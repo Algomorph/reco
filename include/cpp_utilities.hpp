@@ -33,7 +33,7 @@ namespace utl
 
   /** \brief An analogue of the MATLAB dir function
     * \param[in] dir_path input directory
-    * \param[out] content_list a vector of strings representing names of files/folders in the directory
+    * \param[out] content_list a vector of strings representing names of files/folders in the directory, sorted alphanumerically
     */
   inline
   void dir(const std::string &dir_path, std::vector<std::string> &content_list)

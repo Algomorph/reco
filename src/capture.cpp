@@ -9,6 +9,9 @@
 #include <HAL/Posys/PosysDevice.h>
 #include <HAL/Encoder/EncoderDevice.h>
 #include <HAL/LIDAR/LIDARDevice.h>
+
+//previously these were in PbMsgs, which was distributed together with hall
+//now they are fully integrated as part of HAL
 #include <HAL/Messages/ImageArray.h>
 #include <HAL/Messages/Logger.h>
 #include <HAL/Messages/Matrix.h>
@@ -17,10 +20,6 @@
 #include <HAL/Utils/GetPot>
 #include <HAL/Utils/TicToc.h>
 
-//#include <PbMsgs/ImageArray.h>
-//#include <PbMsgs/Logger.h>
-//#include <PbMsgs/Matrix.h>
-//#include <PbMsgs/Reader.h>
 
 #include <opencv2/imgproc/imgproc.hpp>
 

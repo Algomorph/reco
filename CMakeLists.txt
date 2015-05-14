@@ -79,10 +79,6 @@ find_package(HAL 0.1 REQUIRED)
 include_directories( ${HAL_INCLUDE_DIRS} )
 link_libraries(${HAL_LIBRARIES})
 
-#find_package(PbMsgs 2.0 REQUIRED)
-#include_directories( ${PbMsgs_INCLUDE_DIRS})
-#link_libraries(${PbMsgs_LIBRARIES})
-
 find_package(Protobuf REQUIRED)
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
@@ -96,13 +92,8 @@ link_libraries(${Kangaroo_LIBRARIES})
 
 find_package(Boost COMPONENTS system filesystem regex)
 
+include_directories(${CMAKE_SOURCE_DIR}/include)
 
-#     include_directories(${Sophus_INCLUDE_DIR})
-
-
-
-include_directories(" ./include
-                      /home/aecins/Dropbox/Research/Code/libraries/cpp_utilities")
 
 ### ----------------------------------------------------------------------------
 ### C++11 support
