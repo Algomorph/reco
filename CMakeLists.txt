@@ -13,7 +13,6 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 find_package (OpenCV REQUIRED core highgui calib3d imgproc)
 message (STATUS "")
 if (OpenCV_FOUND)
-    
   message (STATUS " --------------------------")
   message (STATUS " Found OpenCV version ${OpenCV_VERSION}")
   message (STATUS "     * include dirs: ${OpenCV_INCLUDE_DIRS}")
@@ -92,7 +91,7 @@ link_libraries(${Kangaroo_LIBRARIES})
 
 find_package(Boost COMPONENTS system filesystem regex)
 
-include_directories(${CMAKE_SOURCE_DIR}/include)
+include_directories(${CMAKE_SOURCE_DIR}/include/alex)
 
 
 ### ----------------------------------------------------------------------------
