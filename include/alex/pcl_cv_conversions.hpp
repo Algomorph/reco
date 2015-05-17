@@ -2,11 +2,19 @@
 #define PCL_OCV_CONVERSIONS_HPP_
 
 // We assume that the code that uses this header already has these included
+//pcl
 #include <pcl/point_types.h>
 #include <pcl/point_cloud.h>
 #include <pcl/console/print.h>
 #include <pcl/io/io.h>
+
+//opencv
 #include <opencv2/core/core.hpp>
+#include <opencv2/core/eigen.hpp>
+
+//eigen
+#include <Eigen/Eigen>
+#include <Eigen/Dense>
 
 namespace pcl
 {
@@ -201,15 +209,12 @@ void cvDepth32F2pclCloud(const cv::Mat& depth, const cv::Mat& K, pcl::PointCloud
 				{
 			float z = static_cast<float>(depth.at<float>(y, x)) / 1000;   // Convert milimetres to metres here
 
-			if (z < 0.2 || z > 5.0)
-					{
+			if (z < 0.2 || z > 5.0) {
 				cloud.at(x, y).x = std::numeric_limits<float>::quiet_NaN();
 				cloud.at(x, y).y = std::numeric_limits<float>::quiet_NaN();
 				cloud.at(x, y).z = std::numeric_limits<float>::quiet_NaN();
 				isDense = false;
-			}
-			else
-			{
+			} else {
 				cloud.at(x, y).x = (x - ox) * z * inv_fx;
 				cloud.at(x, y).y = (y - oy) * z * inv_fy;
 				cloud.at(x, y).z = z;
@@ -220,64 +225,131 @@ void cvDepth32F2pclCloud(const cv::Mat& depth, const cv::Mat& K, pcl::PointCloud
 	cloud.is_dense = isDense;
 }
 
-
-/** \brief Convert an OpenCV depth image to a PCL point cloud using the specified camera parameters
- * TODO: account for P
+/** \brief Convert an OpenCV depth image to an unorganized PCL point cloud using the specified camera parameters
+ * TODO: account for extrinsics
  * TODO: add and account for distortion coefficients arguments
  * \param[in] depth OpenCV depth image (CV_16U where depth is expressed in milimetres)
  * \param[in] K depth camera intrinsic matrix
- * \param[in] P depth camera extrinsic (pose) matrix
+ * \param[in] R depth camera rotation
+ * \param[in] T depth camera translation
  * \param[out] cloud PCL pointcloud
  * \note For now the calibration matrix has to be 32F
  */
 template<typename PointT>
-void cvDepth32F2pclCloud(const cv::Mat& depth, const cv::Mat& K, const cv::Mat&P, pcl::PointCloud<PointT>& cloud){
+void cvDepth32F2pclCloud(const cv::Mat& depth, const cv::Mat& K, Eigen::Matrix<float, 3, 3> R,
+		Eigen::Vector3f T, pcl::PointCloud<PointT>& cloud) {
 	// Check input
-	if (pcl::getFieldsList(cloud).find("x y z") == std::string::npos)
-			{
+	if (pcl::getFieldsList(cloud).find("x y z") == std::string::npos) {
 		std::cout << pcl::getFieldsList(cloud) << std::endl;
 		pcl::console::print_error("[cvDepth2pclCloud] output cloud must contain xyz data");
 		exit(EXIT_FAILURE);
 	}
-	if (K.depth() != CV_32F)
-	{
+	if (K.depth() != CV_32F) {
 		pcl::console::print_error("[cvDepth2pclCloud] calibration matrix must be CV_32F");
 		exit(EXIT_FAILURE);
 	}
-
-	// Prepare cloud
-	const int width = depth.size().width;
-	const int height = depth.size().height;
-
-	cloud.resize(width * height);
-	cloud.width = width;
-	cloud.height = height;
 
 	const float inv_fx = 1.0 / K.at<float>(0, 0);
 	const float inv_fy = 1.0 / K.at<float>(1, 1);
 	const float ox = K.at<float>(0, 2);
 	const float oy = K.at<float>(1, 2);
 
-	bool isDense = true;
+	Eigen::Vector3f pt;
+	for (size_t row = 0; row < depth.rows; row++) {
+		for (size_t col = 0; col < depth.cols; col++) {
+			float z = depth.at<float>(row, col) / 1000.0F;   //convert mm to m
+			//equivalent to multiplying the straight-up pixel coords + depth by inverse of intrinsic matrix K
+			pt << (col - ox) * z * inv_fx, (row - ox) * z * inv_fx, z;
+			pt += T;
+			pt = R*pt;
+			cloud.push_back(PointT(pt.x(),pt.y(),pt.z()));
 
-	for (size_t x = 0; x < width; x++){
-		for (size_t y = 0; y < height; y++){
-			float z = static_cast<float>(depth.at<float>(y, x)) / 1000;   // Convert milimetres to metres here
-
-			if (z < 0.2 || z > 5.0){
-				cloud.at(x, y).x = std::numeric_limits<float>::quiet_NaN();
-				cloud.at(x, y).y = std::numeric_limits<float>::quiet_NaN();
-				cloud.at(x, y).z = std::numeric_limits<float>::quiet_NaN();
-				isDense = false;
-			}else{
-				cloud.at(x, y).x = (x - ox) * z * inv_fx;
-				cloud.at(x, y).y = (y - oy) * z * inv_fy;
-				cloud.at(x, y).z = z;
-			}
 		}
 	}
 
-	cloud.is_dense = isDense;
+}
+
+void cvDepth32F2pclCloudColor(const cv::Mat& depth, const cv::Mat& K, Eigen::Matrix<float, 3, 3> R,
+		Eigen::Vector3f T, pcl::PointCloud<pcl::PointXYZRGB>& cloud, uint32_t rgb) {
+	// Check input
+	if (pcl::getFieldsList(cloud).find("x y z") == std::string::npos) {
+		std::cout << pcl::getFieldsList(cloud) << std::endl;
+		pcl::console::print_error("[cvDepth2pclCloud] output cloud must contain xyz data");
+		exit(EXIT_FAILURE);
+	}
+	if (K.depth() != CV_32F) {
+		pcl::console::print_error("[cvDepth2pclCloud] calibration matrix must be CV_32F");
+		exit(EXIT_FAILURE);
+	}
+
+	const float inv_fx = 1.0 / K.at<float>(0, 0);
+	const float inv_fy = 1.0 / K.at<float>(1, 1);
+	const float ox = K.at<float>(0, 2);
+	const float oy = K.at<float>(1, 2);
+
+	Eigen::Vector3f pt;
+	for (size_t row = 0; row < depth.rows; row++) {
+		for (size_t col = 0; col < depth.cols; col++) {
+			float z = depth.at<float>(row, col) / 1000.0F;   //convert mm to m
+			//equivalent to multiplying the straight-up pixel coords + depth by inverse of intrinsic matrix K
+			pt << (col - ox) * z * inv_fx, (row - ox) * z * inv_fx, z;
+			pt += T;
+			pt = R*pt;
+			pcl::PointXYZRGB ptRGB;
+			ptRGB.rgb = *reinterpret_cast<float*>(&rgb);
+			ptRGB.x = pt.x();
+			ptRGB.y = pt.y();
+			ptRGB.z = pt.z();
+			cloud.push_back(ptRGB);
+		}
+	}
+
+}
+
+/** \brief Convert an OpenCV depth image to an unorganized PCL point cloud using the specified camera parameters
+ * TODO: account for extrinsics
+ * TODO: add and account for distortion coefficients arguments
+ * \param[in] depth OpenCV depth image (CV_16U where depth is expressed in milimetres)
+ * \param[in] K depth camera intrinsic matrix
+ * \param[in] R depth camera rotation
+ * \param[in] T depth camera translation
+ * \param[out] cloud PCL pointcloud
+ * \note For now the calibration matrix has to be 32F
+ */
+void cvDepth32F2pclCloudColor(const cv::Mat& depth, const cv::Mat& K, Eigen::Matrix<float, 3, 3> R,
+		Eigen::Vector3f T, pcl::PointCloud<pcl::PointXYZRGB>& cloud, uint8_t r, uint8_t g, uint8_t b ) {
+	// Check input
+	if (pcl::getFieldsList(cloud).find("x y z") == std::string::npos) {
+		std::cout << pcl::getFieldsList(cloud) << std::endl;
+		pcl::console::print_error("[cvDepth2pclCloud] output cloud must contain xyz data");
+		exit(EXIT_FAILURE);
+	}
+	if (K.depth() != CV_32F) {
+		pcl::console::print_error("[cvDepth2pclCloud] calibration matrix must be CV_32F");
+		exit(EXIT_FAILURE);
+	}
+
+	const float inv_fx = 1.0 / K.at<float>(0, 0);
+	const float inv_fy = 1.0 / K.at<float>(1, 1);
+	const float ox = K.at<float>(0, 2);
+	const float oy = K.at<float>(1, 2);
+
+	Eigen::Vector3f pt;
+	for (size_t row = 0; row < depth.rows; row++) {
+		for (size_t col = 0; col < depth.cols; col++) {
+			float z = depth.at<float>(row, col) / 1000.0F;   //convert mm to m
+			//equivalent to multiplying the straight-up pixel coords + depth by inverse of intrinsic matrix K
+			pt << (col - ox) * z * inv_fx, (row - ox) * z * inv_fx, z;
+			pt += T;
+			pt = R*pt;
+			pcl::PointXYZRGB ptRGB(r,g,b);
+			ptRGB.x = pt.x();
+			ptRGB.y = pt.y();
+			ptRGB.z = pt.z();
+			cloud.push_back(ptRGB);
+		}
+	}
+
 }
 
 /** \brief Convert an OpenCV depth image to a pointcloud
@@ -330,22 +402,17 @@ bool cvDepth2pclCloud(const cv::Mat& depth, const cv::Mat& K, pcl::PointCloud<Po
 
 	bool isDense = true;
 
-	for (size_t x = 0; x < width; x++)
-			{
-		for (size_t y = 0; y < height; y++)
-				{
+	for (size_t x = 0; x < width; x++) {
+		for (size_t y = 0; y < height; y++) {
 			float z = static_cast<float>(depth.at<unsigned short>(y, x)) / 1000;   // Convert milimetres to metres here
 			z *= depth_scaling;
 
-			if (z == 0)
-					{
+			if (z == 0) {
 				cloud.at(x, y).x = std::numeric_limits<float>::quiet_NaN();
 				cloud.at(x, y).y = std::numeric_limits<float>::quiet_NaN();
 				cloud.at(x, y).z = std::numeric_limits<float>::quiet_NaN();
 				isDense = false;
-			}
-			else
-			{
+			} else {
 				cloud.at(x, y).x = (x - ox) * z * inv_fx;
 				cloud.at(x, y).y = (y - oy) * z * inv_fy;
 				cloud.at(x, y).z = z;

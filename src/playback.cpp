@@ -21,6 +21,7 @@
 
 //define what to display
 #define DISPLAY_COMBINED_CLOUD
+//#define DISPLAY_MULTI_CLOUD
 
 //------------------------------------------------------------------------------
 // Get command line parameters
@@ -46,6 +47,21 @@ bool parseCommandLine(int argc, char** argv, std::string &inputDir, std::string 
 	}
 
 	return true;
+}
+
+template<typename T>
+void reorder(std::vector<T>& vec, std::vector<int> order) {
+	if (vec.size() != order.size()) {
+		std::cout << "[reorder] order vector should have the same size as the vector being reordered." << std::endl;
+		exit(EXIT_FAILURE);
+	}
+
+	std::vector<T> copy = vec;
+	vec.clear();
+	for (int ix : order) {
+		vec.push_back(copy[ix]);
+	}
+
 }
 
 int main(int argc, char* argv[]) {
@@ -84,17 +100,19 @@ int main(int argc, char* argv[]) {
 	std::cout << rgbFilenames.size() << " RGB files" << std::endl;
 	std::cout << depthFilenames.size() << " depth files" << std::endl;
 
-	int numFrames = std::min(rgbFilenames.size(), depthFilenames.size());
+	int numFrames = std::min(rgbFilenames.size(), depthFilenames.size()) / numKinects;
 
 	//----------------------------------------------------------------------------
 	// Get callibration parameters
 	//----------------------------------------------------------------------------
 
 	std::vector<cv::Mat> depthIntrinsics;
-	std::vector<cv::Mat> depthExtrinsics;
+	std::vector<Eigen::Matrix<float, 3, 3>> depthRotations;
+	std::vector<Eigen::Matrix<float, 3, 1>> depthTranslations;
 
 	depthIntrinsics.reserve(numKinects);
-	depthExtrinsics.reserve(numKinects);
+	depthRotations.reserve(numKinects);
+	depthTranslations.reserve(numKinects);
 
 	/*TODO Why do we need to worry about converting the eigen intrinsic & extrinsic matrices to OpenCV format?
 	 *  Update linear algebra to use a faster package (See http://nghiaho.com/?p=954 for current comparison.
@@ -102,8 +120,8 @@ int main(int argc, char* argv[]) {
 	if (calibrationFile.empty()) {
 		std::cout << "No camera model provided. Using generic camera models based on image dimensions." << std::endl;
 		float curOffset = 0.0F;
-		float step = 500.0F;//mm
-		for(int iKinect = 0; iKinect < numKinects; iKinect++){
+		float step = 500.0F;	//mm
+		for (int iKinect = 0; iKinect < numKinects; iKinect++) {
 
 			//generate intrinsics
 			cv::Mat K_depth(3, 3, CV_32F);
@@ -122,52 +140,50 @@ int main(int argc, char* argv[]) {
 			cv::Mat P(3, 4, CV_32F);
 
 			//no rotation, identity
-			P.at<float>(0,0) = 1.0F;
-			P.at<float>(1,1) = 1.0F;
-			P.at<float>(2,2) = 1.0F;
+			P.at<float>(0, 0) = 1.0F;
+			P.at<float>(1, 1) = 1.0F;
+			P.at<float>(2, 2) = 1.0F;
 
 			//only x offset
-			P.at<float>(3,0) = curOffset;
+			P.at<float>(3, 0) = curOffset;
 			curOffset += step;
 		}
 
 	} else {
-		for(int iKinect = 0; iKinect < numKinects; iKinect++){
+		//parse intrinsics
+		std::shared_ptr<calibu::Rigd> rig = calibu::ReadXmlRig(calibrationFile);
+		for (int iKinect = 0; iKinect < numKinects; iKinect++) {
 
-			cv::Mat imDepth = utl::readDepthImage(utl::fullfile(inputDir, depthFilenames[0]));
-			cv::Mat imRGB = cv::imread(utl::fullfile(inputDir, rgbFilenames[0]));
-
-			const double depth_focal = imDepth.cols * 570.342 / 640.0;
-			//parse intrinsics
-			std::shared_ptr<calibu::Rigd> rig = calibu::ReadXmlRig(calibrationFile);
-			Eigen::Matrix3f cam_model = rig->cameras_[iKinect]->K().cast<float>();
+			//NOTE: the iKinect*2+1 indexing assumes 2 cameras /Kinect and that depth camera is always after the RGB camera
+			Eigen::Matrix3f cam_model = rig->cameras_[iKinect * 2 + 1]->K().cast<float>();
 			//convert to opencv
 			cv::Mat K_depth(3, 3, CV_32F);
-			cv::eigen2cv(cam_model,K_depth);
+			cv::eigen2cv(cam_model, K_depth);
 			depthIntrinsics.push_back(K_depth);
-
-			//TODO: parse pose
-			Eigen::Matrix<float,3,4> pose = rig->cameras_[iKinect]->Pose().matrix3x4().cast<float>();
-			cv::Mat P(3, 4, CV_32F);
-			//convert to opencv
-			cv::eigen2cv(pose,P);
-
+			depthRotations.push_back(rig->cameras_[iKinect * 2 + 1]->Pose().rotationMatrix().cast<float>());
+			Eigen::Vector3f translation = rig->cameras_[iKinect * 2 + 1]->Pose().translation().cast<float>().col(0);
+			depthTranslations.push_back(translation);
 		}
-
 	}
+
+	//reorder cameras here if needed
+	/*std::vector<int> order = {0,1,2};
+
+	 reorder(depthIntrinsics,order);
+	 reorder(depthRotations,order);
+	 reorder(depthTranslations,order);*/
 
 	//----------------------------------------------------------------------------
 	// Read and display images
 	//----------------------------------------------------------------------------
-
 	// Prepare pcl visualizer
 #ifdef DISPLAY_MULTI_CLOUD
 	pcl::visualization::PCLVisualizer visualizer;
 	visualizer.setCameraPosition(
 			0.0, 0.0, 0.0,   // camera position
-			0.0, 0.0, 1.0,   // viewpoint
-			0.0, -1.0, 0.0,  // normal
-			0.0);            // viewport
+			0.0, 0.0, 1.0,// viewpoint
+			0.0, -1.0, 0.0,// normal
+			0.0);// viewport
 #endif
 #ifdef DISPLAY_COMBINED_CLOUD
 	pcl::visualization::PCLVisualizer visualizerCombo;
@@ -184,7 +200,8 @@ int main(int argc, char* argv[]) {
 	cv::Mat imDepthFiltered;
 
 	pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
-	pcl::PointCloud<pcl::PointXYZ>::Ptr cloudCombo(new pcl::PointCloud<pcl::PointXYZ>);
+	//pcl::PointCloud<pcl::PointXYZ>::Ptr cloudCombo(new pcl::PointCloud<pcl::PointXYZ>);
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloudCombo(new pcl::PointCloud<pcl::PointXYZRGB>);
 
 	// Read first RGB & depth images to get sizes
 	imRGB = cv::imread(utl::fullfile(inputDir, rgbFilenames[0]));
@@ -197,15 +214,17 @@ int main(int argc, char* argv[]) {
 	cv::Mat depthCombined = cv::Mat(sizeDepth.height, sizeDepth.width * numKinects, imDepth.type());
 	cv::Mat depthFilteredCombined = cv::Mat(sizeDepth.height, sizeDepth.width * numKinects, imDepth.type());
 
+	//add more colors for more kinects
+	std::vector<uint32_t> colors = {0x000000ff,0x0000ff00,0x00ff0000};
 	for (size_t frameId = 0; frameId < numFrames; frameId++) {
-
+		cloudCombo->clear();            //clear the cloud
 		int RGBColOffset = 0;
 		int depthColOffset = 0;
 
 		for (int iKinect = 0; iKinect < numKinects; iKinect++) {
 			// Get filenames
-			std::string rgbFilename = rgbFilenames[frameId];
-			std::string depthFilename = depthFilenames[frameId];
+			std::string rgbFilename = rgbFilenames[frameId+iKinect*numFrames];
+			std::string depthFilename = depthFilenames[frameId+iKinect*numFrames];
 
 			// Check actual frame numbers
 			int rgbFrameId = std::stoi(rgbFilename.substr(6, 5));
@@ -247,7 +266,8 @@ int main(int argc, char* argv[]) {
 #ifdef DISPLAY_COMBINED_CLOUD
 			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_single(new pcl::PointCloud<pcl::PointXYZ>);
 			//TODO:Use camera extrinsics **also** to project properly.
-			pcl::cvDepth32F2pclCloud(imDepth, depthIntrinsics[0], *cloudCombo);
+			pcl::cvDepth32F2pclCloudColor(imDepth, depthIntrinsics[iKinect], depthRotations[iKinect],
+					depthTranslations[iKinect], *cloudCombo, colors[iKinect%colors.size()]);
 #endif
 		}
 
@@ -263,10 +283,9 @@ int main(int argc, char* argv[]) {
 		//cv::imshow("Depth discontinuities", imDepthDiscontinuities * 255);
 		//cv::imshow("Depth filtered", imDepthFiltered / 4500.0f);
 
-
 		// Convert combined depth image to cloud
 #ifdef DISPLAY_MULTI_CLOUD
-		pcl::cvDepth32F2pclCloud(depthFilteredCombined, K_depth, *cloud);
+		pcl::cvDepth32F2pclCloud(depthFilteredCombined, depthIntrinsics[0], *cloud);
 		if (!visualizer.updatePointCloud(cloud)) {
 			visualizer.addPointCloud(cloud);
 		}
@@ -278,8 +297,6 @@ int main(int argc, char* argv[]) {
 		}
 		visualizerCombo.spinOnce();
 #endif
-
-
 
 		char k = cv::waitKey(1);
 		if (k == 27)
