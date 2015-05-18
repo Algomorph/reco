@@ -27,7 +27,7 @@
 // Get command line parameters
 //------------------------------------------------------------------------------
 
-bool parseCommandLine(int argc, char** argv, std::string &inputDir, std::string &calibrationFile, int& numCams) {
+bool parseCommandLine(int argc, char** argv, std::string &inputDir, std::string &calibrationFile, int& numKinects) {
 	if (pcl::console::parse_argument(argc, argv, "-i", inputDir) < 0) {
 		std::cout << "You must provide a directory with depth and RGB images." << std::endl;
 		return false;
@@ -37,12 +37,12 @@ bool parseCommandLine(int argc, char** argv, std::string &inputDir, std::string 
 		calibrationFile.clear();
 	}
 
-	if (pcl::console::parse_argument(argc, argv, "-n", numCams) < 0) {
-		numCams = 1;
+	if (pcl::console::parse_argument(argc, argv, "-n", numKinects) < 0) {
+		numKinects = 1;
 	}
 
-	if (numCams < 1) {
-		std::cout << "Number of cameras needs to be an integer above zero." << std::endl;
+	if (numKinects < 1) {
+		std::cout << "Number of Kinects needs to be an integer above zero." << std::endl;
 		return false;
 	}
 

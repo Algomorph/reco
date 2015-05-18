@@ -414,57 +414,6 @@ private:
 	hal::Logger& logger_;
 };
 
-//------------------------------------------------------------------------------
-// Extracts single images out of a log file
-//------------------------------------------------------------------------------
-
-/** Extracts posys out of a log file. */
-void ExtractImages(const std::string &log_file_name,
-		const std::string &output_dir) {
-
-	hal::Reader reader(log_file_name);
-	reader.Enable(hal::Msg_Type_Camera);
-
-	int idx = 0;
-	std::unique_ptr<hal::Msg> msg;
-
-	while (msg = reader.ReadMessage()) {
-		if (msg->has_camera()) {
-			const hal::CameraMsg& cam_msg = msg->camera();
-			int ix_kinect = 0;
-			for (int ii = 0; ii < cam_msg.image_size(); ++ii) {
-				// Convert frame number to string
-				std::string filename;
-				std::ostringstream convert;
-				convert << std::fixed << std::setfill('0') << std::setw(5)
-						<< idx;
-
-				// Write image
-				const hal::ImageMsg& img_msg = cam_msg.image(ii);
-
-				// Depth image (use custom depth format)
-				if (img_msg.format() == GL_LUMINANCE) {
-					filename = utl::fullfile(output_dir,
-							"depth_" + std::to_string(ix_kinect) + "_"
-									+ convert.str() + ".pgm");
-					cv::Mat imDepth = hal::WriteCvMat(img_msg);
-					utl::writeDepthImage(filename, imDepth);
-				}
-				// RGB image (use standard png image)
-				else {
-					filename = utl::fullfile(output_dir,
-							"rgb_" + std::to_string(ix_kinect) + "_"
-									+ convert.str() + ".png");
-					cv::Mat imRGB(img_msg.height(), img_msg.width(), CV_8UC3,
-							(void*) img_msg.data().data());
-					cv::imwrite(filename, imRGB);
-				}
-				ix_kinect += ii % 2;
-			}
-			++idx;
-		}
-	}
-}
 
 //------------------------------------------------------------------------------
 // Main
@@ -531,7 +480,7 @@ int main(int argc, char* argv[]) {
 	}
 
 	// If something was captured - convert it to image files
-	ExtractImages(output_file, output_folder);
+	//ExtractImages(output_file, output_folder);
 
 	return 0;
 }
