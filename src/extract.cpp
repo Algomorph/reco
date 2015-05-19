@@ -6,10 +6,22 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
+// Alex's includes
+#include <cpp_utilities.hpp>
+#include <cv_depth_tools.hpp>
+
+// HAL
 #include <HAL/Messages/ImageArray.h>
-#include <GL/glew.h>
-#include <calibu/cam/camera_crtp.h>
-#include <calibu/cam/rectify_crtp.h>
+#include <HAL/Messages/Logger.h>
+#include <HAL/Messages/Matrix.h>
+#include <HAL/Messages/Reader.h>
+
+//calibu
+#include <calibu/Calibu.h>
+#include <pcl/console/parse.h>
+
+//system
+#include <iomanip>
 
 bool parseCommandLine(int argc, char** argv, std::string& inputFile, std::string& outputDir,
 		std::string &calibrationFile, int& numKinects) {
@@ -38,19 +50,15 @@ bool parseCommandLine(int argc, char** argv, std::string& inputFile, std::string
 	return true;
 }
 
-
-hal::ImageMsg* undistort(const calibu::LookupTable& lut){
-
-}
-
 //------------------------------------------------------------------------------
 // Extracts single images out of a log file
 //------------------------------------------------------------------------------
 
 /** Extracts posys out of a log file. */
-void ExtractImages(const std::string& logPath, const std::string& outputDir,
-		const std::vector<calibu::LookupTable>& lookupTables,
-		const bool doUndistort) {
+void extractImages(const std::string& logPath, const std::string& outputDir,
+		const std::shared_ptr<calibu::Rigd>& rig, const bool doUndistort) {
+
+	std::vector<calibu::LookupTable> lookupTables; //for undistort
 
 	hal::Reader reader(logPath);
 	reader.Enable(hal::Msg_Type_Camera);
@@ -58,69 +66,78 @@ void ExtractImages(const std::string& logPath, const std::string& outputDir,
 	int idx = 0;
 	std::unique_ptr<hal::Msg> msg;
 
+	//initialize lookup tables for undistort
+	if (doUndistort) {
+		const size_t num_cams = rig->NumCams();
+
+		lookupTables.resize(num_cams);
+
+		//traverse camera images
+		for (int iImage = 0; iImage < rig->cameras_.size(); iImage++) {
+			const std::shared_ptr<calibu::CameraInterface<double>> cmod = rig->cameras_[iImage];
+			// Setup new camera model
+			// For now, assume no change in scale so return same params with no distortion.
+			Eigen::Vector2i size_;
+			Eigen::VectorXd params_(calibu::LinearCamera<double>::NumParams);
+			size_ << cmod->Width(), cmod->Height();
+			params_ << cmod->K()(0, 0), cmod->K()(1, 1), cmod->K()(0, 2), cmod->K()(1, 2);
+			std::shared_ptr<calibu::CameraInterface<double>> new_cam(
+					new calibu::LinearCamera<double>(params_, size_));
+			calibu::CreateLookupTable(rig->cameras_[iImage], new_cam->K().inverse(),
+					lookupTables[iImage]);
+		}
+	}
 	msg = reader.ReadMessage();
+
 	while (msg) {
 		//skip messages w/o camera
 		if (msg->has_camera()) {
 			const hal::CameraMsg& camMsg = msg->camera();
 			int iKinect = 0;
-			for (int iImage = 0; iImage < camMsg.image_size(); ++iImage) {
+			for (int iCamera = 0; iCamera < camMsg.image_size(); ++iCamera) {
 				// Convert frame number to string
 				std::string filename;
 				std::ostringstream convert;
 				convert << std::fixed << std::setfill('0') << std::setw(5) << idx;
 
-				hal::ImageMsg* pimg;
-				if (doUndistort) {
-					// Retrieve distorted image
-					hal::Image inImg = hal::Image(camMsg.image(iImage));
-
-					//create an identical image message
-					pimg->set_type((hal::Type) inImg.Type());
-					pimg->set_format((hal::Format) inImg.Format());
-					uint num_channels = 1;
-					if (pimg->format() == hal::PB_LUMINANCE) {
-						num_channels = 1;
-					} else if (pimg->format() == hal::PB_BGRA || pimg->format() == hal::PB_RGBA) {
-						num_channels = 4;
-					} else {
-						num_channels = 3;
-					}
-
-					hal::Image img = hal::Image(*pimg);
-					if (pimg->type() == hal::PB_UNSIGNED_BYTE) {
-						pimg->mutable_data()->resize(
-								inImg.Width() * inImg.Height() * sizeof(unsigned char)
-										* num_channels);
-						calibu::Rectify<unsigned char>(lookupTables[iImage], inImg.data(),
-								reinterpret_cast<unsigned char*>(&pimg->mutable_data()->front()),
-								img.Width(), img.Height(), num_channels);
-					} else if (pimg->type() == hal::PB_FLOAT) {
-						pimg->mutable_data()->resize(
-								inImg.Width() * inImg.Height() * sizeof(float) * num_channels);
-						calibu::Rectify<float>(lookupTables[iImage], (float*) inImg.data(),
-								reinterpret_cast<float*>(&pimg->mutable_data()->front()),
-								img.Width(), img.Height(), num_channels);
-					}
-				} else {
-					pimg = &camMsg.image(iImage);
-				}
+				const hal::ImageMsg& img_msg = camMsg.image(iCamera);
 
 				// Depth image (use custom depth format)
-				if (pimg->format() == GL_LUMINANCE) {
+				if (img_msg.format() == hal::PB_LUMINANCE) {
 					filename = utl::fullfile(outputDir,
 							"depth_" + std::to_string(iKinect) + "_" + convert.str() + ".pgm");
-					cv::Mat imDepth = hal::WriteCvMat(*pimg);
-					utl::writeDepthImage(filename, imDepth);
+					/*					if (doUndistort) {
+					 cv::Mat imDepth(img_msg.height(), img_msg.width(), CV_32F);
 
-				} else { // RGB image (use standard png image)
+					 calibu::Rectify<float>(lut, (float*) img_msg.data(),
+					 reinterpret_cast<float*>(&pimg.mutable_data()->front()), img.Width(), img.Height(),
+					 1);
+					 utl::writeDepthImage(filename, imDepth);
+					 }else{*/
+					cv::Mat imDepth = hal::WriteCvMat(img_msg);
+
+					utl::writeDepthImage(filename, imDepth);
+					//}
+
+				} else { // assume RGB image (use standard png image)
 					filename = utl::fullfile(outputDir,
 							"rgb_" + std::to_string(iKinect) + "_" + convert.str() + ".png");
-					cv::Mat imRGB(pimg->height(), pimg->width(), CV_8UC3,
-							(void*) pimg->data().data());
-					cv::imwrite(filename, imRGB);
+
+					/*if (doUndistort) {
+						cv::Mat imRGB(img_msg.height(), img_msg.width(), CV_8UC3);
+						hal::Image inImg = hal::Image(img_msg);
+						calibu::Rectify<uchar>(lookupTables[iCamera], inImg.data(), imRGB.data,
+								img_msg.width(), img_msg.height(), 3);
+						cv::imwrite(filename, imRGB);
+					} else {*/
+						//use message data directly
+						cv::Mat imRGB(img_msg.height(), img_msg.width(), CV_8UC3,
+								(void*) img_msg.data().data());
+						cv::imwrite(filename, imRGB);
+					//}
+
 				}
-				iKinect += iImage % 2;
+				iKinect += iCamera % 2;
 			}
 			++idx;
 		}
@@ -158,13 +175,15 @@ int main(int argc, char* argv[]) {
 	// Load camera intrinsics if available
 	//----------------------------------------------------------------------------
 
+	std::shared_ptr<calibu::Rigd> rig;
 	if (calibrationFile.empty()) {
 		doUndistort = false;
 	} else {
 		doUndistort = true;
 		//parse intrinsics
-		std::shared_ptr<calibu::Rigd> rig = calibu::ReadXmlRig(calibrationFile);
+		rig = calibu::ReadXmlRig(calibrationFile);
 	}
 
+	extractImages(inputLogPath, outputDir, rig, doUndistort);
 }
 

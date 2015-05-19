@@ -4,7 +4,7 @@
 #include <calibu/cam/Rectify.h>
 #include <calibu/utils/Range.h>
 
-namespace calibu
+namespace alex
 {
 
 
@@ -13,7 +13,7 @@ namespace calibu
   void CreateLookupTableMod(
       const calibu::CameraModelInterface& cam_from,
       const Eigen::Matrix3d& R_onKinv,
-      LookupTable& lut
+	  calibu::LookupTable& lut
       )
   {
     const int w = cam_from.Width();

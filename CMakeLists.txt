@@ -120,7 +120,7 @@ target_link_libraries(capture dl ${Boost_LIBRARIES})
 
 # Data extraction & optional undistort
 add_executable( extract src/extract.cpp )
-target_link_libraries(extract dl ${HAL_LIBRARIES} ${Boost_LIBRARIES})
+target_link_libraries(extract dl ${HAL_LIBRARIES} ${Boost_LIBRARIES} ${PCL_LIBRARIES})
 
 # Captured data playback
 add_executable( playback src/playback.cpp )
