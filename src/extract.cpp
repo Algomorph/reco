@@ -106,35 +106,41 @@ void extractImages(const std::string& logPath, const std::string& outputDir,
 				if (img_msg.format() == hal::PB_LUMINANCE) {
 					filename = utl::fullfile(outputDir,
 							"depth_" + std::to_string(iKinect) + "_" + convert.str() + ".pgm");
-					/*					if (doUndistort) {
-					 cv::Mat imDepth(img_msg.height(), img_msg.width(), CV_32F);
 
-					 calibu::Rectify<float>(lut, (float*) img_msg.data(),
-					 reinterpret_cast<float*>(&pimg.mutable_data()->front()), img.Width(), img.Height(),
-					 1);
-					 utl::writeDepthImage(filename, imDepth);
-					 }else{*/
+
 					cv::Mat imDepth = hal::WriteCvMat(img_msg);
+					if(doUndistort){
+						cv::Mat imDepthUndist(img_msg.height(),img_msg.width(),CV_32F);
+						calibu::Rectify<float>(lookupTables[iCamera], (float*)imDepth.data, (float*)imDepthUndist.data,
+								img_msg.width(), img_msg.height(), 1);
+						imDepth = imDepthUndist;
+					}
+
+
 
 					utl::writeDepthImage(filename, imDepth);
-					//}
+
 
 				} else { // assume RGB image (use standard png image)
 					filename = utl::fullfile(outputDir,
 							"rgb_" + std::to_string(iKinect) + "_" + convert.str() + ".png");
 
-					/*if (doUndistort) {
-						cv::Mat imRGB(img_msg.height(), img_msg.width(), CV_8UC3);
+					if (doUndistort) {
 						hal::Image inImg = hal::Image(img_msg);
-						calibu::Rectify<uchar>(lookupTables[iCamera], inImg.data(), imRGB.data,
-								img_msg.width(), img_msg.height(), 3);
+						cv::Mat imRGB(inImg.Height(), inImg.Width(), CV_8UC3);
+						uchar buffer[inImg.Height() * inImg.Width() * 3];
+						for (int r=0; r<inImg.Height() * inImg.Width() * 3; r++) {
+							buffer[r] = inImg.data()[r];
+						}
+						calibu::Rectify<uchar>(lookupTables[iCamera], buffer, imRGB.data,
+								inImg.Width(), inImg.Height(), 3);
 						cv::imwrite(filename, imRGB);
-					} else {*/
+					} else {
 						//use message data directly
 						cv::Mat imRGB(img_msg.height(), img_msg.width(), CV_8UC3,
 								(void*) img_msg.data().data());
 						cv::imwrite(filename, imRGB);
-					//}
+					}
 
 				}
 				iKinect += iCamera % 2;

@@ -444,7 +444,7 @@ int main(int argc, char* argv[]) {
 		return -1;
 	}
 
-	std::cout << "Writing captured files to " << output_folder << std::endl;
+	std::cout << "Writing captured frames to " << output_folder << std::endl;
 	std::string output_file = utl::fullfile(output_folder, "tmp.log");
 
 	//----------------------------------------------------------------------------
@@ -478,9 +478,6 @@ int main(int argc, char* argv[]) {
 		std::cout << "Nothing was captured." << std::endl;
 		return 0;
 	}
-
-	// If something was captured - convert it to image files
-	//ExtractImages(output_file, output_folder);
 
 	return 0;
 }

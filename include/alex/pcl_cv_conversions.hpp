@@ -293,8 +293,8 @@ void cvDepth32F2pclCloudColor(const cv::Mat& depth, const cv::Mat& K, Eigen::Mat
 			float z = depth.at<float>(row, col) / 1000.0F;   //convert mm to m
 			//equivalent to multiplying the straight-up pixel coords + depth by inverse of intrinsic matrix K
 			pt << (col - ox) * z * inv_fx, (row - ox) * z * inv_fx, z;
-			pt += T;
 			pt = R*pt;
+			pt += T;
 			pcl::PointXYZRGB ptRGB;
 			ptRGB.rgb = *reinterpret_cast<float*>(&rgb);
 			ptRGB.x = pt.x();

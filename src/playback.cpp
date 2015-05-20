@@ -27,7 +27,8 @@
 // Get command line parameters
 //------------------------------------------------------------------------------
 
-bool parseCommandLine(int argc, char** argv, std::string &inputDir, std::string &calibrationFile, int& numKinects) {
+bool parseCommandLine(int argc, char** argv, std::string &inputDir, std::string &calibrationFile,
+		int& numKinects) {
 	if (pcl::console::parse_argument(argc, argv, "-i", inputDir) < 0) {
 		std::cout << "You must provide a directory with depth and RGB images." << std::endl;
 		return false;
@@ -52,7 +53,9 @@ bool parseCommandLine(int argc, char** argv, std::string &inputDir, std::string 
 template<typename T>
 void reorder(std::vector<T>& vec, std::vector<int> order) {
 	if (vec.size() != order.size()) {
-		std::cout << "[reorder] order vector should have the same size as the vector being reordered." << std::endl;
+		std::cout
+				<< "[reorder] order vector should have the same size as the vector being reordered."
+				<< std::endl;
 		exit(EXIT_FAILURE);
 	}
 
@@ -79,9 +82,9 @@ int main(int argc, char* argv[]) {
 	// Check that input directory exists
 	//----------------------------------------------------------------------------
 
-	if (!utl::isDirectory(inputDir))
-			{
-		std::cout << "Input directory doesn't exist of is not a directory (" << inputDir << ")" << std::endl;
+	if (!utl::isDirectory(inputDir)) {
+		std::cout << "Input directory doesn't exist of is not a directory (" << inputDir << ")"
+				<< std::endl;
 		return -1;
 	}
 
@@ -118,7 +121,9 @@ int main(int argc, char* argv[]) {
 	 *  Update linear algebra to use a faster package (See http://nghiaho.com/?p=954 for current comparison.
 	 *  Perhaps OpenCV3 will be faster.).*/
 	if (calibrationFile.empty()) {
-		std::cout << "No camera model provided. Using generic camera models based on image dimensions." << std::endl;
+		std::cout
+				<< "No camera model provided. Using generic camera models based on image dimensions."
+				<< std::endl;
 		float curOffset = 0.0F;
 		float step = 500.0F;	//mm
 		for (int iKinect = 0; iKinect < numKinects; iKinect++) {
@@ -160,8 +165,10 @@ int main(int argc, char* argv[]) {
 			cv::Mat K_depth(3, 3, CV_32F);
 			cv::eigen2cv(cam_model, K_depth);
 			depthIntrinsics.push_back(K_depth);
-			depthRotations.push_back(rig->cameras_[iKinect * 2 + 1]->Pose().rotationMatrix().cast<float>());
-			Eigen::Vector3f translation = rig->cameras_[iKinect * 2 + 1]->Pose().translation().cast<float>().col(0);
+			depthRotations.push_back(
+					rig->cameras_[iKinect * 2 + 1]->Pose().rotationMatrix().cast<float>());
+			Eigen::Vector3f translation = rig->cameras_[iKinect * 2 + 1]->Pose().translation().cast<
+					float>().col(0);
 			depthTranslations.push_back(translation);
 		}
 	}
@@ -187,8 +194,7 @@ int main(int argc, char* argv[]) {
 #endif
 #ifdef DISPLAY_COMBINED_CLOUD
 	pcl::visualization::PCLVisualizer visualizerCombo;
-	visualizerCombo.setCameraPosition(
-			0.0, 0.0, 0.0,   // camera position
+	visualizerCombo.setCameraPosition(0.0, 0.0, 0.0,   // camera position
 			0.0, 0.0, 1.0,   // viewpoint
 			0.0, -1.0, 0.0,  // normal
 			0.0);            // viewport
@@ -212,10 +218,11 @@ int main(int argc, char* argv[]) {
 	//Initialize images for display
 	cv::Mat RGBCombined = cv::Mat(sizeRGB.height, sizeRGB.width * numKinects, CV_8UC3);
 	cv::Mat depthCombined = cv::Mat(sizeDepth.height, sizeDepth.width * numKinects, imDepth.type());
-	cv::Mat depthFilteredCombined = cv::Mat(sizeDepth.height, sizeDepth.width * numKinects, imDepth.type());
+	cv::Mat depthFilteredCombined = cv::Mat(sizeDepth.height, sizeDepth.width * numKinects,
+			imDepth.type());
 
 	//add more colors for more kinects
-	std::vector<uint32_t> colors = {0x000000ff,0x0000ff00,0x00ff0000};
+	std::vector<uint32_t> colors = { 0x000000ff, 0x0000ff00, 0x00ff0000 };
 	for (size_t frameId = 0; frameId < numFrames; frameId++) {
 		cloudCombo->clear();            //clear the cloud
 		int RGBColOffset = 0;
@@ -223,8 +230,8 @@ int main(int argc, char* argv[]) {
 
 		for (int iKinect = 0; iKinect < numKinects; iKinect++) {
 			// Get filenames
-			std::string rgbFilename = rgbFilenames[frameId+iKinect*numFrames];
-			std::string depthFilename = depthFilenames[frameId+iKinect*numFrames];
+			std::string rgbFilename = rgbFilenames[frameId + iKinect * numFrames];
+			std::string depthFilename = depthFilenames[frameId + iKinect * numFrames];
 
 			// Check actual frame numbers
 			int rgbFrameId = std::stoi(rgbFilename.substr(6, 5));
@@ -248,13 +255,14 @@ int main(int argc, char* argv[]) {
 			for (int x = 0; x < imDepthFiltered.cols; x++) {
 				for (int y = 0; y < imDepthFiltered.rows; y++) {
 					if (imDepthDiscontinuities.at<uchar>(y, x) == 1)
-					imDepthFiltered.at<float>(y, x) = 0.0f;
+						imDepthFiltered.at<float>(y, x) = 0.0f;
 				}
 			}
 			//copy over to slices of display images
 			cv::Mat sliceRGB(RGBCombined, cv::Rect(RGBColOffset, 0, sizeRGB.width, sizeRGB.height));
 			imRGB.copyTo(sliceRGB);
-			cv::Mat sliceDepth(depthCombined, cv::Rect(depthColOffset, 0, sizeDepth.width, sizeDepth.height));
+			cv::Mat sliceDepth(depthCombined,
+					cv::Rect(depthColOffset, 0, sizeDepth.width, sizeDepth.height));
 			imDepth.copyTo(sliceDepth);
 			cv::Mat sliceDepthFiltered(depthFilteredCombined,
 					cv::Rect(depthColOffset, 0, sizeDepth.width, sizeDepth.height));
@@ -266,8 +274,9 @@ int main(int argc, char* argv[]) {
 #ifdef DISPLAY_COMBINED_CLOUD
 			pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_single(new pcl::PointCloud<pcl::PointXYZ>);
 			//TODO:Use camera extrinsics **also** to project properly.
-			pcl::cvDepth32F2pclCloudColor(imDepth, depthIntrinsics[iKinect], depthRotations[iKinect],
-					depthTranslations[iKinect], *cloudCombo, colors[iKinect%colors.size()]);
+			pcl::cvDepth32F2pclCloudColor(imDepth, depthIntrinsics[iKinect],
+					depthRotations[iKinect], depthTranslations[iKinect], *cloudCombo,
+					colors[iKinect % colors.size()]);
 #endif
 		}
 
@@ -300,7 +309,7 @@ int main(int argc, char* argv[]) {
 
 		char k = cv::waitKey(1);
 		if (k == 27)
-		break;
+			break;
 	}
 
 	return 0;
