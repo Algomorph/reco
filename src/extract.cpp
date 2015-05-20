@@ -24,7 +24,7 @@
 #include <iomanip>
 
 bool parseCommandLine(int argc, char** argv, std::string& inputFile, std::string& outputDir,
-		std::string &calibrationFile, int& numKinects) {
+		std::string &calibrationFile) {
 	if (pcl::console::parse_argument(argc, argv, "-i", inputFile) < 0) {
 		std::cout << "You must provide a path to a HAL log file." << std::endl;
 		return false;
@@ -36,15 +36,6 @@ bool parseCommandLine(int argc, char** argv, std::string& inputFile, std::string
 
 	if (pcl::console::parse_argument(argc, argv, "-c", calibrationFile) < 0) {
 		calibrationFile.clear();
-	}
-
-	if (pcl::console::parse_argument(argc, argv, "-n", numKinects) < 0) {
-		numKinects = 1;
-	}
-
-	if (numKinects < 1) {
-		std::cout << "Number of kinects needs to be an integer above zero." << std::endl;
-		return false;
 	}
 
 	return true;
@@ -163,9 +154,8 @@ int main(int argc, char* argv[]) {
 	std::string outputDir;
 	std::string calibrationFile;
 	bool doUndistort;
-	int numKinects;
 
-	parseCommandLine(argc, argv, inputLogPath, outputDir, calibrationFile, numKinects);
+	parseCommandLine(argc, argv, inputLogPath, outputDir, calibrationFile);
 
 	//----------------------------------------------------------------------------
 	// Check that input file exists
