@@ -22,6 +22,7 @@
 
 //system
 #include <iomanip>
+#include <cstring>
 
 bool parseCommandLine(int argc, char** argv, std::string& inputFile, std::string& outputDir,
 		std::string &calibrationFile) {
@@ -91,24 +92,21 @@ void extractImages(const std::string& logPath, const std::string& outputDir,
 				std::ostringstream convert;
 				convert << std::fixed << std::setfill('0') << std::setw(5) << idx;
 
-				const hal::ImageMsg& img_msg = camMsg.image(iCamera);
+				const hal::ImageMsg& imgMsg = camMsg.image(iCamera);
 
 				// Depth image (use custom depth format)
-				if (img_msg.format() == hal::PB_LUMINANCE) {
+				if (imgMsg.format() == hal::PB_LUMINANCE) {
 					filename = utl::fullfile(outputDir,
 							"depth_" + std::to_string(iKinect) + "_" + convert.str() + ".pgm");
 
 
-					cv::Mat imDepth = hal::WriteCvMat(img_msg);
+					cv::Mat imDepth = hal::WriteCvMat(imgMsg);
 					if(doUndistort){
-						cv::Mat imDepthUndist(img_msg.height(),img_msg.width(),CV_32F);
+						cv::Mat imDepthUndist(imgMsg.height(),imgMsg.width(),CV_32F);
 						calibu::Rectify<float>(lookupTables[iCamera], (float*)imDepth.data, (float*)imDepthUndist.data,
-								img_msg.width(), img_msg.height(), 1);
+								imgMsg.width(), imgMsg.height(), 1);
 						imDepth = imDepthUndist;
 					}
-
-
-
 					utl::writeDepthImage(filename, imDepth);
 
 
@@ -117,19 +115,18 @@ void extractImages(const std::string& logPath, const std::string& outputDir,
 							"rgb_" + std::to_string(iKinect) + "_" + convert.str() + ".png");
 
 					if (doUndistort) {
-						hal::Image inImg = hal::Image(img_msg);
-						cv::Mat imRGB(inImg.Height(), inImg.Width(), CV_8UC3);
-						uchar buffer[inImg.Height() * inImg.Width() * 3];
-						for (int r=0; r<inImg.Height() * inImg.Width() * 3; r++) {
-							buffer[r] = inImg.data()[r];
-						}
+						cv::Mat imRGB(imgMsg.height(), imgMsg.width(), CV_8UC3);
+						const int numChannels = 3;
+						size_t bufferSize = imgMsg.height() * imgMsg.width() * numChannels;
+						uchar buffer[bufferSize];
+						memcpy(buffer,imgMsg.data().data(),bufferSize);
 						calibu::Rectify<uchar>(lookupTables[iCamera], buffer, imRGB.data,
-								inImg.Width(), inImg.Height(), 3);
+								imgMsg.width(), imgMsg.height(), numChannels);
 						cv::imwrite(filename, imRGB);
 					} else {
 						//use message data directly
-						cv::Mat imRGB(img_msg.height(), img_msg.width(), CV_8UC3,
-								(void*) img_msg.data().data());
+						cv::Mat imRGB(imgMsg.height(), imgMsg.width(), CV_8UC3,
+								(void*) imgMsg.data().data());
 						cv::imwrite(filename, imRGB);
 					}
 

@@ -1,3 +1,6 @@
+# Files marked as links
+*-lk
+
 # Qt Generated files
 *_automoc.cpp
 moc_*
