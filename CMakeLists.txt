@@ -1,112 +1,108 @@
-cmake_minimum_required(VERSION 2.8)
+#===============Reco top-level CMakeLists.txt==========================#  
+#
+#  Created on: Dec 8, 2014
+#      Author: Gregory Kramida
+#     License: Apache v2
+#   Copyright: (c) Gregory Kramida 2014, 2015
+#
+# EDITING GUIDELINES:
+# 1) Use lowercase CMake commands
+# 2) Succinct > descriptive > abbreviated
+# 3) Less = more
+# 4) Hard now = easy later
+# 5) Freedom = slavery
+#
 
+cmake_minimum_required(VERSION 2.8.11)
+	
+#----------------------------PROJECT NAME--------------------------------------#
 project(reco)
+string(TOUPPER "${PROJECT_NAME}" PROJECT_NAME_UPPER)
 
-### ----------------------------------------------------------------------------
-### Output folders
-### ----------------------------------------------------------------------------
+#----------------------------CMAKE & GLOBAL PROPERTIES-------------------------#
+set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
-set (CMAKE_BUILD_TYPE RelWithDebInfo)
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
-
-### ============================================================================
-###                              FIND PACKAGES
-### ============================================================================
-
-# Freenect
-find_package (freenect2 REQUIRED)
-#temp fix for OpenKinect/libfreenect2 issue #217
-set(freenect2_INCLUDE_DIRS ${freenect2_INCLUDE_DIR} ${freenect2_INCLUDE_DIR}/libfreenect2/tinythread)
-include_directories(${freenect2_INCLUDE_DIRS})
-
-# OpenCV
-find_package (OpenCV REQUIRED core highgui calib3d imgproc)
-include_directories(${OpenCV_INCLUDE_DIRS})
-link_directories(${OpenCV_INSTALL_PATH})
-
-#PCL
-find_package(PCL REQUIRED)
-include_directories(${PCL_INCLUDE_DIRS})
-link_directories(${PCL_LIBRARY_DIRS})
-add_definitions(${PCL_DEFINITIONS})
-
-# Boost
-find_package(Boost REQUIRED COMPONENTS regex system filesystem) 
-
-### ARPG dependencies-----------------------------------------------------------
-
-find_package(SceneGraph 0.1 REQUIRED)
-include_directories(${SceneGraph_INCLUDE_DIRS})
-link_libraries(${SceneGraph_LIBRARIES})
-
-find_package(Pangolin 0.1 REQUIRED)
-include_directories(${Pangolin_INCLUDE_DIRS})
-link_libraries(${Pangolin_LIBRARIES})
-
-find_package(HAL 0.1 REQUIRED)
-include_directories( ${HAL_INCLUDE_DIRS} )
-link_libraries(${HAL_LIBRARIES})
-
-find_package(Protobuf REQUIRED)
-include_directories(${PROTOBUF_INCLUDE_DIR})
-
-find_package(Calibu 0.1 REQUIRED)
-include_directories(${Calibu_INCLUDE_DIRS})
-link_libraries(${Calibu_LIBRARIES})
-
-find_package(Kangaroo 0.1 REQUIRED)
-include_directories(${Kangaroo_INCLUDE_DIRS})
-link_libraries(${Kangaroo_LIBRARIES})
-
-find_package(Boost COMPONENTS system filesystem regex)
-
-include_directories(${CMAKE_SOURCE_DIR}/include/alex)
-
-
-### ----------------------------------------------------------------------------
-### C++11 support
-### ----------------------------------------------------------------------------
-
-include(CheckCXXCompilerFlag)
-CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
-CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
-if(COMPILER_SUPPORTS_CXX11)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
-elseif(COMPILER_SUPPORTS_CXX0X)
-  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
-else()
-  message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+if(CMAKE_MAJOR_VERSION GREATER 2 AND CMAKE_MINOR_VERSION GREATER 0)
+    cmake_policy(SET CMP0054 NEW)#no implicit dereferencing for STREQUAL
+    cmake_policy(SET CMP0053 NEW)#no special characters in variable names
 endif()
 
+#----------------------------BUILD CONFIGURATIONS------------------------------#
+set(DEBUG_BUILD_TYPE_OPTIONS Debug RelWithDebInfo)
+set(RELEASE_BUILD_TYPE_OPTIONS Release MinSizeRel)
+set(BUILD_TYPE_OPTIONS ${DEBUG_BUILD_TYPE_OPTIONS} ${RELEASE_BUILD_TYPE_OPTIONS})
 
-### ----------------------------------------------------------------------------
-### Executables
-### ----------------------------------------------------------------------------
+#set build type 
+if(NOT MSVC)#TODO: also don't do for XCode generator?
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: ${BUILD_TYPE_OPTIONS}.")
+    set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${BUILD_TYPE_OPTIONS})
 
-# Built-in Parameter Extraction
-add_executable(extract-params src/applications/intrinsics.cpp)
-target_link_libraries(extract-params ${freenect2_LIBRARY} ${OpenCV_LIBS})
+    set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE})
+endif()
 
-# Data capture
-add_executable( capture src/applications/capture.cpp )
-target_link_libraries(capture dl ${Boost_LIBRARIES})
+#----------------------------COMPILER FLAGS-----------------------------------#
+if(MSVC)
+	#ADD_DEFINITIONS(-DUNICODE -D_UNICODE) #TODO: not sure about those
+else()
+	set(CMAKE_CXX_FLAGS "-Wall")
+	if(DEFINED ${CMAKE_BUILD_TYPE})
+    	if(${CMAKE_BUILD_TYPE} STREQUAL "Debug" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
+    	    ADD_DEFINITIONS(-D_DEBUG) #add the debug flag
+    	else()
+    	    ADD_DEFINITIONS(-DQT_NO_DEBUG_OUTPUT) #add the qt debug output flag
+    	endif()
+    endif() 
+    
+    ### C++11 support
+    include(CheckCXXCompilerFlag)
+    CHECK_CXX_COMPILER_FLAG("-std=c++11" COMPILER_SUPPORTS_CXX11)
+    CHECK_CXX_COMPILER_FLAG("-std=c++0x" COMPILER_SUPPORTS_CXX0X)
+    if(COMPILER_SUPPORTS_CXX11)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
+    elseif(COMPILER_SUPPORTS_CXX0X)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++0x")
+    else()
+        message(STATUS "The compiler ${CMAKE_CXX_COMPILER} has no C++11 support. Please use a different C++ compiler.")
+    endif()
+endif()
 
-# Data extraction & optional undistort
-add_executable( extract src/applications/extract.cpp )
-target_link_libraries(extract dl ${HAL_LIBRARIES} ${Boost_LIBRARIES} ${PCL_LIBRARIES})
+#----------------------------OUTPUT DIRECTORIES--------------------------------#
+#generic no-config case (e.g. with gcc/mingw)
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/lib")
 
-# Captured data playback
-add_executable( playback src/applications/playback.cpp )
-target_link_libraries(playback  ${PCL_LIBRARIES}
-                                ${Boost_LIBRARIES})
-                                      
-# Kinfu library                                      
-add_library(kinfu SHARED src/applications/kinfu.cpp)
+#multi-config builds (e.g. msvc)
+foreach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
+    string(TOUPPER ${OUTPUTCONFIG} OUTPUTCONFIG)
+	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_${OUTPUTCONFIG} "${CMAKE_BINARY_DIR}/bin")
+    set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_${OUTPUTCONFIG} "${CMAKE_BINARY_DIR}/lib")
+	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_${OUTPUTCONFIG} "${CMAKE_BINARY_DIR}/lib")
+endforeach(OUTPUTCONFIG ${CMAKE_CONFIGURATION_TYPES})
 
-# Kinfu app
-add_executable( kinfuapp src/applications/kinfu_app.cpp )
-target_link_libraries(kinfuapp  ${PCL_LIBRARIES}
-                                ${Boost_LIBRARIES}
-                                kinfu)
+#----------------------------NON-COMPILE SOURCE FILES--------------------------#
+file(GLOB_RECURSE ${PROJECT_NAME_UPPER}_CMAKE ${CMAKE_SOURCE_DIR}/cmake/*.cmake)
+file(GLOB ${PROJECT_NAME_UPPER}_TOP_CMAKE ${CMAKE_SOURCE_DIR}/CMakeLists.txt)
+file(GLOB ${PROJECT_NAME_UPPER}_APPLICATIONS_CMAKE ${CMAKE_SOURCE_DIR}/src/applications/CMakeLists.txt)
+file(GLOB ${PROJECT_NAME_UPPER}_MODULES_CMAKE ${CMAKE_SOURCE_DIR}/src/modules/CMakeLists.txt)
+
+source_group("Extra CMake Scripts" FILES ${${PROJECT_NAME_UPPER}_CMAKE})
+source_group("Top-level CMake" FILES ${${PROJECT_NAME_UPPER}_TOP_CMAKE})
+source_group("Applications CMake" FILES ${${PROJECT_NAME_UPPER}_APPLICATIONS_CMAKE})
+source_group("Modules CMake" FILES ${${PROJECT_NAME_UPPER}_MODULES_CMAKE})
+
+set(NON_COMPILE_SOURCES 
+    ${${PROJECT_NAME_UPPER}_CMAKE}
+    ${${PROJECT_NAME_UPPER}_TOP_CMAKE}
+    ${${PROJECT_NAME_UPPER}_MODULES_CMAKE} 
+    ${${PROJECT_NAME_UPPER}_SETTINGS} 
+)
+
+#add non-compile target
+add_custom_target(${PROJECT_NAME}_noncompile SOURCES ${NON_COMPILE_SOURCES})
+
+#-------------------------INCLUDE SUBDIRECTORIES-------------------------------#
+add_subdirectory ("src/applications")
+add_subdirectory ("src/modules")
+#------------------------------------------------------------------------------#
