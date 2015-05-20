@@ -36,9 +36,9 @@ using std::placeholders::_1;
 // Capture data
 //------------------------------------------------------------------------------
 
-class SensorViewer {
+class Capture {
 public:
-	SensorViewer() :
+	Capture() :
 			num_channels_(0), base_width_(0), base_height_(0), has_camera_(
 			false), has_imu_(false), has_posys_(false), has_encoder_(
 			false), has_lidar_(false), is_running_(true), is_stepping_(
@@ -46,14 +46,14 @@ public:
 					hal::Logger::GetInstance()), logging_delay_(5.0) {
 	}
 
-	void start_paused(void) {
+	void startPaused(void) {
 		is_running_ = false;
 	}
 
-	virtual ~SensorViewer() {
+	virtual ~Capture() {
 	}
 
-	void SetupGUI() {
+	void setupGUI() {
 		panel_width_ = 100;
 		int window_width = num_channels_ * base_width_;
 		pangolin::OpenGlRenderState render_state;
@@ -71,7 +71,7 @@ public:
 		fps_.reset(new pangolin::Var<int>("ui.FPS", 30, 1, 120));
 		limit_fps_.reset(new pangolin::Var<bool>("ui.Limit FPS", true,
 		true));
-		logging_enabled_.reset(new pangolin::Var<bool>("ui.LOG",
+		logging_enabled_.reset(new pangolin::Var<bool>("ui.Capture",
 		false));
 		delayed_logging_enabled_ = false;
 
@@ -132,7 +132,7 @@ public:
 
 	}
 
-	void Run() {
+	void run() {
 		double last_capture = hal::Tic();
 		RegisterCallbacks();
 
@@ -284,25 +284,25 @@ protected:
 	void RegisterCallbacks() {
 		if (has_posys_) {
 			posys_.RegisterPosysDataCallback(
-					std::bind(&SensorViewer::Posys_Handler, this, _1));
+					std::bind(&Capture::Posys_Handler, this, _1));
 			std::cout << "- Registering Posys device." << std::endl;
 		}
 
 		if (has_imu_) {
 			imu_.RegisterIMUDataCallback(
-					std::bind(&SensorViewer::IMU_Handler, this, _1));
+					std::bind(&Capture::IMU_Handler, this, _1));
 			std::cout << "- Registering IMU device." << std::endl;
 		}
 
 		if (has_encoder_) {
 			encoder_.RegisterEncoderDataCallback(
-					std::bind(&SensorViewer::Encoder_Handler, this, _1));
+					std::bind(&Capture::Encoder_Handler, this, _1));
 			std::cout << "- Registering Encoder device." << std::endl;
 		}
 
 		if (has_lidar_) {
 			lidar_.RegisterLIDARDataCallback(
-					std::bind(&SensorViewer::LIDAR_Handler, this, _1));
+					std::bind(&Capture::LIDAR_Handler, this, _1));
 			std::cout << "- Registering LIDAR device." << std::endl;
 		}
 	}
@@ -426,56 +426,37 @@ int main(int argc, char* argv[]) {
 
 	GetPot cl_args(argc, argv);
 	std::string cam_uri = "freenect2:[rgb=1,ir=0,depth=1]//";
-	std::string output_folder = cl_args.follow("", "-o");
+	std::string outputFile = cl_args.follow("", "-o");
 
 	//----------------------------------------------------------------------------
 	// Check output directory exists
 	//----------------------------------------------------------------------------
 
 	// If no output folder was provided write to current folder
-	if (output_folder.empty())
-		output_folder = "./";
+	if (outputFile.empty())
+		outputFile = "./capture.log";
 
-	// Check that output folder exists
-	output_folder = utl::addTrailingSlash(output_folder);
-	if (!utl::isDirectory(output_folder)) {
-		std::cout << "Output folder does not exists or is not a directory. ("
-				<< output_folder << ")" << std::endl;
-		return -1;
-	}
-
-	std::cout << "Writing captured frames to " << output_folder << std::endl;
-	std::string output_file = utl::fullfile(output_folder, "tmp.log");
-
+	std::cout << "Writing captured frames to " << outputFile << std::endl;
 	//----------------------------------------------------------------------------
 	// Setup viewer
 	//----------------------------------------------------------------------------
 
-	SensorViewer viewer;
-	//SensorViewer viewer1;
-
-	//viewer1.set_camera(cam_uri);
-	//viewer1.SetupGUI();
-	//viewer1.set_output_log_file(output_file);
+	Capture viewer;
 
 	viewer.set_camera(cam_uri);
-	viewer.SetupGUI();
-	viewer.set_output_log_file(output_file);
+	viewer.setupGUI();
+	viewer.set_output_log_file(outputFile);
 
 	//----------------------------------------------------------------------------
 	// Run
 	//----------------------------------------------------------------------------
 
-	viewer.Run();
+	viewer.run();
 	//viewer1.Run();
 
-	//----------------------------------------------------------------------------
-	// Convert logged data to images
-	//----------------------------------------------------------------------------
-
 	//First check if anything was captured
-	if (!utl::isFile(output_file)) {
-		std::cout << "Nothing was captured." << std::endl;
+	if (!utl::isFile(outputFile)) {
+		std::cout << "Nothing was captured. Did you forget to hit the 'Capture' button?" << std::endl;
 		return 0;
 	}
 
