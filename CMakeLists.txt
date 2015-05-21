@@ -17,10 +17,11 @@ cmake_minimum_required(VERSION 2.8.11)
 	
 #----------------------------PROJECT NAME--------------------------------------#
 project(reco)
+set(global_project_name "${PROJECT_NAME}")
 string(TOUPPER "${PROJECT_NAME}" PROJECT_NAME_UPPER)
 
 #----------------------------CMAKE & GLOBAL PROPERTIES-------------------------#
-set(CMAKE_MODULE_PATH "${CMAKE_MODULE_PATH};${CMAKE_CURRENT_SOURCE_DIR}/cmake")
+list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
 if(CMAKE_MAJOR_VERSION GREATER 2 AND CMAKE_MINOR_VERSION GREATER 0)
@@ -102,7 +103,13 @@ set(NON_COMPILE_SOURCES
 #add non-compile target
 add_custom_target(${PROJECT_NAME}_noncompile SOURCES ${NON_COMPILE_SOURCES})
 
+#-------------------------INCLUDE UTILITIES------------------------------------#
+include("RecoUtilities")
+#-------------------------FIND DEPENDENCIES------------------------------------#
+include("FindDependencies")
+
+
 #-------------------------INCLUDE SUBDIRECTORIES-------------------------------#
-add_subdirectory ("src/applications")
-add_subdirectory ("src/modules")
+#add_subdirectory ("applications")
+add_subdirectory ("modules")
 #------------------------------------------------------------------------------#

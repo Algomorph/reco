@@ -28,26 +28,21 @@ find_package(Boost REQUIRED COMPONENTS regex system filesystem)
 
 find_package(SceneGraph 0.1 REQUIRED)
 include_directories(${SceneGraph_INCLUDE_DIRS})
-#link_libraries(${SceneGraph_LIBRARIES})
 
 find_package(Pangolin 0.1 REQUIRED)
 include_directories(${Pangolin_INCLUDE_DIRS})
-#link_libraries(${Pangolin_LIBRARIES})
 
 find_package(HAL 0.1 REQUIRED)
 include_directories( ${HAL_INCLUDE_DIRS} )
-#link_libraries(${HAL_LIBRARIES})
 
 find_package(Protobuf REQUIRED)
 include_directories(${PROTOBUF_INCLUDE_DIR})
 
 find_package(Calibu 0.1 REQUIRED)
 include_directories(${Calibu_INCLUDE_DIRS})
-#link_libraries(${Calibu_LIBRARIES})
 
 find_package(Kangaroo 0.1 REQUIRED)
 include_directories(${Kangaroo_INCLUDE_DIRS})
-#link_libraries(${Kangaroo_LIBRARIES})
 
 find_package(Boost COMPONENTS system filesystem regex)
 
