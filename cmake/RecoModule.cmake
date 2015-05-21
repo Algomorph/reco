@@ -230,8 +230,7 @@ macro(reco_add_subproject _name)
        
     #exclude from build if necessary
     if(NOT BUILD_${_name})
-        message(STATUS "Excuding from build: ${_name}")
-        set_target_properties(${module_name} PROPERTIES EXCLUDE_FROM_ALL TRUE EXCLUDE_FROM_DEFAULT_BUILD TRUE)
+        set_target_properties(${subproject_name} PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
         set (HAVE_${_name} FALSE PARENT_SCOPE)
     else()
         set (HAVE_${_name} TRUE PARENT_SCOPE)

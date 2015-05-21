@@ -8,9 +8,7 @@ reco_find_dependency(Pangolin QUIET)
 reco_find_dependency(HAL QUIET)
 reco_find_dependency(Protobuf QUIET)
 reco_find_dependency(Calibu QUIET)
-
 reco_find_dependency(Kangaroo QUIET)
-
 reco_find_dependency(LibDL QUIET)
 
 
