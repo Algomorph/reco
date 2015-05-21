@@ -1,30 +1,96 @@
+#add dependency include dirs to subproject
+macro(reco_add_includes_to_subproject subproject_name)
+    set(_depends ${ARGN})
+    #dependency includes
+    foreach(depend ${_depends})
+        if(DEFINED ${depend}_INCLUDE_DIRS)
+            #by default, assume the includes are also required by projects that use this module
+            #hence PUBLIC
+            #TODO: add functionality to specify whether includes are PUBLIC/PRIVATE for each depend
+            target_include_directories(${subproject_name} PUBLIC ${${depend}_INCLUDE_DIRS})
+        endif()
+    endforeach()
+endmacro()
+
+#link dependency libraries to subproject
+macro(reco_link_libraries_to_subproject subproject_name verbose)
+    set(_depends ${ARGN})
+    #dependency libraries
+    foreach(depend ${_depends})
+        if(DEFINED ${depend}_LIBRARIES)
+            #by default, assume the libraries are also required by projects that use this module
+            #hence PUBLIC (may brake in case of static libs?)
+            #TODO: add functionality to specify whether libraries are PUBLIC/PRIVATE for each depend
+            target_link_libraries(${subproject_name} PUBLIC ${${depend}_LIBRARIES})
+        endif()
+    endforeach()
+    if(${verbose})
+        get_target_property(${subproject_name}_libs ${subproject_name} LINK_INTERFACE_LIBRARIES)
+        message(STATUS "Libraries linked to subproject '${subproject_name}': ${${subproject_name}_libs}")
+    endif() 
+endmacro()
+
+#add dependency preprocessor definitions to subproject
+macro(reco_add_depends_to_subproject subproject_name)
+    get_target_property(${subproject_name}_definitions ${subproject_name} COMPILE_DEFINITIONS)
+    if(NOT "${${subproject_name}_definitions}")
+        #clear out the "...-NOTFOUND" value
+        set(${subproject_name}_definitions)
+    endif()
+    foreach(depend ${_depends})
+        if(DEFINED ${depend}_DEFINITIONS)
+            string(REPLACE "-D" "" filtered_defs ${${depend}_DEFINITIONS})
+            list(APPEND ${subproject_name}_definitions filtered_defs)
+        endif()
+    endforeach()
+    set_target_properties(${subproject_name} PROPERTIES COMPILE_DEFINITIONS "${${subproject_name}_definitions}")
+endmacro()
+
+#report failure on repeatedly setting a parameter that can only be set once
+#TODO: generify, adding a parameter_name parameter and using that instead of "module type"
+macro(reco_check_repeated_subproject_type  _subproject_type _arg)
+    if(_subproject_type)
+        message(FATAL_ERROR "Trying to set module type repeatedly. Already have: '${_subproject_type}'. Now parsed: '${arg}'.")
+    endif()
+endmacro()
+
 ####################################################################################################
 #  CMake macro that abstracts away adding modules(library subprojects) and applications(executable 
 #  subprojects) in CMake, i.e. turns that into a one-liner.
 #
 #  Syntax: 
-#  reco_add_subproject(<subproject_name> [QT] 
+#  reco_add_subproject(<subproject_name>  
+#    MODULE [QT] | APPLICATION [QT] | LIGHTWEIGHT_APPLICATION
 #    [[DEPENDENCIES] [names of packages or modules that this subproject depends on...]]
-#    [MODULE | APPLICATION] [TEST])
-#
+#    [[SOURCES] [project sources...]]
+#    [TEST])
 #
 #  If the QT flag is passed in, this will let the script know that the module uses the qmake moc 
 #  compiler (qt resource files, ui files, and custom widgets are supported).
 #  If the TEST flag (currently unsupported) is passed in, the macro will generate an additional test 
 #  target using GTest.
+#  For the MODULE and APPLICATION types, the SOURCES are optional, and are used to specify additional
+#  sources which are not int <current dir>/src directory. For the LIGHTWEIGHT_APPLICATION type, they
+#  are mandatory, as it will not look for any files within an "src" folder.
+#
 ####################################################################################################
-
-macro(${global_project_name}_add_subproject _name)
+macro(reco_add_subproject _name)
     set(subproject_name ${global_project_name}_${_name})
     
     project(${subproject_name})
     
     set(module_type "MODULE")
     set(app_type "APPLICATION")
+    set(lightweight_app_type "LIGHTWEIGHT_APPLICATION")
+    set(subproject_types ${module_type} ${app_type} ${lightweight_app_type})
     
 #----------PARSE ARGUMENTS-------------------------------------------------------------------------#
-    set(keywords DEPENDENCIES QT ${module_type} ${app_type})
+    set(keywords DEPENDENCIES QT SOURCES)
+    list(APPEND keywords ${subproject_types})
+    
     set(append_depends 0)
+    set(append_sources 0)
+    set(_sources)
     set(_depends)
     set(_qt 0)
     set(_subproject_type 0)
@@ -34,36 +100,40 @@ macro(${global_project_name}_add_subproject _name)
         list(FIND keywords ${arg} index)
         if(index EQUAL -1)
             if(append_depends)
-                list(FIND keywords ${arg} index)
-                if(index EQUAL -1)
-                    list(APPEND _depends ${arg})
-                else()
-                    set(append_depends 0)
-                endif()
+                list(APPEND _depends ${arg})
+            elseif(append_sources)
+                list(APPEND _sources ${arg})
             endif()
         else()
+            set(append_depends 0)
+            set(append_sources 0)
             #check which keyword
             if("${arg}" STREQUAL "DEPENDENCIES")
                 set(append_depends 1)
+            elseif("${arg}" STREQUAL "SOURCES")
+                set(append_sources 1)
             elseif("${arg}" STREQUAL "QT")
                 set(_qt 1)
             elseif("${arg}" STREQUAL "${module_type}")
-                if(_subproject_type)
-                    message(FATAL_ERROR "Trying to set module type repeatedly. Already have: '${_subproject type}'. Now parsed: '${arg}'.")
-                endif()
+                reco_check_repeated_subproject_type(${_subproject_type} ${arg})
                 set(_subproject_type ${module_type})
             elseif("${arg}" STREQUAL "${app_type}")
-                if(_subproject_type)
-                    message(FATAL_ERROR "Trying to set module type repeatedly. Already have: '${_subproject type}'. Now parsed: '${arg}'.")
-                endif()
+                reco_check_repeated_subproject_type(${_subproject_type} ${arg})
                 set(_subproject_type ${app_type})
+            elseif("${arg}" STREQUAL "${lightweight_app_type}")
+                reco_check_repeated_subproject_type(${_subproject_type} ${arg})
+                set(_subproject_type ${lightweight_app_type})
             endif()
         endif()
     endforeach()
     
-    
+    #consistency/argument checks
     if(NOT _subproject_type)
-        message(FATAL_ERROR "Type of module not set. Expecting either '${module_type}' or '${app_type}' as argument.")
+        message(FATAL_ERROR "Type of module not set. Expecting one of [${subproject_types}] as argument.")
+    endif()
+    
+    if(${_subproject_type} STREQUAL "${lightweight_app_type}" AND _qt)
+        message(FATAL_ERROR "LIGHTWEIGHT_APPLICATION and QT arguments to the reco_add_subproject are incompatible.")
     endif()
     
 #----------CHECK DEPENDENCIES----------------------------------------------------------------------#
@@ -78,6 +148,9 @@ macro(${global_project_name}_add_subproject _name)
     
     if(NOT DEFINED BUILD_${_name})
         SET(BUILD_${_name} ${_have_depends} CACHE BOOL "Build the '${_name}' module.")
+        if(NOT ${_have_depends})
+            message(WARNING "Cannot build module '${_name}', the following dependencies are not met: ${_unmet_depends}")
+        endif()
     else()
         if(BUILD_${_name} AND NOT ${_have_depends})
             message(FATAL_ERROR "Cannot build module '${_name}', the following dependencies are not met: ${_unmet_depends}")
@@ -93,13 +166,20 @@ macro(${global_project_name}_add_subproject _name)
     
     file(GLOB ${subproject_name}_CMakeLists ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt)
     
-    file(GLOB ${subproject_name}_sources src/*.cpp)
-    file(GLOB ${subproject_name}_headers src/*.h src/*.h.in src/*.hpp src/*.tpp
-        ${${subproject_name}_top_include_dir}/*.h 
-        ${${subproject_name}_top_include_dir}/*.h.in 
-        ${${subproject_name}_top_include_dir}/*.hpp 
-        ${${subproject_name}_top_include_dir}/*.tpp)
-    file(GLOB ${subproject_name}_test_sources  tests/*.cpp)
+    set(${subproject_name}_sources)
+    if(NOT ${_subproject_type} STREQUAL "${lightweight_app_type}")
+        #search for all sources in the current source dir
+        file(GLOB ${subproject_name}_sources src/*.cpp)
+        file(GLOB ${subproject_name}_headers src/*.h src/*.h.in src/*.hpp src/*.tpp
+            ${${subproject_name}_top_include_dir}/*.h 
+            ${${subproject_name}_top_include_dir}/*.h.in 
+            ${${subproject_name}_top_include_dir}/*.hpp 
+            ${${subproject_name}_top_include_dir}/*.tpp)
+        file(GLOB ${subproject_name}_test_sources  tests/*.cpp)
+    endif()
+    
+    #append sources specified in the arguments
+    list(APPEND ${subproject_name}_sources ${_sources})
     
     if(_qt)
         file(GLOB_RECURSE moc_${subproject_name}_sources moc_*.cpp *_automoc.cpp qrc_*.cpp)
@@ -142,15 +222,16 @@ macro(${global_project_name}_add_subproject _name)
     	${${subproject_name}_generated_headers}
     )
 #---------------------------ADD TARGET-------------------------------------------------------------#
-    if(${_subproject_type} STREQUAL "${app_type}")
+    if(${_subproject_type} STREQUAL "${app_type}" OR ${_subproject_type} STREQUAL "${lightweight_app_type}")
         add_executable(${subproject_name} ${all_${subproject_name}_files})
     elseif(${_subproject_type} STREQUAL "${module_type}")
         add_library(${subproject_name} SHARED ${all_${subproject_name}_files})
     endif()
-    
+       
     #exclude from build if necessary
     if(NOT BUILD_${_name})
-        set_target_properties(${module_name} PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
+        message(STATUS "Excuding from build: ${_name}")
+        set_target_properties(${module_name} PROPERTIES EXCLUDE_FROM_ALL TRUE EXCLUDE_FROM_DEFAULT_BUILD TRUE)
         set (HAVE_${_name} FALSE PARENT_SCOPE)
     else()
         set (HAVE_${_name} TRUE PARENT_SCOPE)
@@ -160,41 +241,12 @@ macro(${global_project_name}_add_subproject _name)
     #local or project-specific includes
     target_include_directories(${subproject_name} PUBLIC include)
     
-    #dependency includes
-    foreach(depend ${_depends})
-        if(DEFINED ${depend}_INCLUDE_DIRS)
-            #by default, assume the includes are also required by projects that use this module
-            #hence PUBLIC
-            #TODO: add functionality to specify whether includes are PUBLIC/PRIVATE for each depend
-            target_include_directories(${subproject_name} PUBLIC ${${depend}_INCLUDE_DIRS})
-        endif()
-    endforeach()
-    
-    get_target_property(${subproject_name}_includes ${subproject_name} INTERFACE_INCLUDE_DIRECTORIES)
-    message(STATUS "Includes: ${${subproject_name}_includes}")
-        
+    reco_add_includes_to_subproject(${subproject_name} ${_depends})
 #---------------------------LINK LIBRARIES --------------------------------------------------------#
 
-    foreach(depend ${_depends})
-        if(DEFINED ${depend}_LIBRARIES)
-            #by default, assume the libraries are also required by projects that use this module
-            #hence PUBLIC (may brake in case of static libs?)
-            #TODO: add functionality to specify whether libraries are PUBLIC/PRIVATE for each depend
-            target_link_libraries(${subproject_name} PUBLIC ${${depend}_LIBRARIES})
-        endif()
-    endforeach()
+    reco_link_libraries_to_subproject(${subproject_name} FALSE ${_depends})
     
 #---------------------------ADD PREPROCESSOR DEFINES-----------------------------------------------#
 #TODO: add support for user-specified defines
-    get_target_property(${subproject_name}_definitions ${subproject_name} COMPILE_DEFINITIONS)
-    if(NOT "${${subproject_name}_definitions}")
-        #clear out the "...-NOTFOUND" value
-        set(${subproject_name}_definitions)
-    endif()
-    foreach(depend ${_depends})
-        if(DEFINED ${depend}_DEFINITIONS)
-            list(APPEND ${subproject_name}_definitions ${${depend}_DEFINITIONS})
-        endif()
-    endforeach()
-    set_target_properties(${subproject_name} PROPERTIES COMPILE_DEFINITIONS "${${subproject_name}_definitions}")
+    reco_add_depends_to_subproject(${subproject_name} ${_depends})
 endmacro()

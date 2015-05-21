@@ -2,9 +2,9 @@
 #include <iostream>
 
 // Alex's includes
-#include <cpp_utilities.hpp>
-#include <cv_depth_tools.hpp>
-#include <pcl_cv_conversions.hpp>
+#include <reco/alex/cpp_utilities.hpp>
+#include <reco/alex/cv_depth_tools.hpp>
+#include <reco/alex/pcl_cv_conversions.hpp>
 
 // OpenCV includes
 #include <opencv2/highgui/highgui.hpp>

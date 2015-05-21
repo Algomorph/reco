@@ -7,8 +7,8 @@
  */
 
 // Alex's includes
-#include <cpp_utilities.hpp>
-#include <cv_depth_tools.hpp>
+#include <reco/alex/cpp_utilities.hpp>
+#include <reco/alex/cv_depth_tools.hpp>
 
 // HAL
 #include <HAL/Messages/ImageArray.h>

@@ -76,12 +76,14 @@ macro(reco_find_dependency _name)
         endif()
     endforeach()
     
+    
     find_package(${_name} ${_required} ${_quiet} COMPONENTS ${_components})
     
     string(TOUPPER ${_name} _name_upper)
 
     if(${_name}_FOUND OR ${_name_upper}_FOUND)
-        set(HAVE_${_name} 1)
+
+        set(HAVE_${_name} TRUE)
         #standardise libraries, includes, defines variable names
         if(${_libraries})
             set(${_name}_LIBRARIES  ${${_libraries}})
@@ -93,7 +95,7 @@ macro(reco_find_dependency _name)
             set(${_name}_DEFINITIONS  ${${_defines}})
         endif()
     else()
-        set(HAVE_${_name} 0)
+        set(HAVE_${_name} FALSE)
     endif()
 
 endmacro()

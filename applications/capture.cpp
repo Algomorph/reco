@@ -23,8 +23,8 @@
 
 #include <opencv2/imgproc/imgproc.hpp>
 
-#include <cpp_utilities.hpp>
-#include <cv_depth_tools.hpp>
+#include <reco/alex/cpp_utilities.hpp>
+#include <reco/alex/cv_depth_tools.hpp>
 
 pangolin::DataLog g_PlotLogAccel;
 pangolin::DataLog g_PlotLogGyro;

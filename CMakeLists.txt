@@ -110,6 +110,6 @@ include("FindDependencies")
 
 
 #-------------------------INCLUDE SUBDIRECTORIES-------------------------------#
-#add_subdirectory ("applications")
+add_subdirectory ("applications")
 add_subdirectory ("modules")
 #------------------------------------------------------------------------------#
