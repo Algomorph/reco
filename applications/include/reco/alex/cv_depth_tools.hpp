@@ -117,13 +117,10 @@ namespace utl
     int yRes = depth_cleaned.rows;
     
     // Filter depth
-    for (int x = 0; x < xRes; x++)
-    {
-      for (int y = 0; y < yRes; y++)
-      {
+    for (int x = 0; x < xRes; x++){
+      for (int y = 0; y < yRes; y++){
         // Get center pixel value
         float centerDepth = static_cast<float> (depth.at<ushort>(y,x));
-        float maxDiff = 0.0;        
         
         // Get neighbour coordinates
         std::vector<std::pair<int,int> > neighbours(8);
@@ -137,20 +134,17 @@ namespace utl
         neighbours[7] = std::pair<int,int> (y+1,  x+1);
 
         // Get maximum difference between center and neighbours
-        for (size_t nbrId = 0; nbrId < neighbours.size(); nbrId++)
-        {
+        for (size_t nbrId = 0; nbrId < neighbours.size(); nbrId++){
           int nbrY = neighbours[nbrId].first;
           int nbrX = neighbours[nbrId].second;
           
-          if (nbrY < 0 || nbrY > yRes-1 || nbrX < 0 || nbrX > xRes-1)
-          {
+          if (nbrY < 0 || nbrY > yRes-1 || nbrX < 0 || nbrX > xRes-1){
             depth_cleaned.at<ushort> (y,x) = 0;
             continue;
           }
           
           float nbrDepth = static_cast<float> (depth.at<ushort>(nbrY,nbrX));
-          if (std::abs(nbrDepth - centerDepth) > depth_diff_thresh)
-          {
+          if (std::abs(nbrDepth - centerDepth) > depth_diff_thresh){
             depth_cleaned.at<ushort> (y,x) = 0;
             continue;
           }

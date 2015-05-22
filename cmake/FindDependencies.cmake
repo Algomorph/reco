@@ -11,6 +11,8 @@ reco_find_dependency(Calibu QUIET)
 reco_find_dependency(Kangaroo QUIET)
 reco_find_dependency(LibDL QUIET)
 
+#find python, numpy
+include("DetectPython")
 
 #temp fix for OpenKinect/libfreenect2 issue #217
 set(freenect2_INCLUDE_DIRS ${freenect2_INCLUDE_DIR} ${freenect2_INCLUDE_DIR}/libfreenect2/tinythread)

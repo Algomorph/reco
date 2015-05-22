@@ -20,7 +20,6 @@
 #include <HAL/Utils/GetPot>
 #include <HAL/Utils/TicToc.h>
 
-
 #include <opencv2/imgproc/imgproc.hpp>
 
 #include <reco/alex/cpp_utilities.hpp>
@@ -39,11 +38,22 @@ using std::placeholders::_1;
 class Capture {
 public:
 	Capture() :
-			num_channels_(0), base_width_(0), base_height_(0), has_camera_(
-			false), has_imu_(false), has_posys_(false), has_encoder_(
-			false), has_lidar_(false), is_running_(true), is_stepping_(
-			false), frame_number_(0), panel_width_(0), logger_(
-					hal::Logger::GetInstance()), logging_delay_(5.0) {
+			num_channels_(0),
+			base_width_(0),
+			base_height_(0),
+			has_camera_(false),
+			has_imu_(false),
+			has_posys_(false),
+			has_encoder_(false),
+			has_lidar_(false),
+			is_running_(true),
+			is_stepping_(false),
+			frame_number_(0),
+			panel_width_(0),
+			delayed_logging_enabled_(false),
+			logging_delay_(5.0),
+			delayed_logging_start_(0.0),
+			logger_(hal::Logger::GetInstance())  {
 	}
 
 	void startPaused(void) {
@@ -406,14 +416,14 @@ private:
 	std::unique_ptr<pangolin::Var<int> > fps_;
 	std::unique_ptr<pangolin::Var<bool> > limit_fps_;
 	std::unique_ptr<pangolin::Var<bool> > logging_enabled_;
-	std::unique_ptr<pangolin::Plotter> accel_plot_, gyro_plot_, mag_plot_;bool delayed_logging_enabled_;
+	std::unique_ptr<pangolin::Plotter> accel_plot_, gyro_plot_, mag_plot_;
+	bool delayed_logging_enabled_;
 	double logging_delay_;
 	std::string output_file_;
 	double delayed_logging_start_;
 
 	hal::Logger& logger_;
 };
-
 
 //------------------------------------------------------------------------------
 // Main
@@ -456,7 +466,8 @@ int main(int argc, char* argv[]) {
 
 	//First check if anything was captured
 	if (!utl::isFile(outputFile)) {
-		std::cout << "Nothing was captured. Did you forget to hit the 'Capture' button?" << std::endl;
+		std::cout << "Nothing was captured. Did you forget to hit the 'Capture' button?"
+				<< std::endl;
 		return 0;
 	}
 

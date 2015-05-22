@@ -78,20 +78,31 @@ macro(reco_add_subproject _name)
     set(subproject_name ${global_project_name}_${_name})
     
     project(${subproject_name})
-    
+
+#----------------------------------PARSE ARGUMENTS-------------------------------------------------#
+
+    #subproject types    
     set(module_type "MODULE")
     set(app_type "APPLICATION")
     set(lightweight_app_type "LIGHTWEIGHT_APPLICATION")
+    
     set(subproject_types ${module_type} ${app_type} ${lightweight_app_type})
     
-#----------PARSE ARGUMENTS-------------------------------------------------------------------------#
-    set(keywords DEPENDENCIES QT SOURCES)
+    #other keywords
+    set(depends_keyword "DEPENDENCIES")
+    set(qt_keyword "QT")
+    set(sources_keyword "SOURCES")
+    set(reqs_keyword "REQUIREMENTS")
+
+    set(keywords ${depends_keyword} ${qt_keyword} ${sources_keyword} ${reqs_keyword})
     list(APPEND keywords ${subproject_types})
     
     set(append_depends 0)
     set(append_sources 0)
+    set(append_reqs 0)
     set(_sources)
     set(_depends)
+    set(_reqs)
     set(_qt 0)
     set(_subproject_type 0)
 
@@ -99,20 +110,26 @@ macro(reco_add_subproject _name)
         #check if it's a keyword
         list(FIND keywords ${arg} index)
         if(index EQUAL -1)
+            #append to lists
             if(append_depends)
                 list(APPEND _depends ${arg})
             elseif(append_sources)
                 list(APPEND _sources ${arg})
+            elseif(append_reqs)
+                list(APPEND _reqs ${arg})
             endif()
         else()
             set(append_depends 0)
             set(append_sources 0)
+            set(append_reqs 0)
             #check which keyword
-            if("${arg}" STREQUAL "DEPENDENCIES")
+            if("${arg}" STREQUAL "${depends_keyword}")
                 set(append_depends 1)
-            elseif("${arg}" STREQUAL "SOURCES")
+            elseif("${arg}" STREQUAL "${sources_keyword}")
                 set(append_sources 1)
-            elseif("${arg}" STREQUAL "QT")
+            elseif("${arg}" STREQUAL "${reqs_keyword}")
+                set(append_reqs 1)
+            elseif("${arg}" STREQUAL "${qt_keyword}")
                 set(_qt 1)
             elseif("${arg}" STREQUAL "${module_type}")
                 reco_check_repeated_subproject_type(${_subproject_type} ${arg})
@@ -136,7 +153,9 @@ macro(reco_add_subproject _name)
         message(FATAL_ERROR "LIGHTWEIGHT_APPLICATION and QT arguments to the reco_add_subproject are incompatible.")
     endif()
     
-#----------CHECK DEPENDENCIES----------------------------------------------------------------------#
+#-----------------------------CHECK DEPENDENCIES AND REQUIREMENTS----------------------------------#
+
+ #depends
     set(_have_depends TRUE)
     set(_unmet_depends)
     foreach(dep ${_depends})
@@ -145,18 +164,41 @@ macro(reco_add_subproject _name)
             list(APPEND _unmet_depends ${dep})
         endif()
     endforeach()
+ #reqs
+    set(_reqs_satisfied TRUE)
+    set(_unmet_reqs)
+    foreach(req ${_reqs})
+        if(NOT ${${req}})
+            set(_reqs_satisfied FALSE)
+            list(APPEND _unmet_reqs ${req})
+        endif()
+    endforeach()
+    
+    if(${_reqs_satisfied} AND ${_have_depends})
+        set(_can_build TRUE)
+    else()
+        set(_can_build FALSE)
+    endif()
     
     if(NOT DEFINED BUILD_${_name})
-        SET(BUILD_${_name} ${_have_depends} CACHE BOOL "Build the '${_name}' module.")
+        SET(BUILD_${_name} ${_can_build} CACHE BOOL "Build the '${_name}' module.")
         if(NOT ${_have_depends})
             message(WARNING "Cannot build module '${_name}', the following dependencies are not met: ${_unmet_depends}")
         endif()
+        if(NOT ${_reqs_satisfied})
+            message(WARNING "Cannot build module '${_name}', the following requirements are not met: ${_unmet_reqs}")
+        endif()
     else()
-        if(BUILD_${_name} AND NOT ${_have_depends})
-            message(FATAL_ERROR "Cannot build module '${_name}', the following dependencies are not met: ${_unmet_depends}")
+        if(BUILD_${_name})
+            if(NOT ${_have_depends})
+                message(FATAL_ERROR "Cannot build module '${_name}', the following dependencies are not met: ${_unmet_depends}")
+            endif()
+            if(NOT ${_reqs_satisfied})
+                message(FATAL_ERROR "Cannot build module '${_name}', the following requirements are not met: ${_unmet_reqs}")
+            endif()
         endif()
     endif()
-    
+#--------------------------- AUTOMOC FOR QT -------------------------------------------------------#    
     if(_qt)
         set(CMAKE_AUTOMOC ON)
     endif()
