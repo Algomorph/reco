@@ -77,7 +77,7 @@ endmacro()
 macro(reco_add_subproject _name)
     set(subproject_name ${global_project_name}_${_name})
     
-    project(${subproject_name})
+
 
 #----------------------------------PARSE ARGUMENTS-------------------------------------------------#
 
@@ -149,10 +149,13 @@ macro(reco_add_subproject _name)
         message(FATAL_ERROR "Type of module not set. Expecting one of [${subproject_types}] as argument.")
     endif()
     
-    if(${_subproject_type} STREQUAL "${lightweight_app_type}" AND _qt)
+    if(${_subproject_type} STREQUAL ${lightweight_app_type} AND _qt)
         message(FATAL_ERROR "LIGHTWEIGHT_APPLICATION and QT arguments to the reco_add_subproject are incompatible.")
     endif()
-    
+#---------------------------- PROJECT NAME --------------------------------------------------------#
+    if(NOT ${_subproject_type} STREQUAL ${lightweight_app_type})
+        project(${subproject_name})
+    endif()    
 #-----------------------------CHECK DEPENDENCIES AND REQUIREMENTS----------------------------------#
 
  #depends
