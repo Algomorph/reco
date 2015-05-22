@@ -5,8 +5,9 @@
  *      Author: Gregory Kramida
  *   Copyright: 2015 Gregory Kramida
  */
+#define NO_IMPORT_ARRAY
+#define PY_ARRAY_UNIQUE_SYMBOL reco_ARRAY_API
 #include <reco/python/CVBoostConverter.hpp>
-
 #if CV_VERSION_EPOCH == 2
 namespace reco {
 namespace python {
@@ -131,21 +132,20 @@ NumpyAllocator g_numpyAllocator;
 //===================   STANDALONE CONVERTER FUNCTIONS     =========================================
 
 PyObject* fromMatToNDArray(const Mat& m) {
-	if (!m.data)
-		Py_RETURN_NONE;
-		Mat temp,
-	*p = (Mat*) &m;
-	if (!p->refcount || p->allocator != &g_numpyAllocator) {
-		temp.allocator = &g_numpyAllocator;
-		ERRWRAP2(m.copyTo(temp));
-		p = &temp;
-	}
-	PyObject* o = (PyObject*) p->data;
-	Py_INCREF(o);
-	return o;
+    if( !m.data )
+        Py_RETURN_NONE;
+    Mat temp, *p = (Mat*)&m;
+    if(!p->refcount || p->allocator != &g_numpyAllocator)
+    {
+        temp.allocator = &g_numpyAllocator;
+        ERRWRAP2(m.copyTo(temp));
+        p = &temp;
+    }
+    p->addref();
+    return pyObjectFromRefcount(p->refcount);
 }
 
-Mat fromNDArrayToMat(PyObject* o) {
+Mat fromNDArrayToMat(const PyObject* o) {
 	cv::Mat m;
 	if (!PyArray_Check(o)) {
 		failmsg("argument is not a numpy array");
@@ -188,7 +188,6 @@ Mat fromNDArrayToMat(PyObject* o) {
 				m.allocator = &g_numpyAllocator;
 			return m;
 		}
-
 		int size[CV_MAX_DIM + 1];
 		size_t step[CV_MAX_DIM + 1];
 		size_t elemsize = CV_ELEM_SIZE1(type);
@@ -208,7 +207,6 @@ Mat fromNDArrayToMat(PyObject* o) {
 
 		if (ismultichannel && _strides[1] != (npy_intp) elemsize * _sizes[2])
 			needcopy = true;
-
 		if (needcopy) {
 
 			if (needcast) {
@@ -233,7 +231,6 @@ Mat fromNDArrayToMat(PyObject* o) {
 			step[ndims] = elemsize;
 			ndims++;
 		}
-
 		if (ismultichannel) {
 			ndims--;
 			type |= CV_MAKETYPE(0, size[2]);
@@ -256,19 +253,18 @@ Mat fromNDArrayToMat(PyObject* o) {
 //===================   BOOST CONVERTERS     =======================================================
 
 PyObject* matToNDArrayBoostConverter::convert(Mat const& m) {
-	if (!m.data)
-		Py_RETURN_NONE;
-	Mat *p = (Mat*) &m;
-	Mat temp;
-	if (!p->refcount || p->allocator != &g_numpyAllocator) {
-		temp.allocator = &g_numpyAllocator;
-		ERRWRAP2(m.copyTo(temp));
-		p = &temp;
-	}
-	PyObject* o = (PyObject*) p->data;
-	return boost::python::incref(o);
+    if( !m.data )
+        Py_RETURN_NONE;
+    Mat temp, *p = (Mat*)&m;
+    if(!p->refcount || p->allocator != &g_numpyAllocator)
+    {
+        temp.allocator = &g_numpyAllocator;
+        ERRWRAP2(m.copyTo(temp));
+        p = &temp;
+    }
+    p->addref();
+    return pyObjectFromRefcount(p->refcount);
 }
-;
 
 matFromNDArrayBoostConverter::matFromNDArrayBoostConverter() {
 	boost::python::converter::registry::push_back(matFromNDArrayBoostConverter::convertible,
@@ -278,6 +274,7 @@ matFromNDArrayBoostConverter::matFromNDArrayBoostConverter() {
 
 /// @brief Check if PyObject is an array and can be converted to OpenCV matrix.
 void* matFromNDArrayBoostConverter::convertible(PyObject* object) {
+
 	if (!PyArray_Check(object)) {
 		return NULL;
 	}
@@ -299,12 +296,14 @@ void* matFromNDArrayBoostConverter::convertible(PyObject* object) {
 	if (ndims >= CV_MAX_DIM) {
 		return NULL; //too many dimensions
 	}
+
 	return object;
 }
 
 /// @brief Construct a Mat from an NDArray object.
 void matFromNDArrayBoostConverter::construct(PyObject* object,
 		boost::python::converter::rvalue_from_python_stage1_data* data) {
+
 	namespace python = boost::python;
 	// Object is a borrowed reference, so create a handle indicting it is
 	// borrowed for proper reference counting.
@@ -394,16 +393,16 @@ void matFromNDArrayBoostConverter::construct(PyObject* object,
 	if (!needcopy) {
 		Py_INCREF(object);
 	}
+
 	cv::Mat* m = new (storage) cv::Mat(ndims, size, type, PyArray_DATA(oarr), step);
-	if (m->data)
-	{
+	if (m->data){
 		m->refcount = refcountFromPyObject(object);
-		if (!needcopy)
-		{
+		if (!needcopy){
 			m->addref(); // protect the original numpy array from deallocation
 						 // (since Mat destructor will decrement the reference counter)
 		}
 	};
+
 	m->allocator = &g_numpyAllocator;
 	data->convertible = storage;
 }
