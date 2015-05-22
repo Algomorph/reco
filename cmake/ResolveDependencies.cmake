@@ -13,6 +13,7 @@ reco_find_dependency(LibDL QUIET)
 
 #find python, numpy
 include("DetectPython")
+include("DetectQt")
 
 #temp fix for OpenKinect/libfreenect2 issue #217
 set(freenect2_INCLUDE_DIRS ${freenect2_INCLUDE_DIR} ${freenect2_INCLUDE_DIR}/libfreenect2/tinythread)

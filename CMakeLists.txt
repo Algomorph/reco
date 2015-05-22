@@ -106,7 +106,7 @@ add_custom_target(${PROJECT_NAME}_noncompile SOURCES ${NON_COMPILE_SOURCES})
 #-------------------------INCLUDE UTILITIES------------------------------------#
 include("RecoUtilities")
 #-------------------------FIND DEPENDENCIES------------------------------------#
-include("FindDependencies")
+include("ResolveDependencies")
 
 
 #-------------------------INCLUDE SUBDIRECTORIES-------------------------------#
