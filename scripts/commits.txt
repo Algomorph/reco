@@ -1,0 +1,11 @@
+miniglog commit: 27c1060064f0651ddecfa898633d7098a3043889
+Sophus commit: c4c82525502e6ba32179ff6d6021276b0620d7ca
+CVars commit: 3ca9ebfdc34caf2be43529d48bea8f6202e81778
+Pangolin commit: 7d93ebac6a83f652820ef5b45f2bb60c9be61ca5
+SceneGraph commit: 8f31eaaf883139c3bdfb135bcdea9316c892b01b
+calibu commit: 2e72c6ad1c395f5844a49f819fb6bebf7ea3f12a
+Node commit: 547a6dfe3b9682ac1d9ba9b9e938ba24c615e184
+HAL commit: 73ce13dc5bb56d318aa8a089d9ec3177aaedd4c2
+vicalib commit: 6b2c68aae652d8d83a9a6d9da4104dfcabfd7b28
+Kangaroo commit: a859c236fddc5054b89ab7326b230d7dba96fa1e
+D-MoCap commit: e560ee8c8dc6ccd97d065d170d983eb481277dd9
