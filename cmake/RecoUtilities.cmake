@@ -11,3 +11,7 @@ macro(reco_check_environment_variables)
     endif()
   endforeach()
 endmacro()
+
+macro(puts _text)
+    message(STATUS ${_text})
+endmacro()

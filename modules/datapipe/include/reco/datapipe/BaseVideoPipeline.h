@@ -7,7 +7,7 @@
 #include <QObject>
 
 namespace reco {
-namespace vidgui {
+namespace datapipe {
 
 class BaseVideoPipeline: public QObject{
 	Q_OBJECT

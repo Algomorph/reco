@@ -8,6 +8,7 @@
 
 #ifndef MODULES_VIDEO_FRAMEPROCESSOR_H_
 #define MODULES_VIDEO_FRAMEPROCESSOR_H_
+
 #pragma once
 
 //OpenCV
@@ -19,7 +20,7 @@
 //#include <stdarg.h>
 
 namespace reco {
-namespace vidgui {
+namespace datapipe {
 
 /**
  * Captures and processes each subsequent frame of the video

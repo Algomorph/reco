@@ -7,14 +7,14 @@
  */
 
 //local
-#include <reco/vidgui/WebcamVideoSource.h>
+#include <reco/datapipe/WebcamVideoSource.h>
 
 //std
 #include <exception>
 
 
 namespace reco {
-namespace vidgui {
+namespace datapipe {
 WebcamVideoSource::WebcamVideoSource(unsigned int requestedWidth, unsigned int requestedHeight, int deviceNum):
 		VideoSource(),
 		requestedWidth(requestedWidth),
@@ -50,5 +50,5 @@ bool WebcamVideoSource::setResolution(unsigned int width, unsigned int height){
 	return horizChange && vertChange;
 }
 
-} /* namespace vidgui */
+} /* namespace datapipe */
 } /* namespace reco */

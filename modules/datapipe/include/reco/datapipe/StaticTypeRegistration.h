@@ -16,8 +16,8 @@
 
 Q_DECLARE_METATYPE(cv::Mat);
 
-namespace augmentarium{
-namespace video{
+namespace reco{
+namespace datapipe{
 class StaticTypeRegistration{
 	static bool registrationDone;
 public:
@@ -30,7 +30,7 @@ public:
 	};
 };
 static int staticInitializationDummy = StaticTypeRegistration::initialize();
-}
-}
+}//end namespace datapipe
+}//end namespace reco
 
 #endif /* MODULES_VIDEO_STATICTYPEREGISTRATION_H_ */

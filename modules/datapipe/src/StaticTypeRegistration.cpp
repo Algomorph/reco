@@ -7,11 +7,11 @@
  */
 
 
-#include <reco/vidgui/StaticTypeRegistration.h>
+#include <reco/datapipe/StaticTypeRegistration.h>
 
-namespace augmentarium{
-namespace video{
+namespace reco{
+namespace datapipe{
 bool StaticTypeRegistration::registrationDone = false;
-}/*namespace video*/
-}/*namespace augmentarium*/
+}/*namespace reco*/
+}/*namespace datapipe*/
 

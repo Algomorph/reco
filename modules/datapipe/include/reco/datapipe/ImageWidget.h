@@ -15,7 +15,7 @@
 #include <opencv2/core/core.hpp>
 
 namespace reco {
-namespace vidgui {
+namespace datapipe {
 class ImageWidget: public QWidget {
 	Q_OBJECT
 public:

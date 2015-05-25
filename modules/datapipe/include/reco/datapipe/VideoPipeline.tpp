@@ -6,12 +6,14 @@
  *   Copyright: (c) Gregory Kramida 2015
  */
 
+//local
 #include "VideoPipeline.h"
+
 //opencv
 #include <opencv2/core/core.hpp>
 
 namespace reco {
-namespace vidgui {
+namespace datapipe {
 
 
 template<class VS>
@@ -46,5 +48,5 @@ void VideoPipeline<VS>::requestStop() {
 	stopRequested = true;
 }
 
-} /* namespace vidgui */
+} /* namespace datapipe */
 } /* namespace  reco*/

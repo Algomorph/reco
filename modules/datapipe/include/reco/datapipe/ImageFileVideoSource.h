@@ -8,16 +8,17 @@
 
 #ifndef MODULES_VIDEO_FRAMEVIDEOSOURCE_H_
 #define MODULES_VIDEO_FRAMEVIDEOSOURCE_H_
+
 #pragma once
 
 //local
-#include <reco/vidgui/VideoSource.h>
+#include "VideoSource.h"
 
 //standard
 #include <set>
 
 namespace reco {
-namespace vidgui {
+namespace datapipe {
 
 /**
  * Retrieves video frame-by-frame from images in a folder on the hard-disk

@@ -8,13 +8,14 @@
 
 #ifndef MODULES_VIDEO_CVVIDEOWIDGET_H_
 #define MODULES_VIDEO_CVVIDEOWIDGET_H_
+
 #pragma once
 
 #include "ImageWidget.h"
 #include "VideoPipeline.h"
 
 namespace reco {
-namespace vidgui {
+namespace datapipe {
 
 class VideoWidget: public ImageWidget {
 	Q_OBJECT

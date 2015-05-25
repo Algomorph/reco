@@ -15,11 +15,13 @@ set(QT_TARGETS
     ${Qt5OpenGL_LIBRARIES}
 )
 #choose between debug and release qt libraries
-if(${CMAKE_BUILD_TYPE} STREQUAL "Debug" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-    set(QT_CONFIG "DEBUG")
-else()
-    set(QT_CONFIG "RELEASE")
+if(NOT MSVC)#not necessary for MSVC - it uses both debug & release version
+    if(${CMAKE_BUILD_TYPE} STREQUAL "Debug" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
+        set(QT_CONFIG "DEBUG")
+    else()
+        set(QT_CONFIG "RELEASE")
+    endif()
+    foreach(QT_TARGET ${QT_TARGETS})
+        set_target_properties(${QT_TARGET} PROPERTIES MAP_IMPORTED_CONFIG_COVERAGE QT_CONFIG)
+    endforeach()
 endif()
-foreach(QT_TARGET ${QT_TARGETS})
-    set_target_properties(${QT_TARGET} PROPERTIES MAP_IMPORTED_CONFIG_COVERAGE QT_CONFIG)
-endforeach()

@@ -22,7 +22,7 @@
 
 
 namespace reco {
-namespace vidgui {
+namespace datapipe {
 
 template<class VS>
 class VideoPipeline:public BaseVideoPipeline {
@@ -61,6 +61,6 @@ public slots:
 } /* namespace video */
 } /* namespace augmentarium */
 
-#include "reco/vidgui/VideoPipeline.tpp"
+#include "VideoPipeline.tpp"
 
 #endif /* MODULES_VIDEO_VIDEOPIPELINE_H_ */

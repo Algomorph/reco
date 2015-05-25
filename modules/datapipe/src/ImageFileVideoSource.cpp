@@ -7,20 +7,18 @@
  */
 
 //local
-#include <reco/vidgui/ImageFileVideoSource.h>
-
-//boost
 #include <boost/filesystem.hpp>
 #include <boost/regex.hpp>
 
 //opencv
 #include <opencv2/highgui/highgui.hpp>
+#include <reco/datapipe/ImageFileVideoSource.h>
 
 //std
 #include <exception>
 
 namespace reco {
-namespace vidgui {
+namespace datapipe {
 
 ImageFileVideoSource::ImageFileVideoSource(std::string directory, bool looping) :
 				ixCurFrame(-1),

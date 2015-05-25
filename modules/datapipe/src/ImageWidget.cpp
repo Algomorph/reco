@@ -7,7 +7,7 @@
  */
 
 //local
-#include <reco/vidgui/ImageWidget.h>
+#include <reco/datapipe/ImageWidget.h>
 
 //qt
 #include <QPainter>
@@ -24,7 +24,7 @@
 //#endif
 
 namespace reco {
-namespace vidgui {
+namespace datapipe {
 ImageWidget::ImageWidget(QWidget *parent) :
 				QWidget(parent) {
 }
@@ -116,6 +116,6 @@ void ImageWidget::paintEvent(QPaintEvent* event) {
 
 	painter.end();
 }
-} /* namespace vidgui */
+} /* namespace datapipe */
 } /* namespace reco */
 

@@ -29,6 +29,9 @@ if(CMAKE_MAJOR_VERSION GREATER 2 AND CMAKE_MINOR_VERSION GREATER 0)
     cmake_policy(SET CMP0053 NEW)#no special characters in variable names
 endif()
 
+#-------------------------INCLUDE UTILITIES------------------------------------#
+include("RecoUtilities")
+
 #----------------------------BUILD CONFIGURATIONS------------------------------#
 set(DEBUG_BUILD_TYPE_OPTIONS Debug RelWithDebInfo)
 set(RELEASE_BUILD_TYPE_OPTIONS Release MinSizeRel)
@@ -36,9 +39,13 @@ set(BUILD_TYPE_OPTIONS ${DEBUG_BUILD_TYPE_OPTIONS} ${RELEASE_BUILD_TYPE_OPTIONS}
 
 #set build type 
 if(NOT MSVC)#TODO: also don't do for XCode generator?
-    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: ${BUILD_TYPE_OPTIONS}.")
+    #work around CMakes strange CACHE setting system
+    if("${CMAKE_BUILD_TYPE}" STREQUAL "")
+        set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: ${BUILD_TYPE_OPTIONS}." FORCE)
+    else()
+        set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: ${BUILD_TYPE_OPTIONS}.")
+    endif()
     set_property(CACHE CMAKE_BUILD_TYPE PROPERTY STRINGS ${BUILD_TYPE_OPTIONS})
-
     set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE})
 endif()
 
@@ -103,8 +110,7 @@ set(NON_COMPILE_SOURCES
 #add non-compile target
 add_custom_target(${PROJECT_NAME}_noncompile SOURCES ${NON_COMPILE_SOURCES})
 
-#-------------------------INCLUDE UTILITIES------------------------------------#
-include("RecoUtilities")
+
 #-------------------------FIND DEPENDENCIES------------------------------------#
 include("ResolveDependencies")
 

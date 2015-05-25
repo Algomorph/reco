@@ -13,13 +13,13 @@
 
 //local
 #include "VideoSource.h"
-#include "reco/vidgui/Cv2To3Video.h"
+#include "Cv2To3Video.h"
 
 //OpenCV
 #include <opencv2/core/core.hpp>
 
 namespace reco {
-namespace vidgui {
+namespace datapipe {
 
 /**
  * Retrieves and processes frames using the OpenCV VideoCapture interface.
