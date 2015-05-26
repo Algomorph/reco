@@ -116,6 +116,7 @@ include("ResolveDependencies")
 
 
 #-------------------------INCLUDE SUBDIRECTORIES-------------------------------#
-add_subdirectory ("applications")
 add_subdirectory ("modules")
+add_subdirectory ("applications")
+
 #------------------------------------------------------------------------------#

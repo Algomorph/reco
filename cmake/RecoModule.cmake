@@ -201,6 +201,12 @@ macro(reco_add_subproject _name)
             endif()
         endif()
     endif()
+#--------------------------- HACK FOR MODULES -----------------------------------------------------#
+
+if(${_subproject_type} STREQUAL ${module_type} AND BUILD_${_name})
+    SET(${_name}_LIBRARIES ${subproject_name} CACHE INTERNAL "module library define" FORCE)
+endif()
+    
 #--------------------------- AUTOMOC FOR QT -------------------------------------------------------#    
     if(_qt)
         set(CMAKE_AUTOMOC ON)
@@ -233,14 +239,14 @@ macro(reco_add_subproject _name)
             list(REMOVE_ITEM ${subproject_name}_sources ${file_name})
         endforeach()
 #---------------------------ADD QT UI FILES--------------------------------------------------------#
-        file(GLOB ${subproject_name}_UI src/*.ui)
+        file(GLOB ${subproject_name}_ui qt/*.ui)
         
         if(BUILD_${_name})
         #this macro doesn't get defined unless QtWidgets is found
             qt5_wrap_ui(${subproject_name}_ui_headers ${${subproject_name}_ui})
         endif()
 #---------------------------ADD QT RESOUCE FILES---------------------------------------------------#
-        file(GLOB ${subproject_name}_resource_files *.qrc)
+        file(GLOB ${subproject_name}_resource_files qt/*.qrc)
     
         if(BUILD_${_name})
             #this macro doesn't get defined unless QtWidgets is found
@@ -268,29 +274,36 @@ macro(reco_add_subproject _name)
     )
 #---------------------------ADD TARGET-------------------------------------------------------------#
     if(${_subproject_type} STREQUAL "${app_type}" OR ${_subproject_type} STREQUAL "${lightweight_app_type}")
-        add_executable(${subproject_name} ${all_${subproject_name}_files})
+        #don't use the subproject name, but rather the briefer name suffix for the executables
+        #this will make command-line invocation involve less typing
+        set(_target_name ${_name})
+        add_executable(${_target_name} ${all_${subproject_name}_files})
     elseif(${_subproject_type} STREQUAL "${module_type}")
-        add_library(${subproject_name} SHARED ${all_${subproject_name}_files})
+        set(_target_name ${subproject_name})
+        add_library(${_target_name} SHARED ${all_${subproject_name}_files})
     endif()
        
     #exclude from build if necessary
     if(NOT BUILD_${_name})
-        set_target_properties(${subproject_name} PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
-        set (HAVE_${_name} FALSE PARENT_SCOPE)
+        set_target_properties(${_target_name} PROPERTIES EXCLUDE_FROM_ALL 1 EXCLUDE_FROM_DEFAULT_BUILD 1)
+        #this syntax is required to propagate these to the upper level
+        set (HAVE_${_name} FALSE CACHE INTERNAL "have flag" FORCE)
     else()
-        set (HAVE_${_name} TRUE PARENT_SCOPE)
+        set (HAVE_${_name} TRUE CACHE INTERNAL "have flag" FORCE)
     endif()
     
-#---------------------------DEFINE INCLUDES--------------------------------------------------------#
-    #local or project-specific includes
-    target_include_directories(${subproject_name} PUBLIC include)
     
-    reco_add_includes_to_subproject(${subproject_name} ${_depends})
+    
+#---------------------------DEFINE INCLUDES--------------------------------------------------------#
+    #local or project-specific *public* includes
+    target_include_directories(${_target_name} PUBLIC include)
+    
+    reco_add_includes_to_subproject(${_target_name} ${_depends})
 #---------------------------LINK LIBRARIES --------------------------------------------------------#
 
-    reco_link_libraries_to_subproject(${subproject_name} FALSE ${_depends})
+    reco_link_libraries_to_subproject(${_target_name} FALSE ${_depends})
     
 #---------------------------ADD PREPROCESSOR DEFINES-----------------------------------------------#
 #TODO: add support for user-specified defines
-    reco_add_depends_to_subproject(${subproject_name} ${_depends})
+    reco_add_depends_to_subproject(${_target_name} ${_depends})
 endmacro()

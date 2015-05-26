@@ -1,0 +1,99 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1104</width>
+    <height>704</height>
+   </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <property name="windowTitle">
+   <string>Augmentarium HMD</string>
+  </property>
+  <property name="windowIcon">
+   <iconset resource="application.qrc">
+    <normaloff>:/assets/icons/ball.ico</normaloff>:/assets/icons/ball.ico</iconset>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <property name="sizePolicy">
+    <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+     <horstretch>0</horstretch>
+     <verstretch>0</verstretch>
+    </sizepolicy>
+   </property>
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="1" column="0">
+       <widget class="QPushButton" name="startCameraButton">
+        <property name="text">
+         <string>Start Camera</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="1">
+       <widget class="reco::datapipe::VideoWidget" name="videoWidget" native="true"/>
+      </item>
+      <item row="2" column="0">
+       <widget class="QPushButton" name="launchViewerButton">
+        <property name="text">
+         <string>Launch Viewer</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <layout class="QHBoxLayout" name="horizontalLayout_2">
+        <item>
+         <widget class="reco::datapipe::ImageWidget" name="imageOutput" native="true"/>
+        </item>
+       </layout>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menuBar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1104</width>
+     <height>25</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuFile">
+    <property name="title">
+     <string>File</string>
+    </property>
+   </widget>
+   <addaction name="menuFile"/>
+  </widget>
+ </widget>
+ <customwidgets>
+  <customwidget>
+   <class>reco::datapipe::ImageWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">reco/datapipe/ImageWidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>reco::datapipe::VideoWidget</class>
+   <extends>QWidget</extends>
+   <header location="global">reco/datapipe/VideoWidget.h</header>
+   <container>1</container>
+  </customwidget>
+ </customwidgets>
+ <resources>
+  <include location="application.qrc"/>
+ </resources>
+ <connections/>
+</ui>
