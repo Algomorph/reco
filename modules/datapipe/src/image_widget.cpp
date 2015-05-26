@@ -47,7 +47,7 @@ image_widget::~image_widget() {
  * Fast version of setImage: assumes BGR mat (CV_8UC3), does not resize widget
  * @param mat matrix to use for current image
  */
-void image_widget::setImageFast(const cv::Mat& mat) {
+void image_widget::set_image_fast(const cv::Mat& mat) {
 
 	// Convert the image to the RGB888 format
 	// assume BGR image
@@ -68,7 +68,7 @@ void image_widget::setImageFast(const cv::Mat& mat) {
  * Sets the current image
  * @param mat
  */
-void image_widget::setImage(const cv::Mat& mat) {
+void image_widget::set_image(const cv::Mat& mat) {
 
 	// Convert the image to the RGB888 format
 	CV_IMAGE_WIDGET_CONF_MAT(mat)
@@ -88,7 +88,7 @@ void image_widget::setImage(const cv::Mat& mat) {
  * Sets the current image and resizes the widget to the size of this image
  * @param mat
  */
-void image_widget::setImageAndResize(const cv::Mat& mat) {
+void image_widget::set_image_and_resize(const cv::Mat& mat) {
 
 	// Convert the image to the RGB888 format
 	CV_IMAGE_WIDGET_CONF_MAT(mat)

@@ -33,9 +33,9 @@ public:
 	}
 
 public slots:
-	void setImage(const cv::Mat& image);
-	void setImageAndResize(const cv::Mat& image);
-	void setImageFast(const cv::Mat& image);
+	void set_image(const cv::Mat& image);
+	void set_image_and_resize(const cv::Mat& image);
+	void set_image_fast(const cv::Mat& image);
 
 protected:
 	void paintEvent(QPaintEvent* event);

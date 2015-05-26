@@ -6,8 +6,11 @@
  *     License: Apache v2
  *   Copyright: (c) Gregory Kramida 2014
  */
-#include "MainWindow.h"
+//local
+#include "main_window.h"
+//qt
 #include <QApplication>
+//opencv
 #include <opencv2/core/core.hpp>
 
 int main(int argc, char* argv[]){
@@ -16,7 +19,7 @@ int main(int argc, char* argv[]){
 	QApplication app(argc, argv);
 	app.setOrganizationName("QtProject");
 	app.setApplicationName("Application Example");
-	MainWindow main_window;
+	main_window main_window;
 	main_window.show();
 	return app.exec();
 }

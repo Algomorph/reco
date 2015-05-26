@@ -8,8 +8,8 @@
  */
 
 //local
-#include "MainWindow.h"
-#include "ui_MainWindow.h"
+#include <src/main_window.h>
+#include "ui_main_window.h"
 
 
 
@@ -25,26 +25,26 @@ namespace workbench {
 #define CAMERA_PX_HEIGHT 1080
 
 
-MainWindow::MainWindow() :
-				ui(new Ui_MainWindow),
-				videoPipelineThread(NULL)
+main_window::main_window() :
+				ui(new Ui_main_window),
+				video_pipeline_thread(NULL)
 	{
 	ui->setupUi(this);
 }
 
-MainWindow::~MainWindow() {
+main_window::~main_window() {
 	delete ui;
-	if(videoPipelineThread && !videoPipelineThread->isFinished()){
+	if(video_pipeline_thread && !video_pipeline_thread->isFinished()){
 		//videoPipeline->requestStop();
 	}
 }
 
-void MainWindow::on_launchViewerButton_released() {
+void main_window::on_launch_viewer_button_released() {
 	//viewer.show();
 }
 
-void MainWindow::on_startCameraButton_released(){
-	videoPipelineThread = new QThread;
+void main_window::on_start_camera_button_released(){
+	video_pipeline_thread = new QThread;
 	/*videoPipeline->moveToThread(videoPipelineThread);
 
 	ui->videoWidget->connectToVideoPipeline(videoPipeline);
@@ -57,14 +57,14 @@ void MainWindow::on_startCameraButton_released(){
 	connect(videoPipeline, SIGNAL(finished()), videoPipeline, SLOT(deleteLater()));
 	connect(videoPipelineThread, SIGNAL(finished()), videoPipelineThread, SLOT(deleteLater()));*/
 
-	videoPipelineThread->start();
+	video_pipeline_thread->start();
 }
 
-void MainWindow::reportError(QString string){
+void main_window::report_error(QString string){
 	qDebug() << string;
 }
 
-void MainWindow::closeEvent(QCloseEvent* event){
+void main_window::closeEvent(QCloseEvent* event){
 	//viewer.close();
 }
 

@@ -26,27 +26,28 @@
 #include <opencv2/core/core.hpp>
 
 
-class Ui_MainWindow;
+class Ui_main_window;
 
 namespace reco{
 namespace workbench{
 
-class MainWindow: public QMainWindow {
+class main_window: public QMainWindow {
 	Q_OBJECT
 public:
-	MainWindow();
-	virtual ~MainWindow();
+	main_window();
+	virtual ~main_window();
 protected:
+	//keep qt naming convention here (override)
 	virtual void closeEvent(QCloseEvent* event);
 private:
-	Ui_MainWindow* ui;
+	Ui_main_window* ui;
 	//OsgOculusWidget viewer; //TODO: replace with whatever qt->Oculus plugin needed by whatever rendering engine we decide to use
-	QThread* videoPipelineThread;
+	QThread* video_pipeline_thread;
 
 private slots:
-	void on_launchViewerButton_released();
-	void on_startCameraButton_released();
-	void reportError(QString string);
+	void on_launch_viewer_button_released();
+	void on_start_camera_button_released();
+	void report_error(QString string);
 
 };
 

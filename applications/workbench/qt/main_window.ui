@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ui version="4.0">
- <class>MainWindow</class>
- <widget class="QMainWindow" name="MainWindow">
+<ui version="5.0">
+ <class>main_window</class>
+ <widget class="QMainWindow" name="main_window">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -23,7 +23,7 @@
    <iconset resource="application.qrc">
     <normaloff>:/assets/icons/ball.ico</normaloff>:/assets/icons/ball.ico</iconset>
   </property>
-  <widget class="QWidget" name="centralwidget">
+  <widget class="QWidget" name="central_widget">
    <property name="sizePolicy">
     <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
      <horstretch>0</horstretch>
@@ -34,21 +34,21 @@
     <item>
      <layout class="QGridLayout" name="gridLayout">
       <item row="1" column="0">
-       <widget class="QPushButton" name="startCameraButton">
+       <widget class="QPushButton" name="start_camera_button">
         <property name="text">
          <string>Start Camera</string>
         </property>
        </widget>
       </item>
       <item row="2" column="0">
-       <widget class="QPushButton" name="launchViewerButton">
+       <widget class="QPushButton" name="launch_viewer_button">
         <property name="text">
          <string>Launch Viewer</string>
         </property>
        </widget>
       </item>
       <item row="0" column="0">
-       <widget class="reco::datapipe::VideoWidget" name="videoWidget" native="true"/>
+       <widget class="reco::datapipe::video_widget" name="videoWidget" native="true"/>
       </item>
      </layout>
     </item>
@@ -73,9 +73,9 @@
  </widget>
  <customwidgets>
   <customwidget>
-   <class>reco::datapipe::VideoWidget</class>
+   <class>reco::datapipe::video_widget</class>
    <extends>QWidget</extends>
-   <header location="global">reco/datapipe/VideoWidget.h</header>
+   <header location="global">reco/datapipe/video_widget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>
