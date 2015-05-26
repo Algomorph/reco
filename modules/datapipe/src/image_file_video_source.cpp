@@ -12,25 +12,23 @@
 
 //opencv
 #include <opencv2/highgui/highgui.hpp>
-#include <reco/datapipe/ImageFileVideoSource.h>
-
-//std
+#include <reco/datapipe/image_file_video_source.h>
 #include <exception>
 
 namespace reco {
 namespace datapipe {
 
-ImageFileVideoSource::ImageFileVideoSource(std::string directory, bool looping) :
-				ixCurFrame(-1),
+image_file_video_source::image_file_video_source(std::string directory, bool looping) :
+				ix_cur_frame(-1),
 				directory(directory),
-				filePathIter(),
+				file_path_iter(),
 				looping(looping)
 
 {
 
 }
 
-ImageFileVideoSource::~ImageFileVideoSource() {
+image_file_video_source::~image_file_video_source() {
 	// TODO Auto-generated destructor stub
 
 }
@@ -40,8 +38,8 @@ ImageFileVideoSource::~ImageFileVideoSource() {
  * one of bmp, jpg, tiff, png, pbm, dib.
  * @return always true
  */
-bool ImageFileVideoSource::setUp() {
-	if (ixCurFrame == -1) {
+bool image_file_video_source::set_up() {
+	if (ix_cur_frame == -1) {
 		using namespace boost::filesystem;
 		using namespace std;
 
@@ -54,10 +52,10 @@ bool ImageFileVideoSource::setUp() {
 		if (is_directory(dir)) {
 			directory_iterator endItr;
 			string filename;
-			for (directory_iterator dirIter(dir); dirIter != endItr; dirIter++) {
-				if (is_regular_file(dirIter->status())
-						|| regex_match((filename = dirIter->path().filename().string()), filenamePattern)) {
-					orderedFilepaths.insert(dirIter->path().string());
+			for (directory_iterator dir_iter(dir); dir_iter != endItr; dir_iter++) {
+				if (is_regular_file(dir_iter->status())
+						|| regex_match((filename = dir_iter->path().filename().string()), filenamePattern)) {
+					orderedFilepaths.insert(dir_iter->path().string());
 				}
 			}
 		} else {
@@ -65,35 +63,35 @@ bool ImageFileVideoSource::setUp() {
 			throw new std::runtime_error(std::string("Directory \"") + directory + std::string("\" not found."));
 		}
 	}
-	filePathIter = orderedFilepaths.begin();
-	ixCurFrame = 0;
+	file_path_iter = orderedFilepaths.begin();
+	ix_cur_frame = 0;
 	return true;
 }
 
-int ImageFileVideoSource::getFrameIx(){
-	return ixCurFrame;
+int image_file_video_source::get_frame_ix(){
+	return ix_cur_frame;
 }
 
 /**
  *@return width of first image file found in directory assigned at construction
  */
-unsigned ImageFileVideoSource::getWidth() {
-	if (ixCurFrame == -1) {
-		setUp();
+unsigned image_file_video_source::get_width() {
+	if (ix_cur_frame == -1) {
+		set_up();
 	}
-	cv::Mat firstIm = cv::imread(*filePathIter);
-	unsigned width = firstIm.cols;
+	cv::Mat first_image = cv::imread(*file_path_iter);
+	unsigned width = first_image.cols;
 	return width;
 }
 /**
  *@return height of first image file found in directory assigned at construction
  */
-unsigned ImageFileVideoSource::getHeight() {
-	if (ixCurFrame == -1) {
-		setUp();
+unsigned image_file_video_source::get_height() {
+	if (ix_cur_frame == -1) {
+		set_up();
 	}
-	std::string curPath = *filePathIter;
-	cv::Mat firstIm = cv::imread(curPath);
+	std::string curPafile_path_iterath_iter;
+	cv::Mat firstIm = cv::imread(*file_path_iter);
 	unsigned height = firstIm.rows;
 	return height;
 }
@@ -101,37 +99,32 @@ unsigned ImageFileVideoSource::getHeight() {
 /**
  * Clears the image file path queue.
  */
-void ImageFileVideoSource::tearDown() {
+void image_file_video_source::tear_down() {
 	orderedFilepaths.clear();
-	ixCurFrame = -1;
+	ix_cur_frame = -1;
 }
 
 /**
  * Attempts to retrieve a single image from the queue. Will fail if file has been renamed or deleted.
  * @return matrix with the contents of the retrieved image.
  */
-cv::Mat ImageFileVideoSource::retrieveFrame() {
-	cv::Mat retval;
-	if (filePathIter != orderedFilepaths.end()) {
-		retval = cv::imread(*filePathIter);
+bool image_file_video_source::capture_frame() {
+	if (file_path_iter != orderedFilepaths.end()) {
+		this->frame = cv::imread(*file_path_iter);
 	} else {
 		if (looping) {
 			//restart from beginning
-			ixCurFrame = 0;
-			filePathIter = orderedFilepaths.begin();
-			retval = cv::imread(*filePathIter);
+			ix_cur_frame = 0;
+			file_path_iter = orderedFilepaths.begin();
+			this->frame = cv::imread(*file_path_iter);
 		} else {
 			//return empty frame, don't advance index or iterator
-			return cv::Mat();
+			return false;
 		}
 	}
-	filePathIter++;
-	ixCurFrame++;
-	return retval;
-}
-
-bool ImageFileVideoSource::trySetResolution(unsigned int width, unsigned int hegiht) {
-	return false;
+	file_path_iter++;
+	ix_cur_frame++;
+	return true;
 }
 
 } /* namespace video */

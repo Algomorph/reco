@@ -1,5 +1,5 @@
-#ifndef MODULES_VIDEO_BASEVIDEOPIPELINE_H_
-#define MODULES_VIDEO_BASEVIDEOPIPELINE_H_
+#ifndef RECO_DATAPIPE_BASEVIDEOPIPELINE_H_
+#define RECO_DATAPIPE_BASEVIDEOPIPELINE_H_
 
 #pragma once
 
@@ -9,16 +9,16 @@
 namespace reco {
 namespace datapipe {
 
-class BaseVideoPipeline: public QObject{
+class base_video_pipeline: public QObject{
 	Q_OBJECT
 protected:
-	BaseVideoPipeline(){
+	base_video_pipeline(){
 	};
-	virtual ~BaseVideoPipeline(){};
-	virtual void processFrame(const cv::Mat& frame) = 0;
+	virtual ~base_video_pipeline(){};
+	virtual void process_frame(const cv::Mat& frame) = 0;
 public slots:
 	virtual void run() = 0;
-	virtual void requestStop() = 0;
+	virtual void request_stop() = 0;
 signals:
 /**
  * Emitted on error
@@ -29,12 +29,12 @@ signals:
 	 * Emitted when a new frame had been processed
 	 * @param
 	 */
-	void frameReady(cv::Mat);
+	void frame_ready(cv::Mat);
 	/**
 	 * Emitted when some kind of new result image was prepared
 	 * @param
 	 */
-	void resultImageReady(cv::Mat);
+	void result_image_ready(cv::Mat);
 	void finished();
 };
 

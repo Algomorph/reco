@@ -7,16 +7,14 @@
  */
 
 //local
-#include <reco/datapipe/WebcamVideoSource.h>
-
-//std
+#include <reco/datapipe/webcam_video_source.h>
 #include <exception>
 
 
 namespace reco {
 namespace datapipe {
 WebcamVideoSource::WebcamVideoSource(unsigned int requestedWidth, unsigned int requestedHeight, int deviceNum):
-		VideoSource(),
+		video_source(),
 		requestedWidth(requestedWidth),
 		requestedHeight(requestedHeight),
 		camera(),
@@ -27,24 +25,21 @@ WebcamVideoSource::~WebcamVideoSource() {
 	camera.release();
 }
 
-bool WebcamVideoSource::setUp(){
+bool WebcamVideoSource::set_up(){
 	return this->camera.open(this->deviceNum) && this->setResolution(this->requestedWidth,this->requestedHeight);
 }
 
-void WebcamVideoSource::tearDown(){
+void WebcamVideoSource::tear_down(){
 	this->camera.release();
 }
 
-cv::Mat WebcamVideoSource::retrieveFrame(){
-	cv::Mat frame;
-	this->camera.read(frame);
-	return frame;
+bool WebcamVideoSource::capture_frame(){
+	return this->camera.read(this->frame);
 }
 bool WebcamVideoSource::setResolution(unsigned int width, unsigned int height){
 	//TODO: OpenCV3 support
 	cv::Mat frame;
 	camera >> frame;
-	//camera.set(CV_CAP_PROP_FOURCC,CV_FOURCC('H','2','6','4'));
 	bool horizChange = camera.set(CV_CAP_PROP_FRAME_WIDTH, (double)width);
 	bool vertChange = camera.set(CV_CAP_PROP_FRAME_HEIGHT, (double)height);
 	return horizChange && vertChange;

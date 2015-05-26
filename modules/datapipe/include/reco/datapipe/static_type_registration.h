@@ -6,8 +6,8 @@
  *   Copyright: (c) Gregory Kramida 2015
  */
 
-#ifndef MODULES_VIDEO_STATICTYPEREGISTRATION_H_
-#define MODULES_VIDEO_STATICTYPEREGISTRATION_H_
+#ifndef RECO_DATAPIPE_STATICTYPEREGISTRATION_H_
+#define RECO_DATAPIPE_STATICTYPEREGISTRATION_H_
 #pragma once
 
 #include <QMetaType>
@@ -18,7 +18,7 @@ Q_DECLARE_METATYPE(cv::Mat);
 
 namespace reco{
 namespace datapipe{
-class StaticTypeRegistration{
+class static_type_registration{
 	static bool registrationDone;
 public:
 	static int initialize(){
@@ -29,8 +29,8 @@ public:
 		return 0;
 	};
 };
-static int staticInitializationDummy = StaticTypeRegistration::initialize();
+static int static_initialization_dummy = static_type_registration::initialize();
 }//end namespace datapipe
 }//end namespace reco
 
-#endif /* MODULES_VIDEO_STATICTYPEREGISTRATION_H_ */
+#endif /* RECO_DATAPIPE_STATICTYPEREGISTRATION_H_ */

@@ -7,7 +7,7 @@
  */
 
 //local
-#include <reco/datapipe/ImageWidget.h>
+#include <reco/datapipe/image_widget.h>
 
 //qt
 #include <QPainter>
@@ -25,11 +25,11 @@
 
 namespace reco {
 namespace datapipe {
-ImageWidget::ImageWidget(QWidget *parent) :
+image_widget::image_widget(QWidget *parent) :
 				QWidget(parent) {
 }
 
-ImageWidget::~ImageWidget() {
+image_widget::~image_widget() {
 	// TODO Auto-generated destructor stub
 }
 
@@ -47,7 +47,7 @@ ImageWidget::~ImageWidget() {
  * Fast version of setImage: assumes BGR mat (CV_8UC3), does not resize widget
  * @param mat matrix to use for current image
  */
-void ImageWidget::setImageFast(const cv::Mat& mat) {
+void image_widget::setImageFast(const cv::Mat& mat) {
 
 	// Convert the image to the RGB888 format
 	// assume BGR image
@@ -68,7 +68,7 @@ void ImageWidget::setImageFast(const cv::Mat& mat) {
  * Sets the current image
  * @param mat
  */
-void ImageWidget::setImage(const cv::Mat& mat) {
+void image_widget::setImage(const cv::Mat& mat) {
 
 	// Convert the image to the RGB888 format
 	CV_IMAGE_WIDGET_CONF_MAT(mat)
@@ -88,7 +88,7 @@ void ImageWidget::setImage(const cv::Mat& mat) {
  * Sets the current image and resizes the widget to the size of this image
  * @param mat
  */
-void ImageWidget::setImageAndResize(const cv::Mat& mat) {
+void image_widget::setImageAndResize(const cv::Mat& mat) {
 
 	// Convert the image to the RGB888 format
 	CV_IMAGE_WIDGET_CONF_MAT(mat)
@@ -103,7 +103,7 @@ void ImageWidget::setImageAndResize(const cv::Mat& mat) {
 
 	repaint();
 }
-void ImageWidget::paintEvent(QPaintEvent* event) {
+void image_widget::paintEvent(QPaintEvent* event) {
 	QWidget::paintEvent(event);
 	// Display the image
 	QPainter painter(this);

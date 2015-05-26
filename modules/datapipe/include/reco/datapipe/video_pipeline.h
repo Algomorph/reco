@@ -6,8 +6,8 @@
  *   Copyright: (c) Gregory Kramida 2015
  */
 
-#ifndef MODULES_VIDEO_VIDEOPIPELINE_H_
-#define MODULES_VIDEO_VIDEOPIPELINE_H_
+#ifndef RECO_DATAPIPE_VIDEOPIPELINE_H_
+#define RECO_DATAPIPE_VIDEOPIPELINE_H_
 
 #pragma once
 
@@ -17,50 +17,48 @@
 #include <opencv2/core/core.hpp>
 
 //local
-#include "VideoSource.h"
-#include "BaseVideoPipeline.h"
+#include "video_source.h"
+#include "base_video_pipeline.h"
 
+//std
+#include <memory>
 
 namespace reco {
 namespace datapipe {
 
 template<class VS>
-class VideoPipeline:public BaseVideoPipeline {
+class video_pipeline:public base_video_pipeline {
 	//TODO: why does this throws a "Macro argument mismatch" warning
-	static_assert(std::is_base_of<VideoSource, VS>::value,
+	static_assert(std::is_base_of<video_source, VS>::value,
 	        "VS must be a descendant of VideoSource"
 	    );
 private:
 
-
-	bool stopRequested;
+	bool stop_requested;
 
 protected:
-	VS* videoSource;
-	//TODO: fix design problems with videoSource, change videoSource to non-pointer member by somehow copying it or passing initialization paramers to it.
+	std::shared_ptr<VS> current_video_source;
 	/**
 	 * Constructor.
 	 * Memory management of videoSource is taken over by the pipeline, do not delete the videoSource after passing it in.
-	 * Do not use the same videoSource for two separate VideoPipeline objects, as that will cause double deallocation.
 	 * @param videoSource - video source to retrieve frames from. See notes above about memory management of this object.
 	 */
-	VideoPipeline(VS* videoSource):
-		BaseVideoPipeline(),
-		stopRequested(false),
-		videoSource(videoSource)
-		{
+	video_pipeline(const std::shared_ptr<VS>& video_source_in):
+		base_video_pipeline(),
+		stop_requested(false),
+		current_video_source(video_source_in){
 	}
-	virtual ~VideoPipeline();
+	virtual ~video_pipeline();
 
 public slots:
 	virtual void run();
-	virtual void requestStop();
+	virtual void request_stop();
 
 };
 
 } /* namespace reco */
 } /* namespace datapipe */
 
-#include "VideoPipeline.tpp"
+#include "video_pipeline.tpp"
 
-#endif /* MODULES_VIDEO_VIDEOPIPELINE_H_ */
+#endif /* RECO_DATAPIPE_VIDEOPIPELINE_H_ */

@@ -6,12 +6,12 @@
  *   Copyright: (c) Gregory Kramida 2015
  */
 
-#include <reco/datapipe/VideoWidget.h>
+#include <reco/datapipe/video_widget.h>
 #include <QDebug>
 
 namespace reco {
 namespace datapipe{
-VideoWidget::VideoWidget(QWidget *parent) : ImageWidget(parent) {
+video_widget::video_widget(QWidget *parent) : image_widget(parent) {
 	// TODO Auto-generated constructor stub
 
 }
@@ -20,7 +20,7 @@ VideoWidget::VideoWidget(QWidget *parent) : ImageWidget(parent) {
 	// TODO Auto-generated destructor stub
 //}
 
-void VideoWidget::connectToVideoPipeline(const BaseVideoPipeline* pipeline){
+void video_widget::connectToVideoPipeline(const base_video_pipeline* pipeline){
 	connect(pipeline, SIGNAL(frameReady(cv::Mat)),this, SLOT(setImageFast(cv::Mat)));
 }
 

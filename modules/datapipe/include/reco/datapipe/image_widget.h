@@ -6,8 +6,8 @@
  *   Copyright: (c) Gregory Kramida 2015
  */
 
-#ifndef MODULES_VIDEO_CVIMAGEWIDGET_H_
-#define MODULES_VIDEO_CVIMAGEWIDGET_H_
+#ifndef RECO_DATAPIPE_CVIMAGEWIDGET_H_
+#define RECO_DATAPIPE_CVIMAGEWIDGET_H_
 #pragma once
 
 //qt
@@ -19,11 +19,11 @@
 
 namespace reco {
 namespace datapipe {
-class ImageWidget: public QWidget {
+class image_widget: public QWidget {
 	Q_OBJECT
 public:
-	ImageWidget(QWidget *parent = 0);
-	virtual ~ImageWidget();
+	image_widget(QWidget *parent = 0);
+	virtual ~image_widget();
 
 	QSize sizeHint() const {
 		return image.size();
@@ -47,4 +47,4 @@ protected:
 } /* namespace reco */
 } /* namespace datapipe */
 
-#endif /* MODULES_VIDEO_CVIMAGEWIDGET_H_ */
+#endif /* RECO_DATAPIPE_CVIMAGEWIDGET_H_ */

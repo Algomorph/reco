@@ -18,9 +18,9 @@
 //#include <OVR.h>
 
 //video
-#include <reco/datapipe/VideoWidget.h>
-#include <reco/datapipe/WebcamVideoSource.h>
-#include <reco/datapipe/ImageFileVideoSource.h>
+#include <reco/datapipe/video_widget.h>
+#include <reco/datapipe/webcam_video_source.h>
+#include <reco/datapipe/image_file_video_source.h>
 
 //OpenCV
 #include <opencv2/core/core.hpp>

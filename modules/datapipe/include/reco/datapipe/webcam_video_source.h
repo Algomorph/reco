@@ -6,14 +6,14 @@
  *   Copyright: (c) Gregory Kramida 2015
  */
 
-#ifndef MODULES_VIDEO_CVVIDEOSOURCE_H_
-#define MODULES_VIDEO_CVVIDEOSOURCE_H_
+#ifndef RECO_DATAPIPE_CVVIDEOSOURCE_H_
+#define RECO_DATAPIPE_CVVIDEOSOURCE_H_
 
 #pragma once
 
 //local
-#include "VideoSource.h"
-#include "Cv2To3Video.h"
+#include "video_source.h"
+#include "cv2_to_cv3_video.h"
 
 //OpenCV
 #include <opencv2/core/core.hpp>
@@ -24,7 +24,7 @@ namespace datapipe {
 /**
  * Retrieves and processes frames using the OpenCV VideoCapture interface.
  */
-class WebcamVideoSource: public VideoSource {
+class WebcamVideoSource: public video_source {
 public:
 	WebcamVideoSource(unsigned int requestedWidth = 0, unsigned int requestedHeight = 0, int deviceNum = 0);
 	virtual ~WebcamVideoSource();
@@ -33,23 +33,23 @@ public:
 	unsigned int requestedHeight;
 	//methods
 public:
-	virtual unsigned int getWidth() {
+	virtual unsigned int get_width() {
 		return requestedWidth;
 	}
-	virtual unsigned int getHeight() {
+	virtual unsigned int get_height() {
 		return requestedHeight;
 	}
 	//TODO: how can we effectively envelope this to protect it from misuse, i.e. calling retrieveFrame before setUp()?
-	virtual bool setUp();
-	virtual void tearDown();
-	virtual cv::Mat retrieveFrame();
+	virtual bool set_up();
+	virtual void tear_down();
+	virtual bool capture_frame();
 	bool setResolution(unsigned int width, unsigned int height);
 	private:
 	cv::VideoCapture camera;
 
 	int deviceNum;
 };
-} /* namespace video */
-} /* namespace augmentarium */
+} /* namespace reco */
+} /* namespace datapipe */
 
-#endif /* MODULES_VIDEO_CVVIDEOSOURCE_H_ */
+#endif /* RECO_DATAPIPE_CVVIDEOSOURCE_H_ */

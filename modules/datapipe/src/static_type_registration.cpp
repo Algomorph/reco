@@ -7,11 +7,11 @@
  */
 
 
-#include <reco/datapipe/StaticTypeRegistration.h>
+#include <reco/datapipe/static_type_registration.h>
 
 namespace reco{
 namespace datapipe{
-bool StaticTypeRegistration::registrationDone = false;
+bool static_type_registration::registrationDone = false;
 }/*namespace reco*/
 }/*namespace datapipe*/
 
