@@ -1,5 +1,5 @@
 #add dependency include dirs to subproject
-macro(reco_add_includes_to_subproject subproject_name)
+macro(reco_add_includes_to_subproject _target_name)
     set(_depends ${ARGN})
     #dependency includes
     foreach(depend ${_depends})
@@ -7,13 +7,14 @@ macro(reco_add_includes_to_subproject subproject_name)
             #by default, assume the includes are also required by projects that use this module
             #hence PUBLIC
             #TODO: add functionality to specify whether includes are PUBLIC/PRIVATE for each depend
-            target_include_directories(${subproject_name} PUBLIC ${${depend}_INCLUDE_DIRS})
+            target_include_directories(${_target_name} PUBLIC ${${depend}_INCLUDE_DIRS})
         endif()
     endforeach()
 endmacro()
 
 #link dependency libraries to subproject
-macro(reco_link_libraries_to_subproject subproject_name verbose)
+macro(reco_link_libraries_to_subproject _target_name verbose)
+    set(_depend_libs)
     set(_depends ${ARGN})
     #dependency libraries
     foreach(depend ${_depends})
@@ -21,29 +22,30 @@ macro(reco_link_libraries_to_subproject subproject_name verbose)
             #by default, assume the libraries are also required by projects that use this module
             #hence PUBLIC (may brake in case of static libs?)
             #TODO: add functionality to specify whether libraries are PUBLIC/PRIVATE for each depend
-            target_link_libraries(${subproject_name} PUBLIC ${${depend}_LIBRARIES})
+            target_link_libraries(${_target_name} PUBLIC ${${depend}_LIBRARIES})
+            list(APPEND _depend_libs ${${depend}_LIBRARIES})
         endif()
     endforeach()
     if(${verbose})
-        get_target_property(${subproject_name}_libs ${subproject_name} LINK_INTERFACE_LIBRARIES)
-        message(STATUS "Libraries linked to subproject '${subproject_name}': ${${subproject_name}_libs}")
+        get_target_property(${_target_name}_libs ${_target_name} LINK_INTERFACE_LIBRARIES)
+        message(STATUS "Libraries linked to subproject '${_target_name}': ${${_target_name}_libs}")
     endif() 
 endmacro()
 
 #add dependency preprocessor definitions to subproject
-macro(reco_add_depends_to_subproject subproject_name)
-    get_target_property(${subproject_name}_definitions ${subproject_name} COMPILE_DEFINITIONS)
-    if(NOT "${${subproject_name}_definitions}")
+macro(reco_add_depends_to_subproject _target_name)
+    get_target_property(${_target_name}_definitions ${_target_name} COMPILE_DEFINITIONS)
+    if(NOT "${${_target_name}_definitions}")
         #clear out the "...-NOTFOUND" value
-        set(${subproject_name}_definitions)
+        set(${_target_name}_definitions)
     endif()
     foreach(depend ${_depends})
         if(DEFINED ${depend}_DEFINITIONS)
             string(REPLACE "-D" "" filtered_defs ${${depend}_DEFINITIONS})
-            list(APPEND ${subproject_name}_definitions filtered_defs)
+            list(APPEND ${_target_name}_definitions filtered_defs)
         endif()
     endforeach()
-    set_target_properties(${subproject_name} PROPERTIES COMPILE_DEFINITIONS "${${subproject_name}_definitions}")
+    set_target_properties(${_target_name} PROPERTIES COMPILE_DEFINITIONS "${${_target_name}_definitions}")
 endmacro()
 
 #report failure on repeatedly setting a parameter that can only be set once
@@ -201,19 +203,15 @@ macro(reco_add_subproject _name)
             endif()
         endif()
     endif()
-#--------------------------- HACK FOR MODULES -----------------------------------------------------#
-
-if(${_subproject_type} STREQUAL ${module_type} AND BUILD_${_name})
-    SET(${_name}_LIBRARIES ${subproject_name} CACHE INTERNAL "module library define" FORCE)
-endif()
-    
+   
 #--------------------------- AUTOMOC FOR QT -------------------------------------------------------#    
     if(_qt)
         set(CMAKE_AUTOMOC ON)
+        set(CMAKE_INCLUDE_CURRENT_DIR ON)
     endif()
 
 #---------------------------DEFINE SOURCE FILES----------------------------------------------------#
-    SET(${subproject_name}_top_include_dir include/${global_project_name}/${subproject_name})
+    SET(${subproject_name}_top_include_dir include/${global_project_name}/${_name})
     
     file(GLOB ${subproject_name}_CMakeLists ${CMAKE_CURRENT_SOURCE_DIR}/CMakeLists.txt)
     
@@ -247,7 +245,6 @@ endif()
         endif()
 #---------------------------ADD QT RESOUCE FILES---------------------------------------------------#
         file(GLOB ${subproject_name}_resource_files qt/*.qrc)
-    
         if(BUILD_${_name})
             #this macro doesn't get defined unless QtWidgets is found
             qt5_add_resources(${subproject_name}_generated_resources ${${subproject_name}_resource_files})
@@ -261,7 +258,10 @@ endif()
     if(_qt)
         source_group("Resource Files" FILES ${${subproject_name}_resource_files})
         source_group("UI Files" FILES ${${subproject_name}_ui})
-        source_group("Generated Files" FILES ${${subproject_name}_generated_headers} ${${subproject_name}_ui_headers})
+        source_group("Generated Files" FILES 
+            ${${subproject_name}_ui_headers}
+            ${${subproject_name}_generated_resources}
+        )
     endif()
     
     set(all_${subproject_name}_files
@@ -270,7 +270,8 @@ endif()
     	${${subproject_name}_headers}
     	${${subproject_name}_resource_files}
     	${${subproject_name}_ui}
-    	${${subproject_name}_generated_headers}
+    	${${subproject_name}_ui_headers}
+        ${${subproject_name}_generated_resources}
     )
 #---------------------------ADD TARGET-------------------------------------------------------------#
     if(${_subproject_type} STREQUAL "${app_type}" OR ${_subproject_type} STREQUAL "${lightweight_app_type}")
@@ -302,6 +303,14 @@ endif()
 #---------------------------LINK LIBRARIES --------------------------------------------------------#
 
     reco_link_libraries_to_subproject(${_target_name} FALSE ${_depends})
+    
+    #make a list of used libraries, for reuse in applications
+    if(${_subproject_type} STREQUAL ${module_type} AND BUILD_${_name})
+        #TODO: not sure if dependency libs are required 
+        #(shouldn't CMake add those automatically when the target subproject is linked via target_link_libraries?)
+        #SET(${_name}_LIBRARIES ${_depend_libs} ${subproject_name} CACHE INTERNAL "module library define" FORCE)
+        SET(${_name}_LIBRARIES ${subproject_name} CACHE INTERNAL "module library define" FORCE)
+    endif()
     
 #---------------------------ADD PREPROCESSOR DEFINES-----------------------------------------------#
 #TODO: add support for user-specified defines

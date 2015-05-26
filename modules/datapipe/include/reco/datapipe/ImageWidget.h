@@ -10,8 +10,11 @@
 #define MODULES_VIDEO_CVIMAGEWIDGET_H_
 #pragma once
 
+//qt
 #include <QWidget>
 #include <QImage>
+
+//opencv
 #include <opencv2/core/core.hpp>
 
 namespace reco {
@@ -41,7 +44,7 @@ protected:
 	cv::Mat tmp;
 
 };
-} /* namespace video */
-} /* namespace augmentarium */
+} /* namespace reco */
+} /* namespace datapipe */
 
 #endif /* MODULES_VIDEO_CVIMAGEWIDGET_H_ */

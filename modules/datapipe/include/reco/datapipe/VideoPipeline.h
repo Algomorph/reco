@@ -58,8 +58,8 @@ public slots:
 
 };
 
-} /* namespace video */
-} /* namespace augmentarium */
+} /* namespace reco */
+} /* namespace datapipe */
 
 #include "VideoPipeline.tpp"
 

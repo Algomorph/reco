@@ -18,8 +18,8 @@
 #include <QDebug>
 
 
-namespace augmentarium{
-namespace vstar {
+namespace reco{
+namespace workbench {
 
 #define CAMERA_PX_WIDTH 1920
 #define CAMERA_PX_HEIGHT 1080
@@ -27,15 +27,7 @@ namespace vstar {
 
 MainWindow::MainWindow() :
 				ui(new Ui_MainWindow),
-				viewer(NULL, ApplicationPaths::GetPath(PathKey::MODELS) + "/cow.osg"),
-				videoPipelineThread(NULL),
-#ifdef USE_IMAGE_FILES
-				videoPipeline(new OpenDtamPipeline<augmentarium::video::ImageFileVideoSource>(
-						new augmentarium::video::ImageFileVideoSource(FRAME_DIR)))
-#else
-videoPipeline(new OpenDtamPipeline<augmentarium::video::ImageFileVideoSource>(
-		new augmentarium::video::WebcamVideoSource(CAMERA_PX_WIDTH,CAMERA_PX_HEIGHT)))
-#endif
+				videoPipelineThread(NULL)
 	{
 	ui->setupUi(this);
 }
@@ -43,17 +35,17 @@ videoPipeline(new OpenDtamPipeline<augmentarium::video::ImageFileVideoSource>(
 MainWindow::~MainWindow() {
 	delete ui;
 	if(videoPipelineThread && !videoPipelineThread->isFinished()){
-		videoPipeline->requestStop();
+		//videoPipeline->requestStop();
 	}
 }
 
 void MainWindow::on_launchViewerButton_released() {
-	viewer.show();
+	//viewer.show();
 }
 
 void MainWindow::on_startCameraButton_released(){
 	videoPipelineThread = new QThread;
-	videoPipeline->moveToThread(videoPipelineThread);
+	/*videoPipeline->moveToThread(videoPipelineThread);
 
 	ui->videoWidget->connectToVideoPipeline(videoPipeline);
 	connect(videoPipeline, SIGNAL(resultImageReady(cv::Mat)), ui->imageOutput, SLOT(setImage(const cv::Mat&)));
@@ -63,7 +55,7 @@ void MainWindow::on_startCameraButton_released(){
 	connect(videoPipelineThread, SIGNAL(started()), videoPipeline, SLOT(run()));
 	connect(videoPipeline, SIGNAL(finished()), videoPipelineThread, SLOT(quit()));
 	connect(videoPipeline, SIGNAL(finished()), videoPipeline, SLOT(deleteLater()));
-	connect(videoPipelineThread, SIGNAL(finished()), videoPipelineThread, SLOT(deleteLater()));
+	connect(videoPipelineThread, SIGNAL(finished()), videoPipelineThread, SLOT(deleteLater()));*/
 
 	videoPipelineThread->start();
 }
@@ -73,10 +65,10 @@ void MainWindow::reportError(QString string){
 }
 
 void MainWindow::closeEvent(QCloseEvent* event){
-	viewer.close();
+	//viewer.close();
 }
 
 
-}//end namespace vstar
-}//end namespace augmentarium
+}//end namespace reco
+}//end namespace workbench
 

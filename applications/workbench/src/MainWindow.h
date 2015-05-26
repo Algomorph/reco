@@ -28,8 +28,8 @@
 
 class Ui_MainWindow;
 
-namespace augmentarium{
-namespace vstar{
+namespace reco{
+namespace workbench{
 
 class MainWindow: public QMainWindow {
 	Q_OBJECT
@@ -42,7 +42,6 @@ private:
 	Ui_MainWindow* ui;
 	//OsgOculusWidget viewer; //TODO: replace with whatever qt->Oculus plugin needed by whatever rendering engine we decide to use
 	QThread* videoPipelineThread;
-	OpenDtamPipeline<augmentarium::video::ImageFileVideoSource>* videoPipeline;
 
 private slots:
 	void on_launchViewerButton_released();
@@ -51,7 +50,7 @@ private slots:
 
 };
 
-}//end namespace vstar
-} //namespace augmentarium
+}//end namespace workbench
+} //end namespace reco
 
 #endif /* HMD_MAIN_WINDOW_H_ */

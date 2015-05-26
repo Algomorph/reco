@@ -16,8 +16,7 @@
 #include <QObject>
 //local
 #include "StaticTypeRegistration.h"
-//standard
-//#include <stdarg.h>
+
 
 namespace reco {
 namespace datapipe {
@@ -28,8 +27,7 @@ namespace datapipe {
 class VideoSource: public QObject {
 	Q_OBJECT
 protected:
-	VideoSource()
-	{}
+	VideoSource(){}
 	virtual ~VideoSource(){}
 
 public:

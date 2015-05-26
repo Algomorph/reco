@@ -10,7 +10,9 @@
 #define MODULES_VIDEO_CVVIDEOWIDGET_H_
 
 #pragma once
-
+//qt
+#include <QWidget>
+//local
 #include "ImageWidget.h"
 #include "VideoPipeline.h"
 
@@ -21,7 +23,7 @@ class VideoWidget: public ImageWidget {
 	Q_OBJECT
 public:
 	VideoWidget(QWidget *parent = NULL);
-	virtual ~VideoWidget();
+	virtual ~VideoWidget(){};
 	void connectToVideoPipeline(const BaseVideoPipeline* pipeline);
 
 };
