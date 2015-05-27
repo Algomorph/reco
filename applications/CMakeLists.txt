@@ -15,7 +15,7 @@ reco_add_subproject(capture
     
 reco_add_subproject(extract
     SOURCES extract.cpp
-    DEPENDENCIES LibDL HAL 420 Boost PCL
+    DEPENDENCIES LibDL HAL Boost PCL
     LIGHTWEIGHT_APPLICATION)
     
 reco_add_subproject(playback
