@@ -8,7 +8,7 @@
 
 //freenect2
 #include <reco/datapipe/freenect2_connector.h>
-#include <libfreenect2/frame_listener_impl.h>
+
 
 //std
 #include <exception>
@@ -16,6 +16,9 @@
 namespace reco {
 namespace datapipe {
 
+/*
+ * helper initialization function, called by constructors
+ */
 void freenect2_connector::init(bool capture_RGB, bool capture_depth, bool capture_IR) {
 	if (!this->device) {
 		throw std::runtime_error(
@@ -34,32 +37,58 @@ void freenect2_connector::init(bool capture_RGB, bool capture_depth, bool captur
 		throw std::runtime_error("Freenect2: no channel given (rgb, ir, depth)");
 	}
 
-	listener = std::shared_ptr<SyncMultiFrameListener>(types);
-	if(capture_RGB){
+	listener = std::make_shared<SyncMultiFrameListener>(types);
+	if (capture_RGB) {
 		device->setColorFrameListener(listener.get());
 	}
-	if(capture_IR || capture_depth){
+	if (capture_IR || capture_depth) {
 		device->setIrAndDepthFrameListener(listener.get());
 	}
-
 }
 
-freenect2_connector::freenect2_connector(int index, bool captureRGB, bool capture_depth,
-		bool capture_IR) {
+/**
+ * Construct a connector using index of the connected Kinect2 device, if such device is available.
+ * There are no guarantees that the index is preserved is the configuration of the attached Kinect2s is altered.
+ * One or more of {capture_RGB, capture_depth, capture_IR} has to be set to true.
+ * @param index index of the kinect2 to connect to.
+ * @param capture_RGB whether to capture RGB stream or not.
+ * @param capture_depth whether to capture depth stream or not.
+ * @param capture_IR whether to capture the IR stream or not.
+ */
+freenect2_connector::freenect2_connector(int index, bool capture_RGB, bool capture_depth,
+		bool capture_IR) :
+		capture_RGB(capture_RGB), capture_depth(capture_depth), capture_IR(capture_IR),
+		device_is_running(false){
 	this->device = std::shared_ptr<libfreenect2::Freenect2Device>(freenect2.openDevice(index));
-	init(captureRGB, capture_depth, capture_IR);
-
+	init(capture_RGB, capture_depth, capture_IR);
 }
 
-freenect2_connector::freenect2_connector(std::string serial_number, bool captureRGB, bool capture_depth,
-		bool capture_IR) {
-	this->device = std::shared_ptr<libfreenect2::Freenect2Device>(freenect2.openDevice(serial_number));
-	init(captureRGB, capture_depth, capture_IR);
-
+/**
+ * Construct a connector using serial number of the connected Kinect2 device, if such device is available.
+ * Serial numbers are guaranteed to be unique and persistent for each device.
+ * One or more of {capture_RGB, capture_depth, capture_IR} has to be set to true.
+ * @param index index of the kinect2 to connect to.
+ * @param capture_RGB whether to capture RGB stream or not.
+ * @param capture_depth whether to capture depth stream or not.
+ * @param capture_IR whether to capture the IR stream or not.
+ */
+freenect2_connector::freenect2_connector(std::string serial_number, bool capture_RGB,
+		bool capture_depth, bool capture_IR) :
+		capture_RGB(capture_RGB), capture_depth(capture_depth), capture_IR(capture_IR),
+		device_is_running(false){
+	this->device = std::shared_ptr<libfreenect2::Freenect2Device>(
+			freenect2.openDevice(serial_number));
+	init(capture_RGB, capture_depth, capture_IR);
 }
 
+/*
+ * Desctructor closes the device.
+ */
 freenect2_connector::~freenect2_connector() {
-	// TODO Auto-generated destructor stub
+	if(device_is_running){
+		device->stop();
+	}
+	device->close();
 }
 
 } //end namespace reco

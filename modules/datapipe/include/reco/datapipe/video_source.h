@@ -28,6 +28,8 @@ namespace datapipe {
 /**
  * Captures and each subsequent frame of the video
  */
+
+
 class video_source:
 		public QObject {
 Q_OBJECT

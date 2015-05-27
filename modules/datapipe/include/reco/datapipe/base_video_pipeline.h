@@ -17,7 +17,7 @@ protected:
 	virtual ~base_video_pipeline(){};
 	virtual void process_frame(const cv::Mat& frame) = 0;
 public slots:
-	virtual void run() = 0;
+	virtual void run_take() = 0;
 	virtual void request_stop() = 0;
 signals:
 /**

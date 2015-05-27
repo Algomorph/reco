@@ -33,7 +33,7 @@ class video_pipeline:public base_video_pipeline {
 	        "VS must be a descendant of VideoSource"
 	    );
 private:
-
+	bool in_use;
 	bool stop_requested;
 
 protected:
@@ -45,13 +45,15 @@ protected:
 	 */
 	video_pipeline(const std::shared_ptr<VS>& video_source_in):
 		base_video_pipeline(),
+		in_use(false),
 		stop_requested(false),
 		current_video_source(video_source_in){
 	}
 	virtual ~video_pipeline();
 
 public slots:
-	virtual void run();
+	virtual void run_take();
+	virtual void run_copy();
 	virtual void request_stop();
 
 };
