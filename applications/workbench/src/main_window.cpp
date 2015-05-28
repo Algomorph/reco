@@ -46,7 +46,7 @@ void main_window::on_launch_viewer_button_released() {
 void main_window::on_start_camera_button_released(){
 	kinect_data_thread = new QThread;
 
-	pipe->moveToThread(kinect_data_thread);
+	pipe.get()->moveToThread(kinect_data_thread);
 	pipe->hook_to_thread(kinect_data_thread);
 
 	//TODO: connect result stuff

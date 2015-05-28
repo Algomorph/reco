@@ -22,6 +22,6 @@ if(NOT MSVC)#not necessary for MSVC - it uses both debug & release version
         set(QT_CONFIG "RELEASE")
     endif()
     foreach(QT_TARGET ${QT_TARGETS})
-        set_target_properties(${QT_TARGET} PROPERTIES MAP_IMPORTED_CONFIG_COVERAGE ${QT_CONFIG})
+        set_target_properties(${QT_TARGET} PROPERTIES MAP_IMPORTED_CONFIG_COVERAGE "${QT_CONFIG}")
     endforeach()
 endif()

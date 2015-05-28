@@ -54,11 +54,11 @@ if(MSVC)
 	#ADD_DEFINITIONS(-DUNICODE -D_UNICODE) #TODO: not sure about those
 else()
 	set(CMAKE_CXX_FLAGS "-Wall")
-	if(DEFINED ${CMAKE_BUILD_TYPE})
+	if(DEFINED CMAKE_BUILD_TYPE)
     	if(${CMAKE_BUILD_TYPE} STREQUAL "Debug" OR ${CMAKE_BUILD_TYPE} STREQUAL "RelWithDebInfo")
-    	    ADD_DEFINITIONS(-D_DEBUG) #add the debug flag
+    	    add_definitions(-D_DEBUG) #add the debug flag
     	else()
-    	    ADD_DEFINITIONS(-DQT_NO_DEBUG_OUTPUT) #add the qt debug output flag
+    	    add_definitions(-DQT_NO_DEBUG_OUTPUT) #add the qt debug output flag
     	endif()
     endif() 
     
