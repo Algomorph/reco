@@ -27,37 +27,34 @@ namespace workbench {
 
 main_window::main_window() :
 				ui(new Ui_main_window),
-				video_pipeline_thread(NULL)
+				kinect_data_thread(NULL)
 	{
 	ui->setupUi(this);
 }
 
 main_window::~main_window() {
 	delete ui;
-	if(video_pipeline_thread && !video_pipeline_thread->isFinished()){
-		//videoPipeline->requestStop();
+	if(kinect_data_thread && !kinect_data_thread->isFinished()){
+		pipe->request_stop();
 	}
 }
 
 void main_window::on_launch_viewer_button_released() {
-	//viewer.show();
+	//TODO:introduce a viewer
 }
 
 void main_window::on_start_camera_button_released(){
-	video_pipeline_thread = new QThread;
-	/*videoPipeline->moveToThread(videoPipelineThread);
+	kinect_data_thread = new QThread;
 
-	ui->videoWidget->connectToVideoPipeline(videoPipeline);
-	connect(videoPipeline, SIGNAL(resultImageReady(cv::Mat)), ui->imageOutput, SLOT(setImage(const cv::Mat&)));
+	pipe->moveToThread(kinect_data_thread);
+	pipe->hook_to_thread(kinect_data_thread);
 
+	//TODO: connect result stuff
 
-	connect(videoPipeline, SIGNAL(error(QString)), this, SLOT(reportError(QString)));
-	connect(videoPipelineThread, SIGNAL(started()), videoPipeline, SLOT(run()));
-	connect(videoPipeline, SIGNAL(finished()), videoPipelineThread, SLOT(quit()));
-	connect(videoPipeline, SIGNAL(finished()), videoPipeline, SLOT(deleteLater()));
-	connect(videoPipelineThread, SIGNAL(finished()), videoPipelineThread, SLOT(deleteLater()));*/
+	//set up error reporting;
+	connect(pipe.get(), SIGNAL(error(QString)),this,SLOT(report_error(QStrig)));
 
-	video_pipeline_thread->start();
+	kinect_data_thread->start();
 }
 
 void main_window::report_error(QString string){

@@ -14,16 +14,20 @@
 
 //Qt
 #include <QMainWindow>
-//OVR
-//#include <OVR.h>
 
-//video
+//datapipe
 #include <reco/datapipe/video_widget.h>
 #include <reco/datapipe/webcam_video_source.h>
 #include <reco/datapipe/image_file_video_source.h>
 
+//local
+#include "freenect2_pipe.h"
+
 //OpenCV
 #include <opencv2/core/core.hpp>
+
+//std
+#include <memory>
 
 
 class Ui_main_window;
@@ -41,8 +45,8 @@ protected:
 	virtual void closeEvent(QCloseEvent* event);
 private:
 	Ui_main_window* ui;
-	//OsgOculusWidget viewer; //TODO: replace with whatever qt->Oculus plugin needed by whatever rendering engine we decide to use
-	QThread* video_pipeline_thread;
+	QThread* kinect_data_thread;
+	std::unique_ptr<freenect2_pipe> pipe;
 
 private slots:
 	void on_launch_viewer_button_released();
