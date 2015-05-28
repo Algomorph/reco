@@ -23,7 +23,7 @@ freenect2_pipe::~freenect2_pipe()
 }
 
 void freenect2_pipe::run(){
-	while(stop_requested){
+	while(!stop_requested){
 
 	}
 }

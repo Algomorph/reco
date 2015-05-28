@@ -11,61 +11,61 @@
 #include <src/main_window.h>
 #include "ui_main_window.h"
 
-
-
 //qt
 #include <QThread>
 #include <QDebug>
 
+//HAL
 
-namespace reco{
+
+namespace reco {
 namespace workbench {
 
 #define CAMERA_PX_WIDTH 1920
 #define CAMERA_PX_HEIGHT 1080
 
-
 main_window::main_window() :
-				ui(new Ui_main_window),
-				kinect_data_thread(NULL)
-	{
+		ui(new Ui_main_window),
+				kinect_data_thread(NULL),
+				pipe(new freenect2_pipe)
+{
 	ui->setupUi(this);
 }
 
 main_window::~main_window() {
 	delete ui;
-	if(kinect_data_thread && !kinect_data_thread->isFinished()){
-		pipe->request_stop();
-	}
+
 }
 
 void main_window::on_launch_viewer_button_released() {
 	//TODO:introduce a viewer
 }
 
-void main_window::on_start_camera_button_released(){
-	kinect_data_thread = new QThread;
+void main_window::on_start_camera_button_released() {
+	if (!kinect_data_thread) {
+		kinect_data_thread = new QThread;
 
-	pipe.get()->moveToThread(kinect_data_thread);
-	pipe->hook_to_thread(kinect_data_thread);
+		pipe.get()->moveToThread(kinect_data_thread);
+		//set up error reporting;
+		connect(pipe.get(), SIGNAL(error(QString)), this, SLOT(report_error(QString)));
+		pipe->hook_to_thread(kinect_data_thread);
 
-	//TODO: connect result stuff
+		//TODO: connect result stuff
 
-	//set up error reporting;
-	connect(pipe.get(), SIGNAL(error(QString)),this,SLOT(report_error(QStrig)));
-
-	kinect_data_thread->start();
+		kinect_data_thread->start();
+	}
 }
 
-void main_window::report_error(QString string){
+void main_window::report_error(QString string) {
 	qDebug() << string;
 }
 
-void main_window::closeEvent(QCloseEvent* event){
-	//viewer.close();
+void main_window::closeEvent(QCloseEvent* event) {
+	if (kinect_data_thread && !kinect_data_thread->isFinished()) {
+		pipe->request_stop();
+	}
 }
 
-
-}//end namespace reco
-}//end namespace workbench
+} //end namespace reco
+} //end namespace workbench
 

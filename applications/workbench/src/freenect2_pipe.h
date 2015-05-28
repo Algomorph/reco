@@ -18,6 +18,9 @@
 //datapipe
 #include <reco/datapipe/runnable.h>
 
+//HAL
+#include <HAL/Camera/CameraDriverInterface.h>
+
 namespace reco {
 namespace workbench {
 
