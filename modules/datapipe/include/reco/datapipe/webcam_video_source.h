@@ -24,10 +24,10 @@ namespace datapipe {
 /**
  * Retrieves and processes frames using the OpenCV VideoCapture interface.
  */
-class WebcamVideoSource: public video_source {
+class webcam_video_source: public video_source {
 public:
-	WebcamVideoSource(unsigned int requestedWidth = 0, unsigned int requestedHeight = 0, int deviceNum = 0);
-	virtual ~WebcamVideoSource();
+	webcam_video_source(unsigned int requestedWidth = 0, unsigned int requestedHeight = 0, int deviceNum = 0);
+	virtual ~webcam_video_source();
 	//fields
 	unsigned int requestedWidth;
 	unsigned int requestedHeight;
