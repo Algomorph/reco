@@ -20,33 +20,47 @@
 
 //HAL
 #include <HAL/Camera/CameraDriverInterface.h>
+#include <HAL/Camera/CameraDevice.h>
 
 namespace reco {
 namespace workbench {
 
 /**
- * Object for retrieving kinect data (from "somewhere") and pushing it off to various downstream actors,
+ * Object for retrieving kinect data (from "somewhere" in HAL) and pushing it off to various downstream actors,
  * such as display node(s), recording/storing node(s), and/or processing node(s).
  */
-class freenect2_pipe:public datapipe::runnable {
-	Q_OBJECT
+/*
+ * TODO: integrate HAL interface
+ */
+class freenect2_pipe: public datapipe::runnable {
+Q_OBJECT
 
+private:
+	hal::Camera rgbd_camera;
+	bool has_camera;
+
+	void set_camera(const std::string& cam_uri);
 
 public:
+    static const unsigned int DEPTH_IMAGE_WIDTH;
+	static const unsigned int DEPTH_IMAGE_HEIGHT;
 
-	freenect2_pipe();
+	enum kinect2_data_source {
+		hal_log, kinect2_device, image_files //TODO: implement support later if needed
+	};
+
+	freenect2_pipe(kinect2_data_source source);
 	virtual ~freenect2_pipe();
 
 protected:
 
 	virtual void run();
 
-
 signals:
-/**
- * Emitted on error
- * @param error
- */
+	/**
+	 * Emitted on error
+	 * @param error
+	 */
 	void error(QString err);
 	/**
 	 * Emitted when a new frame had been processed

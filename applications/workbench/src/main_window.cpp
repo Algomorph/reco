@@ -27,7 +27,7 @@ namespace workbench {
 main_window::main_window() :
 		ui(new Ui_main_window),
 				kinect_data_thread(NULL),
-				pipe(new freenect2_pipe)
+				pipe(new freenect2_pipe(freenect2_pipe::kinect2_device))
 {
 	ui->setupUi(this);
 }

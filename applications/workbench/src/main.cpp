@@ -8,13 +8,24 @@
  */
 //local
 #include "main_window.h"
+#include <reco/workbench/cpp_exception_util.h>
+
 //qt
 #include <QApplication>
 //opencv
 #include <opencv2/core/core.hpp>
 
+//std
+#include <stdexcept>
+#include <iostream>
+
+
 int main(int argc, char* argv[]){
 	using namespace reco::workbench;
+
+
+
+
 	Q_INIT_RESOURCE(application);
 	QApplication app(argc, argv);
 	app.setOrganizationName("QtProject");

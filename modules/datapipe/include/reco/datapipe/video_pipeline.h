@@ -28,7 +28,6 @@ namespace datapipe {
 
 template<class VS>
 class video_pipeline:public base_video_pipeline {
-	//TODO: why does this throws a "Macro argument mismatch" warning
 	static_assert(std::is_base_of<video_source, VS>::value,
 	        "VS must be a descendant of VideoSource"
 	    );
