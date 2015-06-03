@@ -19,9 +19,12 @@
 #include <stdexcept>
 #include <iostream>
 
+//utils
+#include <reco/utils/cpp_exception_util.h>
 
 int main(int argc, char* argv[]){
 	using namespace reco::workbench;
+
 	Q_INIT_RESOURCE(application);
 	QApplication app(argc, argv);
 	app.setOrganizationName("QtProject");
