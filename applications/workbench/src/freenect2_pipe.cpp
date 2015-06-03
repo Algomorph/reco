@@ -8,7 +8,7 @@
 
 //local
 #include <src/freenect2_pipe.h>
-
+#include <reco/utils/cpp_exception_util.h>
 
 
 //std
@@ -31,7 +31,7 @@ void freenect2_pipe::set_camera(const std::string& cam_uri) {
 	const size_t num_channels = rgbd_camera.NumChannels();
 
 
-	//if()
+	//if(num)
 
 	for (size_t ii = 0; ii < num_channels; ++ii) {
 		std::cout << "\t" << rgbd_camera.Width(ii) << "x" << rgbd_camera.Height(ii)

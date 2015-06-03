@@ -6,8 +6,8 @@
  *   Copyright: (c) Gregory Kramida 2015 
  */
 
-#ifndef RECO_CPP_EXCEPTION_UTIL_H_
-#define RECO_CPP_EXCEPTION_UTIL_H_
+#ifndef RECO_UTILS_CPP_EXCEPTION_UTIL_H_
+#define RECO_UTILS_CPP_EXCEPTION_UTIL_H_
 #pragma once
 
 //std
@@ -15,6 +15,7 @@
 #include <exception>
 
 namespace reco {
+namespace utils{
 
 //TODO: make utility module and put this there
 
@@ -59,7 +60,7 @@ public:
 
 
 };
-
+} //end namespace util
 } //end namespace reco
 
-#endif /* RECO_WORKBENCH_CPP_EXCEPTION_UTIL_H_ */
+#endif /* RECO_UTILS_CPP_EXCEPTION_UTIL_H_ */
