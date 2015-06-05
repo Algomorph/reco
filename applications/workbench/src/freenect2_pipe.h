@@ -38,18 +38,22 @@ Q_OBJECT
 private:
 	hal::Camera rgbd_camera;
 	bool has_camera;
+	int num_kinects;
 
 	void set_camera(const std::string& cam_uri);
 
 public:
-    static const unsigned int DEPTH_IMAGE_WIDTH;
-	static const unsigned int DEPTH_IMAGE_HEIGHT;
+	static const unsigned int RGB_image_width;
+	static const unsigned int RGB_image_height;
+    static const unsigned int depth_image_width;
+	static const unsigned int depth_image_height;
+	static const unsigned int num_channels;
 
 	enum kinect2_data_source {
 		hal_log, kinect2_device, image_files //TODO: implement support later if needed
 	};
 
-	freenect2_pipe(kinect2_data_source source);
+	freenect2_pipe(kinect2_data_source source, const std::string& path = "capture.log");
 	virtual ~freenect2_pipe();
 
 protected:
