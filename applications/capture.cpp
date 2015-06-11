@@ -1,15 +1,20 @@
 #include <iomanip>
 
+
+//Pangolin includes
 #include <pangolin/pangolin.h>
 #include <pangolin/glglut.h>
 #include <pangolin/timer.h>
 
+
+//HAL includes
 #include <HAL/Camera/CameraDevice.h>
 #include <HAL/IMU/IMUDevice.h>
 #include <HAL/Posys/PosysDevice.h>
 #include <HAL/Encoder/EncoderDevice.h>
 #include <HAL/LIDAR/LIDARDevice.h>
-
+#include <HAL/Utils/GetPot>
+#include <HAL/Utils/TicToc.h>
 //previously these were in PbMsgs, which was distributed together with hall
 //now they are fully integrated as part of HAL
 #include <HAL/Messages/ImageArray.h>
@@ -17,13 +22,15 @@
 #include <HAL/Messages/Matrix.h>
 #include <HAL/Messages/Reader.h>
 
-#include <HAL/Utils/GetPot>
-#include <HAL/Utils/TicToc.h>
 
+//OpenCV includes
 #include <opencv2/imgproc/imgproc.hpp>
 
+//Alex's includes
 #include <reco/alex/cpp_utilities.hpp>
 #include <reco/alex/cv_depth_tools.hpp>
+
+#define APP_NAME "Capture"
 
 pangolin::DataLog g_PlotLogAccel;
 pangolin::DataLog g_PlotLogGyro;
@@ -68,7 +75,7 @@ public:
 		int window_width = num_channels_ * base_width_;
 		pangolin::OpenGlRenderState render_state;
 		pangolin::Handler3D handler(render_state);
-		pangolin::CreateWindowAndBind("SensorViewer",
+		pangolin::CreateWindowAndBind(APP_NAME,
 				panel_width_ + window_width,
 				base_height_ * (has_imu_ ? 3.0 / 2.0 : 1.0));
 
@@ -81,7 +88,7 @@ public:
 		fps_.reset(new pangolin::Var<int>("ui.FPS", 30, 1, 120));
 		limit_fps_.reset(new pangolin::Var<bool>("ui.Limit FPS", true,
 		true));
-		logging_enabled_.reset(new pangolin::Var<bool>("ui.Capture",
+		logging_enabled_.reset(new pangolin::Var<bool>("ui.Start_Capture",
 		false));
 		delayed_logging_enabled_ = false;
 
@@ -176,7 +183,7 @@ public:
 #ifdef HAVE_GLUT
 				if (frame_number_ % 30 == 0) {
 					char buffer[1024];
-					sprintf(buffer, "SensorViewer (FPS: %f)",
+					sprintf(buffer, APP_NAME " (FPS: %f)",
 							30.0 / timer.Elapsed_s());
 					glutSetWindowTitle(buffer);
 					timer.Reset();
@@ -184,7 +191,7 @@ public:
 #endif
 #if ANDROID
 				if (frame_number_ % 30 == 0) {
-					LOGI("SensorViewer (FPS: %f)", 30.0 / timer.Elapsed_s());
+					LOGI(APP_NAME " (FPS: %f)", 30.0 / timer.Elapsed_s());
 					timer.Reset();
 				}
 #endif
@@ -250,7 +257,7 @@ public:
 		try {
 			camera_ = hal::Camera(cam_uri);
 		} catch (const hal::DeviceException& e) {
-			std::cerr << "SensorViewer: Camera failed to open! Exception: "
+			std::cerr << APP_NAME ": Camera failed to open! Exception: "
 					<< e.what() << std::endl;
 			abort();
 		}
