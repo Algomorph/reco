@@ -19,7 +19,7 @@
 
 // ARPG includes
 #include <calibu/Calibu.h>
-#include <HAL/Camera.pb.h>
+#include <HAL/Camera/CameraDevice.h>
 
 // Reco includes
 #include <reco/utils/cpp_exception_util.h>
@@ -59,8 +59,10 @@ void set_camera(const std::string& cam_uri, hal::Camera& camera, int& num_kinect
  * @param depth_size - (out) dimensions of the depth feed
  */
 void get_image_sizes(const hal::Camera& camera, cv::Size& rgb_size, cv::Size& depth_size){
-	rgb_size = (camera.Width(RGB_CHANNEL_OFFSET),camera.Height(RGB_CHANNEL_OFFSET));
-	depth_size = (camera.Width(DEPTH_CHANNEL_OFFSET),camera.Height(DEPTH_CHANNEL_OFFSET));
+	rgb_size.width = camera.Width(RGB_CHANNEL_OFFSET);
+	rgb_size.height = camera.Height(RGB_CHANNEL_OFFSET);
+	depth_size.width = camera.Width(DEPTH_CHANNEL_OFFSET);
+	depth_size.height = camera.Height(DEPTH_CHANNEL_OFFSET);
 }
 
 //------------------------------------------------------------------------------
@@ -243,9 +245,6 @@ int main(int argc, char* argv[]) {
 
 	//add more colors for more kinects
 	std::vector<uint32_t> colors = { 0x000000ff, 0x0000ff00, 0x00ff0000 };
-
-
-	int depth_channel_offset = 1;
 
 	std::vector<cv::Mat> images;
 

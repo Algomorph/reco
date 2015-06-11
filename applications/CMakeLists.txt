@@ -20,7 +20,7 @@ reco_add_subproject(extract
     
 reco_add_subproject(playback
     SOURCES playback.cpp
-    DEPENDENCIES LibDL PCL Boost OpenCV Calibu
+    DEPENDENCIES LibDL PCL Boost OpenCV Calibu HAL utils
     LIGHTWEIGHT_APPLICATION)
     
 # Kinfu library
