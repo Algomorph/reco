@@ -114,11 +114,12 @@ int main(int argc, char* argv[]) {
 	// Check that input file exists
 	//----------------------------------------------------------------------------
 
+	/*
 	if (!utl::isFile(input_file)) {
 		std::cout << "Input directory doesn't exist of is not a directory (" << input_file << ")"
 				<< std::endl;
 		return -1;
-	}
+	}*/
 
 	//----------------------------------------------------------------------------
 	// Read log file
@@ -127,7 +128,7 @@ int main(int argc, char* argv[]) {
 	std::cout << "Reading kinect v2 feeds from " << input_file << std::endl;
 
 	hal::Camera camera;
-	set_camera("log~" + input_file, camera, num_kinects);
+	set_camera("log:" + input_file, camera, num_kinects);
 
 	cv::Size2i rgb_size, depth_size;
 	get_image_sizes(camera, rgb_size, depth_size);
