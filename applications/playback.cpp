@@ -191,14 +191,14 @@ int main(int argc, char* argv[]) {
 		for (int i_kinect = 0; i_kinect < num_kinects; i_kinect++) {
 
 			//NOTE: the iKinect*2+1 indexing assumes 2 cameras /Kinect and that depth camera is always after the RGB camera
-			Eigen::Matrix3f cam_model = rig->cameras_[i_kinect * 2 + 1]->K().cast<float>();
+			Eigen::Matrix3f cam_model = rig->cameras_[DEPTH_CHANNEL_OFFSET + i_kinect * 2]->K().cast<float>();
 			//convert to opencv
 			cv::Mat K_depth(3, 3, CV_32F);
 			cv::eigen2cv(cam_model, K_depth);
 			depth_intrinsics.push_back(K_depth);
 			depth_rotations.push_back(
-					rig->cameras_[i_kinect * 2 + 1]->Pose().rotationMatrix().cast<float>());
-			Eigen::Vector3f translation = rig->cameras_[i_kinect * 2 + 1]->Pose().translation().cast<
+					rig->cameras_[DEPTH_CHANNEL_OFFSET + i_kinect * 2]->Pose().rotationMatrix().cast<float>());
+			Eigen::Vector3f translation = rig->cameras_[DEPTH_CHANNEL_OFFSET + i_kinect * 2]->Pose().translation().cast<
 					float>().col(0);
 			depth_translations.push_back(translation);
 		}

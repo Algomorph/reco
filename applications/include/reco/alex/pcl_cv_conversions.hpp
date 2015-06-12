@@ -259,7 +259,7 @@ void cvDepth32F2pclCloud(const cv::Mat& depth, const cv::Mat& K, Eigen::Matrix<f
 		for (size_t col = 0; col < depth.cols; col++) {
 			float z = depth.at<float>(row, col) / 1000.0F;   //convert mm to m
 			//equivalent to multiplying the straight-up pixel coords + depth by inverse of intrinsic matrix K
-			pt << (col - ox) * z * inv_fx, (row - ox) * z * inv_fx, z;
+			pt << (col - ox) * z * inv_fx, (row - oy) * z * inv_fy, z;
 			pt += T;
 			pt = R*pt;
 			cloud.push_back(PointT(pt.x(),pt.y(),pt.z()));
@@ -292,7 +292,7 @@ void cvDepth32F2pclCloudColor(const cv::Mat& depth, const cv::Mat& K, Eigen::Mat
 		for (size_t col = 0; col < depth.cols; col++) {
 			float z = depth.at<float>(row, col) / 1000.0F;   //convert mm to m
 			//equivalent to multiplying the straight-up pixel coords + depth by inverse of intrinsic matrix K
-			pt << (col - ox) * z * inv_fx, (row - ox) * z * inv_fx, z;
+			pt << (col - ox) * z * inv_fx, (row - oy) * z * inv_fy, z;
 			pt = R*pt;
 			pt += T;
 			pcl::PointXYZRGB ptRGB;
@@ -339,7 +339,7 @@ void cvDepth32F2pclCloudColor(const cv::Mat& depth, const cv::Mat& K, Eigen::Mat
 		for (size_t col = 0; col < depth.cols; col++) {
 			float z = depth.at<float>(row, col) / 1000.0F;   //convert mm to m
 			//equivalent to multiplying the straight-up pixel coords + depth by inverse of intrinsic matrix K
-			pt << (col - ox) * z * inv_fx, (row - ox) * z * inv_fx, z;
+			pt << (col - ox) * z * inv_fx, (row - oy) * z * inv_fy, z;
 			pt += T;
 			pt = R*pt;
 			pcl::PointXYZRGB ptRGB(r,g,b);
