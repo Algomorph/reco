@@ -116,7 +116,7 @@ int main(int argc, char* argv[]) {
 
 
 	if (!utl::isFile(input_file)) {
-		std::cout << "Input directory doesn't exist of is not a directory (" << input_file << ")"
+		std::cout << "Input file doesn't exist of is not a file (" << input_file << ")"
 				<< std::endl;
 		return -1;
 	}
@@ -240,8 +240,8 @@ int main(int argc, char* argv[]) {
 
 	//Initialize images for display
 	cv::Mat rgb_combined = cv::Mat(rgb_size.height, rgb_size.width * num_kinects, CV_8UC3);
-	cv::Mat depth_combined = cv::Mat(depth_size.height, depth_size.width * num_kinects, im_depth.type());
-	cv::Mat depthFilteredCombined = cv::Mat(depth_size.height, depth_size.width * num_kinects,
+	cv::Mat depth_combined = cv::Mat(depth_size.height, depth_size.width * num_kinects, CV_32F);
+	cv::Mat depth_filtered_combined = cv::Mat(depth_size.height, depth_size.width * num_kinects,
 			im_depth.type());
 
 	//add more colors for more kinects
@@ -251,7 +251,7 @@ int main(int argc, char* argv[]) {
 
 	while(camera.Capture(images)){
 
-		cloud_fused->clear();            //clear the cloud
+		cloud_fused->clear();            //clear the fused cloud
 		int rgb_col_offset = 0;
 		int depth_col_offset = 0;
 
@@ -271,14 +271,17 @@ int main(int argc, char* argv[]) {
 				}
 			}
 			//copy over to slices of display images
-			cv::Mat slize_rgb(rgb_combined, cv::Rect(rgb_col_offset, 0, rgb_size.width, rgb_size.height));
-			im_rgb.copyTo(slize_rgb);
-			cv::Mat sliceDepth(depth_combined,
+			cv::Mat slice_rgb(rgb_combined, cv::Rect(rgb_col_offset, 0, rgb_size.width, rgb_size.height));
+			im_rgb.copyTo(slice_rgb);
+
+			cv::Mat slice_depth(depth_combined,
 					cv::Rect(depth_col_offset, 0, depth_size.width, depth_size.height));
-			im_depth.copyTo(sliceDepth);
-			cv::Mat sliceDepthFiltered(depthFilteredCombined,
+
+			im_depth.copyTo(slice_depth);
+
+			cv::Mat slice_depth_filtered(depth_filtered_combined,
 					cv::Rect(depth_col_offset, 0, depth_size.width, depth_size.height));
-			im_depth_filtered.copyTo(sliceDepthFiltered);
+			im_depth_filtered.copyTo(slice_depth_filtered);
 
 			//Increase offsets in display images
 			rgb_col_offset += rgb_size.width;
@@ -290,7 +293,7 @@ int main(int argc, char* argv[]) {
 					colors[i_kinect % colors.size()]);
 #endif
 
-			images.clear();
+
 		}
 
 		// Display
@@ -298,8 +301,9 @@ int main(int argc, char* argv[]) {
 		cv::imshow("RGB", rgb_combined);
 #endif
 		cv::imshow("Depth", depth_combined / 4500.0f);
+
 #ifdef DISPLAY_DEPTH_FILTERED
-		cv::imshow("Depth filtered", depthFilteredCombined / 4500.0f);
+		cv::imshow("Depth filtered", depth_filtered_combined / 4500.0f);
 #endif
 
 		//cv::imshow("Depth discontinuities", imDepthDiscontinuities * 255);
@@ -307,7 +311,7 @@ int main(int argc, char* argv[]) {
 
 		// Convert combined depth image to cloud
 #ifdef DISPLAY_MULTI_CLOUD
-		pcl::cvDepth32F2pclCloud(depthFilteredCombined, depth_intrinsics[0], *cloud);
+		pcl::cvDepth32F2pclCloud(depth_filtered_combined, depth_intrinsics[0], *cloud);
 		if (!visualizer.updatePointCloud(cloud)) {
 			visualizer.addPointCloud(cloud);
 		}
@@ -323,6 +327,7 @@ int main(int argc, char* argv[]) {
 		char k = cv::waitKey(1);
 		if (k == 27)
 			break;
+		images.clear();
 	}
 
 	return 0;
