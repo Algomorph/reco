@@ -43,11 +43,13 @@ private:
 	void set_camera(const std::string& cam_uri);
 
 public:
-	static const unsigned int RGB_image_width;
-	static const unsigned int RGB_image_height;
+	static const unsigned int rgb_image_width;
+	static const unsigned int rgb_image_height;
     static const unsigned int depth_image_width;
 	static const unsigned int depth_image_height;
-	static const unsigned int num_channels;
+	static const unsigned int num_channels_per_feed;
+	static const unsigned int depth_channel_offset;
+	static const unsigned int rgb_channel_offset;
 
 	enum kinect2_data_source {
 		hal_log, kinect2_device, image_files //TODO: implement support later if needed

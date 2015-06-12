@@ -260,6 +260,7 @@ int main(int argc, char* argv[]) {
 			im_rgb = images[RGB_CHANNEL_OFFSET + i_kinect*2];
 			im_depth = images[DEPTH_CHANNEL_OFFSET + i_kinect*2];
 
+
 			// Filter depth
 			im_depth.copyTo(im_depth_filtered);
 			utl::getDepthDiscontinuities(im_depth, im_depth_discontinuities, 50000.0f);
