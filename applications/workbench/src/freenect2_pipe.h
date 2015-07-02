@@ -32,7 +32,8 @@ namespace workbench {
 /*
  * TODO: integrate HAL interface
  */
-class freenect2_pipe: public datapipe::runnable {
+class freenect2_pipe:
+		public datapipe::runnable {
 Q_OBJECT
 
 private:
@@ -45,14 +46,14 @@ private:
 public:
 	static const unsigned int rgb_image_width;
 	static const unsigned int rgb_image_height;
-    static const unsigned int depth_image_width;
+	static const unsigned int depth_image_width;
 	static const unsigned int depth_image_height;
 	static const unsigned int num_channels_per_feed;
 	static const unsigned int depth_channel_offset;
 	static const unsigned int rgb_channel_offset;
 
 	enum kinect2_data_source {
-		hal_log, kinect2_device, image_files //TODO: implement support later if needed
+		hal_log, kinect2_device, image_files //TODO: implement image file support later if needed
 	};
 
 	freenect2_pipe(kinect2_data_source source, const std::string& path = "capture.log");

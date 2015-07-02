@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<ui version="5.0">
+<ui version="4.0">
  <class>main_window</class>
  <widget class="QMainWindow" name="main_window">
   <property name="geometry">
@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Augmentarium HMD</string>
+   <string>Reco Workbench</string>
   </property>
   <property name="windowIcon">
    <iconset resource="application.qrc">
@@ -32,7 +32,7 @@
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <layout class="QGridLayout" name="gridLayout">
+     <layout class="QGridLayout" name="central_layout">
       <item row="1" column="0">
        <widget class="QPushButton" name="start_camera_button">
         <property name="text">
@@ -41,14 +41,41 @@
        </widget>
       </item>
       <item row="2" column="0">
-       <widget class="QPushButton" name="launch_viewer_button">
-        <property name="text">
-         <string>Launch Viewer</string>
-        </property>
-       </widget>
+       <layout class="QHBoxLayout" name="raw_feed_layout">
+        <item>
+         <layout class="QVBoxLayout" name="depth_group_layout">
+          <item>
+           <widget class="QPushButton" name="show_depth_feed_button">
+            <property name="text">
+             <string>Show Depth Feed</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+        <item>
+         <layout class="QVBoxLayout" name="rgb_group_layout">
+          <item>
+           <widget class="QPushButton" name="show_depth_feed_button_">
+            <property name="text">
+             <string>Show RGB Feed</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </item>
+       </layout>
       </item>
       <item row="0" column="0">
-       <widget class="reco::datapipe::video_widget" name="videoWidget" native="true"/>
+       <widget class="reco::datapipe::video_widget" name="videoWidget" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <zorder>horizontalLayoutWidget</zorder>
+       </widget>
       </item>
      </layout>
     </item>
@@ -67,9 +94,33 @@
     <property name="title">
      <string>&amp;File</string>
     </property>
+    <widget class="QMenu" name="menu_open_rgb_stream">
+     <property name="title">
+      <string>Open RGB-D Stream</string>
+     </property>
+     <addaction name="action_open_kinect_devices"/>
+     <addaction name="action_open_hal_log"/>
+     <addaction name="action_open_image_folder"/>
+    </widget>
+    <addaction name="menu_open_rgb_stream"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
+  <action name="action_open_kinect_devices">
+   <property name="text">
+    <string>Kinect Devices</string>
+   </property>
+  </action>
+  <action name="action_open_hal_log">
+   <property name="text">
+    <string>Log File</string>
+   </property>
+  </action>
+  <action name="action_open_image_folder">
+   <property name="text">
+    <string>Image Folder</string>
+   </property>
+  </action>
  </widget>
  <customwidgets>
   <customwidget>

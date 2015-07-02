@@ -18,23 +18,24 @@
 #define enderr (reco::utils::error_end_token::get_instance())
 
 namespace reco {
-namespace utils{
-
+namespace utils {
 
 /**
  * Class that abstracts-away some of the hassle behind creating custom error messages for standard errors.
  *
  * Example usage: err(std::runtime_error) << 1 << 2 << 3 << std::endl << "hello" << " " << true << enderr;
  */
-class error_end_token{
+class error_end_token {
 private:
-	error_end_token(){};
+	error_end_token() {
+	}
+	;
 
 	//don't implement copy methods
 	error_end_token(error_end_token const&) = delete;
-	void operator=(error_end_token const&)  = delete;
+	void operator=(error_end_token const&) = delete;
 public:
-	static const error_end_token& get_instance(){
+	static const error_end_token& get_instance() {
 		//guaranteed to be destroyed.
 		//instantiated on first use.
 		static error_end_token instance;
@@ -47,12 +48,14 @@ class error_stream {
 	static_assert(std::is_base_of<std::exception, E>::value,
 			"Template Parameter EX_CL must implement std::exception"
 	);
-private:
+	private:
 	std::stringstream message_stream;
 	bool thrown;
 
 public:
-	error_stream():message_stream(),thrown(false){}
+	error_stream() :
+			message_stream(), thrown(false) {
+	}
 
 	/**
 	 * Add something to the error message
@@ -71,8 +74,8 @@ public:
 	 * @param arg error_end_token singleton
 	 * @return reference to self, to allow "<<" nesting
 	 */
-	error_stream& operator << (const error_end_token& arg){
-		if(!thrown){
+	error_stream& operator <<(const error_end_token& arg) {
+		if (!thrown) {
 			throw E(message_stream.str());
 			thrown = true;
 		}
@@ -90,19 +93,22 @@ public:
 	 * @param manip -- usually, std::endl
 	 * @return reference to self, to allow "<<" nesting
 	 */
-	error_stream& operator<<(standard_end_line manip){
-	        // call the function, but we cannot return it's value
-			manip(this->message_stream);
-			message_stream << "           ";
-	        //throw E(message_stream.str());
-	        return *this;
+	error_stream& operator<<(standard_end_line manip) {
+		// call the function, but we cannot return it's value
+		manip(this->message_stream);
+		message_stream << "           ";
+		//throw E(message_stream.str());
+		return *this;
 	}
-
 
 };
 
+class not_implemented:
+		public std::logic_error{
+public:
+	not_implemented(): std::logic_error("Function not yet implemented."){}
 
-
+};
 
 } //end namespace util
 } //end namespace reco

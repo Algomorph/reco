@@ -48,10 +48,18 @@ private:
 	QThread* kinect_data_thread;
 	std::unique_ptr<freenect2_pipe> pipe;
 
+	void connect_actions();
+	void hook_kinect_source_to_thread();
+
+
 private slots:
 	void on_launch_viewer_button_released();
-	void on_start_camera_button_released();
+	void on_play_button_released();
 	void report_error(QString string);
+	void open_kinect_devices();
+	void open_hal_log();
+	void open_image_folder();
+
 
 };
 

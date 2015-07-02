@@ -83,8 +83,8 @@ freenect2_pipe::freenect2_pipe(kinect2_data_source source, const std::string& pa
 		set_camera("log://" + path);
 		break;
 	case kinect2_data_source::image_files:
-		//TODO: not sure this is the right way to read image files
-		set_camera("file");
+		//TODO: implementation pending. not sure if "set_camera("file")" is the right way to read image files
+		throw reco::utils::not_implemented();
 		break;
 	default:
 		err(std::invalid_argument) << "Unknown value for kinect2_data_source. Got: " << source
