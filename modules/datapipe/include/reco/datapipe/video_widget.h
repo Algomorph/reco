@@ -24,7 +24,7 @@ class video_widget: public image_widget {
 public:
 	video_widget(QWidget *parent = NULL);
 	virtual ~video_widget(){};
-	void connectToVideoPipeline(const base_video_pipeline* pipeline);
+	void connect_to_video_pipeline(const base_video_pipeline* pipeline);
 
 };
 } /* namespace video */

@@ -9,21 +9,13 @@
 //local
 #include <src/freenect2_pipe.h>
 #include <reco/utils/cpp_exception_util.h>
+#include <reco/workbench/kinect_v2_info.h>
 
 //std
 #include <stdexcept>
 
 namespace reco {
 namespace workbench {
-
-// kinect v2 resolution
-const unsigned int freenect2_pipe::depth_image_width = 512;
-const unsigned int freenect2_pipe::depth_image_height = 424;
-const unsigned int freenect2_pipe::rgb_image_width = 1920;
-const unsigned int freenect2_pipe::rgb_image_height = 1080;
-const unsigned int freenect2_pipe::num_channels_per_feed = 2;
-const unsigned int freenect2_pipe::depth_channel_offset = 1;
-const unsigned int freenect2_pipe::rgb_channel_offset = 0;
 
 /*
  * Set camera using requested URI
@@ -36,39 +28,39 @@ void freenect2_pipe::set_camera(const std::string& cam_uri) {
 
 	//check that we have appropriate number of channels
 	//the total number of channels must be evenly divisible by the number of channels per feed
-	if (num_channels % freenect2_pipe::num_channels_per_feed != 0) {
+	if (num_channels % kinect_v2_info::num_channels_per_feed != 0) {
 		err(std::invalid_argument)
 				<< "Incorrect number of channels for Kinect v2 feed! Need exactly "
-				<< freenect2_pipe::num_channels_per_feed << "! Please check cam uri. Got " << cam_uri
+				<< kinect_v2_info::num_channels_per_feed << "! Please check cam uri. Got " << cam_uri
 				<< enderr;
 	}
 
-	num_kinects = num_channels / freenect2_pipe::num_channels_per_feed;
+	num_kinects = num_channels / kinect_v2_info::num_channels_per_feed;
 
 	//check that the feed sizes match for RGB & depth, for each kinect
-	if (rgbd_camera.Width(freenect2_pipe::rgb_channel_offset) != freenect2_pipe::rgb_image_width
+	if (rgbd_camera.Width(kinect_v2_info::rgb_channel_offset) != kinect_v2_info::rgb_image_width
 			||
-			rgbd_camera.Height(freenect2_pipe::rgb_channel_offset)
-					!= freenect2_pipe::rgb_image_height
+			rgbd_camera.Height(kinect_v2_info::rgb_channel_offset)
+					!= kinect_v2_info::rgb_image_height
 			||
-			rgbd_camera.Width(freenect2_pipe::depth_channel_offset)
-					!= freenect2_pipe::depth_image_width
+			rgbd_camera.Width(kinect_v2_info::depth_channel_offset)
+					!= kinect_v2_info::depth_image_width
 			||
-			rgbd_camera.Height(freenect2_pipe::depth_channel_offset)
-					!= freenect2_pipe::depth_image_height
+			rgbd_camera.Height(kinect_v2_info::depth_channel_offset)
+					!= kinect_v2_info::depth_image_height
 					) {
 		err(std::invalid_argument) << "Wrong camera dimensions. " << std::endl
 				<< "Expecting (width x height): " << std::endl
-				<< "  RGB: " << freenect2_pipe::rgb_image_width << " x "
-				<< freenect2_pipe::rgb_image_height << std::endl
-				<< "  depth: " << freenect2_pipe::depth_image_width << " x "
-				<< freenect2_pipe::depth_image_height << std::endl
+				<< "  RGB: " << kinect_v2_info::rgb_image_width << " x "
+				<< kinect_v2_info::rgb_image_height << std::endl
+				<< "  depth: " << kinect_v2_info::depth_image_width << " x "
+				<< kinect_v2_info::depth_image_height << std::endl
 				<< "Got:" << std::endl
-				<< "  RGB: " << rgbd_camera.Width(freenect2_pipe::rgb_channel_offset) << " x "
-				<< rgbd_camera.Height(freenect2_pipe::rgb_channel_offset) << std::endl
-				<< "  depth: " << rgbd_camera.Width(freenect2_pipe::depth_channel_offset) << " x "
-				<< rgbd_camera.Height(freenect2_pipe::depth_channel_offset) << std::endl
-				<< "Got cam_uri: " << cam_uri << enderr;
+				<< "  RGB: " << rgbd_camera.Width(kinect_v2_info::rgb_channel_offset) << " x "
+				<< rgbd_camera.Height(kinect_v2_info::rgb_channel_offset) << std::endl
+				<< "  depth: " << rgbd_camera.Width(kinect_v2_info::depth_channel_offset) << " x "
+				<< rgbd_camera.Height(kinect_v2_info::depth_channel_offset) << std::endl
+				<< "Got casm_uri: " << cam_uri << enderr;
 	}
 
 }
@@ -82,7 +74,7 @@ freenect2_pipe::freenect2_pipe(kinect2_data_source source, const std::string& pa
 	case kinect2_data_source::hal_log:
 		set_camera("log://" + path);
 		break;
-	case kinect2_data_source::image_files:
+	case kinect2_data_source::image_folder:
 		//TODO: implementation pending. not sure if "set_camera("file")" is the right way to read image files
 		throw reco::utils::not_implemented();
 		break;
@@ -97,10 +89,20 @@ freenect2_pipe::freenect2_pipe(kinect2_data_source source, const std::string& pa
 freenect2_pipe::~freenect2_pipe() {
 
 }
+/**
+ * Get number of kinect feeds
+ * @return number of kinect feeds in the source, 0 if no source is available
+ */
+uint freenect2_pipe::get_num_kinects(){
+	return num_kinects;
+}
 
 void freenect2_pipe::run() {
-	while (!stop_requested) {
-
+	if(has_camera){
+		std::vector<cv::Mat> images;
+		while (!stop_requested && !pause_requested && rgbd_camera.Capture(images)) {
+			emit frame(images);
+		}
 	}
 }
 

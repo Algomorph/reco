@@ -10,9 +10,15 @@
 #define RECO_DATAPIPE_STATICTYPEREGISTRATION_H_
 #pragma once
 
+//qt
 #include <QMetaType>
-#include <opencv2/core/core.hpp>
 #include <QDebug>
+
+//opencv
+#include <opencv2/core/core.hpp>
+
+//std
+#include <vector>
 
 Q_DECLARE_METATYPE(cv::Mat);
 
@@ -24,7 +30,8 @@ public:
 	static int initialize(){
 		if(!registrationDone){
 			registrationDone = true;
-			qRegisterMetaType<cv::Mat>("Mat");
+			qRegisterMetaType<cv::Mat>("cv::Mat");
+			qRegisterMetaType<std::vector<cv::Mat>>("std::vector<cv::Mat>");
 		}
 		return 0;
 	};

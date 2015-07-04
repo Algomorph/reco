@@ -14,30 +14,56 @@ namespace datapipe {
 /**
  *
  */
-runnable::runnable(): stop_requested(false){}
+runnable::runnable(){}
 
 runnable::~runnable(){}
 
 void runnable::hook_to_thread(QThread* thread){
 	connect(thread, SIGNAL(started()), this,SLOT(start()));
-	connect(this, SIGNAL(finished()), thread, SLOT(quit()));
-	connect(this, SIGNAL(finished()), thread, SLOT(deleteLater()));
+	//on runnable being stopped, quit the thread
+	connect(this, SIGNAL(stopped()), thread, SLOT(quit()));
+	//mark both object and thread for deletion after stop
+	connect(this, SIGNAL(stopped()), thread, SLOT(deleteLater()));
 	connect(thread, SIGNAL(finished()),thread,SLOT(deleteLater()));
 }
 
+
 /**
- * Reset stop_requested flag and start the runnable job,
+ * Start the runnable job until either paused or stopped
  */
 void runnable::start(){
-	stop_requested = false;
+	is_paused = false;//reset pause flag in case this was paused before start
 	run();
+	if(stop_requested){
+		emit stopped();
+		stop_requested = false;
+	}else if(pause_requested){
+		emit paused();
+		is_paused = true;
+		pause_requested = false;
+	}
 }
+
+
 
 /**
  * Set the stop_requested flag to true
  */
 void runnable::request_stop(){
-	stop_requested=true;
+	if(is_paused){
+		emit stopped();
+	}else{
+		stop_requested=true;
+	}
+}
+
+/**
+ * Set the pause_requested flag to true
+ */
+void runnable::request_pause(){
+	if(!is_paused){
+		pause_requested=true;
+	}
 }
 
 } /* namespace datapipe */

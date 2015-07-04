@@ -56,11 +56,17 @@ void image_widget::set_image_fast(const cv::Mat& mat) {
 	}
 
 	cvtColor(mat, tmp, CV_BGR2RGB);
-
+	//image = QImage(mat.data, mat.cols, mat.rows, mat.cols * 3, QImage::Format_RGB888);
 	// Assign OpenCV's image buffer to the QImage. Note that the bytesPerLine parameter
 	// is 3*width because each pixel has three bytes.
 	image = QImage(tmp.data, tmp.cols, tmp.rows, tmp.cols * 3, QImage::Format_RGB888);
 
+	repaint();
+}
+
+void image_widget::set_blank(uint width, uint height){
+
+	image = QImage(QSize(width,height), QImage::Format_RGB888);
 	repaint();
 }
 

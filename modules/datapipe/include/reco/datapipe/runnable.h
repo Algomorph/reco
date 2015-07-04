@@ -28,6 +28,10 @@ public:
 	virtual ~runnable();
 	void hook_to_thread(QThread* thread);
 
+private:
+	void run_helper();
+
+
 protected:
 	/**
 	 * Primary job function which is executed on the thread hooked to this runnable.
@@ -38,11 +42,14 @@ protected:
 	 * Manually set from the caller thread via the request_stop() slot when the job is
 	 * requested to stop before finishing.
 	 */
-	bool stop_requested;
+	bool stop_requested = false;
+	bool pause_requested = false;
+	bool is_paused = false;
 
 public slots:
 	virtual void start();
 	virtual void request_stop();
+	virtual void request_pause();
 
 signals:
 	/**
@@ -50,7 +57,8 @@ signals:
 	 * @param error
 	 */
 	void error(QString err);
-	void finished();
+	void paused();
+	void stopped();
 
 };
 

@@ -32,7 +32,7 @@ bool parseCommandLine(int argc, char** argv, std::string& inputFile, std::string
 	}
 
 	if (pcl::console::parse_argument(argc, argv, "-o", outputDir) < 0) {
-		outputDir = inputFile;hal::Reader reader(log_path);
+		outputDir = inputFile;hal::Reader reader(inputFile);
 	}
 
 	if (pcl::console::parse_argument(argc, argv, "-c", calibrationFile) < 0) {

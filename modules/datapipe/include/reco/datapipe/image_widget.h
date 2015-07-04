@@ -33,6 +33,7 @@ public:
 	}
 
 public slots:
+	void set_blank(uint width, uint height);
 	void set_image(const cv::Mat& image);
 	void set_image_and_resize(const cv::Mat& image);
 	void set_image_fast(const cv::Mat& image);

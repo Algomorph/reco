@@ -20,7 +20,7 @@ video_widget::video_widget(QWidget *parent) : image_widget(parent) {
 	// TODO Auto-generated destructor stub
 //}
 
-void video_widget::connectToVideoPipeline(const base_video_pipeline* pipeline){
+void video_widget::connect_to_video_pipeline(const base_video_pipeline* pipeline){
 	connect(pipeline, SIGNAL(frameReady(cv::Mat)),this, SLOT(setImageFast(cv::Mat)));
 }
 

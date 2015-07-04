@@ -14,6 +14,10 @@ namespace reco {
 namespace workbench {
 
 class kinect_v2_info {
+
+private:
+	kinect_v2_info();
+public:
 	static const unsigned int rgb_image_width;
 	static const unsigned int rgb_image_height;
 	static const unsigned int depth_image_width;
@@ -21,9 +25,6 @@ class kinect_v2_info {
 	static const unsigned int num_channels_per_feed;
 	static const unsigned int depth_channel_offset;
 	static const unsigned int rgb_channel_offset;
-private:
-	kinect_v2_info();
-public:
 	virtual ~kinect_v2_info();
 };
 
