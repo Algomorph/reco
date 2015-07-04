@@ -32,7 +32,7 @@ bool parseCommandLine(int argc, char** argv, std::string& inputFile, std::string
 	}
 
 	if (pcl::console::parse_argument(argc, argv, "-o", outputDir) < 0) {
-		outputDir = inputFile;
+		outputDir = inputFile;hal::Reader reader(log_path);
 	}
 
 	if (pcl::console::parse_argument(argc, argv, "-c", calibrationFile) < 0) {
@@ -42,17 +42,17 @@ bool parseCommandLine(int argc, char** argv, std::string& inputFile, std::string
 	return true;
 }
 
-//------------------------------------------------------------------------------
+//------ReadMessage------------------------------------------------------------------------
 // Extracts single images out of a log file
 //------------------------------------------------------------------------------
 
 /** Extracts posys out of a log file. */
-void extractImages(const std::string& logPath, const std::string& outputDir,
+void extractImages(const std::string& log_path, const std::string& outputDir,
 		const std::shared_ptr<calibu::Rigd>& rig, const bool doUndistort) {
 
 	std::vector<calibu::LookupTable> lookupTables; //for undistort
 
-	hal::Reader reader(logPath);
+	hal::Reader reader(log_path);
 	reader.Enable(hal::Msg_Type_Camera);
 
 	int idx = 0;

@@ -7,8 +7,8 @@
  *   Copyright: (c) Gregory Kramida 2014
  */
 
-#ifndef HMD_MAIN_WINDOW_H_
-#define HMD_MAIN_WINDOW_H_
+#ifndef RECO_WORKBENCH_MAIN_WINDOW_H_
+#define RECO_WORKBENCH_MAIN_WINDOW_H_
 
 #pragma once
 
