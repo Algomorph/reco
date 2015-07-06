@@ -104,14 +104,11 @@ uint freenect2_pipe::get_num_kinects(){
 void freenect2_pipe::run() {
 	if(has_camera){
 		bool can_capture = true;
-		std::vector<cv::Mat> images = std::vector<cv::Mat>();
+		std::vector<cv::Mat> images;
 		while (!stop_requested && !pause_requested
-				//&& rgbd_camera.Capture(images)
+				&& rgbd_camera.Capture(images)
 				) {
-			images.emplace_back(kinect_v2_info::rgb_image_height,kinect_v2_info::rgb_image_width,16, cv::Scalar(0,0,0));
 			emit frame(images);
-			images.clear();
-			//images = std::vector<cv::Mat>();
 		}
 	}
 }

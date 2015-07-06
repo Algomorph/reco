@@ -23,6 +23,11 @@ reco_add_subproject(playback
     DEPENDENCIES LibDL PCL Boost OpenCV Calibu HAL utils
     LIGHTWEIGHT_APPLICATION)
     
+reco_add_subproject(test
+    SOURCES test.cpp
+    DEPENDENCIES OpenCV HAL utils
+    LIGHTWEIGHT_APPLICATION)
+    
 # Kinfu library
 #TODO: fix Alex's crude hack if necessary                                      
 #add_library(kinfu SHARED kinfu.cpp)

@@ -26,6 +26,7 @@
 
 //define what to display
 #define DISPLAY_FUSED_CLOUD
+#define DISPLAY_RGB
 //#define DISPLAY_MULTI_CLOUD
 
 #define RGB_CHANNEL_OFFSET 0
@@ -154,7 +155,7 @@ int main(int argc, char* argv[]) {
 				<< std::endl;
 		float curOffset = 0.0F;
 		float step = 500.0F;	//mm
-		for (int iKinect = 0; iKinect < num_kinects; iKinect++) {
+		for (int i_kinect = 0; i_kinect < num_kinects; i_kinect++) {
 
 			//generate intrinsics
 			cv::Mat K_depth(3, 3, CV_32F);
@@ -227,7 +228,10 @@ int main(int argc, char* argv[]) {
 			0.0, -1.0, 0.0,  // normal
 			0.0);            // viewport
 #endif
-
+#ifdef DISPLAY_RGB
+	cv::namedWindow("RGB", cv::WINDOW_NORMAL);
+	cv::resizeWindow("RGB", 1800, 600);
+#endif
 	cv::Mat im_rgb;
 	cv::Mat im_depth;
 	cv::Mat im_depth_discontinuities;

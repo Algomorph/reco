@@ -24,7 +24,7 @@ namespace workbench {
 
 #define CAMERA_PX_WIDTH 1920
 #define CAMERA_PX_HEIGHT 1080
-#define DEFAULT_LOG_FILE_PATH "/media/algomorph/Data/reco/cap/pos_D_slow_rotating_human.log"
+#define DEFAULT_LOG_FILE_PATH "/media/algomorph/Data/reco/cap/pos_D_slow_rotating_human_2_kinects_1240_frames.log"
 
 main_window::main_window() :
 		ui(new Ui_main_window),
@@ -89,10 +89,12 @@ void main_window::tmp_display_image(std::vector<cv::Mat> images){
 //	using namespace std;
 //	std::cout << "Num images: " << images.size() << std::endl;
 //	std::cout << "rows X cols: " << images[0].rows << " X " << images[0].cols << endl;
-//	std::cout << "type: " << images[0].type() << endl << endl;
-	cv::Mat copy = cv::Mat(images[0].rows,images[0].cols,images[0].type());
-	images[0].copyTo(copy);
-	ui->rgb_video_widget->set_image_fast(copy);
+	std::cout << "channels: " << images[0].channels() << std::endl;
+	std::cout << "type: " << images[0].type() << std::endl << std::endl;
+	//cv::Mat copy = cv::Mat(images[0].rows,images[0].cols,images[0].type());
+
+	//images[0].copyTo(copy);
+	ui->rgb_video_widget->set_image_fast(images[0]);
 }
 
 void main_window::on_play_button_released() {
