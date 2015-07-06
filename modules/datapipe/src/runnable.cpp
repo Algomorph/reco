@@ -12,9 +12,9 @@ namespace reco {
 namespace datapipe {
 
 /**
- *
+ *Default constructor
  */
-runnable::runnable(){}
+runnable::runnable():stop_requested(false),pause_requested(false),is_paused(false){}
 
 runnable::~runnable(){}
 

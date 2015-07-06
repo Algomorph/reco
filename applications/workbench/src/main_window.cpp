@@ -28,13 +28,13 @@ namespace workbench {
 
 main_window::main_window() :
 		ui(new Ui_main_window),
-				pipe()
+				pipe(new freenect2_pipe(freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH))
 {
 	ui->setupUi(this);
 	connect_actions();
-	pipe = std::unique_ptr<freenect2_pipe>(new freenect2_pipe(freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH));
-	hook_kinect_source_to_thread();
 	ui->rgb_video_widget->set_blank(kinect_v2_info::rgb_image_width,kinect_v2_info::rgb_image_height);
+	hook_kinect_source_to_thread();
+
 }
 
 main_window::~main_window() {
@@ -86,7 +86,12 @@ void main_window::hook_kinect_source_to_thread(){
 }
 
 void main_window::tmp_display_image(std::vector<cv::Mat> images){
-	cv::Mat copy = cv::Mat(images[0]);
+//	using namespace std;
+//	std::cout << "Num images: " << images.size() << std::endl;
+//	std::cout << "rows X cols: " << images[0].rows << " X " << images[0].cols << endl;
+//	std::cout << "type: " << images[0].type() << endl << endl;
+	cv::Mat copy = cv::Mat(images[0].rows,images[0].cols,images[0].type());
+	images[0].copyTo(copy);
 	ui->rgb_video_widget->set_image_fast(copy);
 }
 

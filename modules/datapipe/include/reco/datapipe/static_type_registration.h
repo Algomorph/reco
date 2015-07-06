@@ -19,6 +19,7 @@
 
 //std
 #include <vector>
+#include <memory>
 
 Q_DECLARE_METATYPE(cv::Mat);
 
@@ -32,6 +33,7 @@ public:
 			registrationDone = true;
 			qRegisterMetaType<cv::Mat>("cv::Mat");
 			qRegisterMetaType<std::vector<cv::Mat>>("std::vector<cv::Mat>");
+			qRegisterMetaType<std::shared_ptr<std::vector<cv::Mat>>>("std::shared_ptr<std::vector<cv::Mat>>");
 		}
 		return 0;
 	};

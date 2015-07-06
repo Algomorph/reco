@@ -13,9 +13,37 @@
 
 //std
 #include <stdexcept>
+#include <memory>
 
 namespace reco {
 namespace workbench {
+
+
+freenect2_pipe::freenect2_pipe(kinect2_data_source source, const std::string& path):runnable() {
+	switch (source) {
+	case kinect2_data_source::kinect2_device:
+		//note: will open all kinects as "single" camera
+		set_camera("freenect2:[rgb=1,ir=0,depth=1]//");
+		break;
+	case kinect2_data_source::hal_log:
+		set_camera("log://" + path);
+		break;
+	case kinect2_data_source::image_folder:
+		//TODO: implementation pending. not sure if "set_camera("file")" is the right way to read image files
+		throw reco::utils::not_implemented();
+		break;
+	default:
+		err(std::invalid_argument) << "Unknown value for kinect2_data_source. Got: " << source
+				<< enderr;
+		break;
+	}
+
+}
+
+freenect2_pipe::~freenect2_pipe() {
+
+}
+
 
 /*
  * Set camera using requested URI
@@ -65,30 +93,6 @@ void freenect2_pipe::set_camera(const std::string& cam_uri) {
 
 }
 
-freenect2_pipe::freenect2_pipe(kinect2_data_source source, const std::string& path) {
-	switch (source) {
-	case kinect2_data_source::kinect2_device:
-		//note: will open all kinects as "single" camera
-		set_camera("freenect2:[rgb=1,ir=0,depth=1]//");
-		break;
-	case kinect2_data_source::hal_log:
-		set_camera("log://" + path);
-		break;
-	case kinect2_data_source::image_folder:
-		//TODO: implementation pending. not sure if "set_camera("file")" is the right way to read image files
-		throw reco::utils::not_implemented();
-		break;
-	default:
-		err(std::invalid_argument) << "Unknown value for kinect2_data_source. Got: " << source
-				<< enderr;
-		break;
-	}
-
-}
-
-freenect2_pipe::~freenect2_pipe() {
-
-}
 /**
  * Get number of kinect feeds
  * @return number of kinect feeds in the source, 0 if no source is available
@@ -99,9 +103,15 @@ uint freenect2_pipe::get_num_kinects(){
 
 void freenect2_pipe::run() {
 	if(has_camera){
-		std::vector<cv::Mat> images;
-		while (!stop_requested && !pause_requested && rgbd_camera.Capture(images)) {
+		bool can_capture = true;
+		std::vector<cv::Mat> images = std::vector<cv::Mat>();
+		while (!stop_requested && !pause_requested
+				//&& rgbd_camera.Capture(images)
+				) {
+			images.emplace_back(kinect_v2_info::rgb_image_height,kinect_v2_info::rgb_image_width,16, cv::Scalar(0,0,0));
 			emit frame(images);
+			images.clear();
+			//images = std::vector<cv::Mat>();
 		}
 	}
 }

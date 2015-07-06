@@ -42,9 +42,9 @@ protected:
 	 * Manually set from the caller thread via the request_stop() slot when the job is
 	 * requested to stop before finishing.
 	 */
-	bool stop_requested = false;
-	bool pause_requested = false;
-	bool is_paused = false;
+	bool stop_requested;
+	bool pause_requested;
+	bool is_paused;
 
 public slots:
 	virtual void start();

@@ -43,6 +43,7 @@ private:
 	hal::Camera rgbd_camera;
 	bool has_camera = false;
 	uint num_kinects = 0;
+	std::shared_ptr<std::vector<cv::Mat>> images;
 
 	void set_camera(const std::string& cam_uri);
 
@@ -70,7 +71,7 @@ signals:
 	 * Emitted when a new frame had been processed
 	 * @param
 	 */
-	void frame(std::vector<cv::Mat>);
+	void frame(std::vector<cv::Mat> images);
 	void output_ready();
 };
 
