@@ -1,5 +1,5 @@
 /*
- * freenect2_pipe.cpp
+ * freenect2_pipe2.cpp
  *
  *  Created on: May 28, 2015
  *      Author: Gregory Kramida
@@ -7,7 +7,7 @@
  */
 
 //local
-#include <src/freenect2_pipe.h>
+#include <src/freenect2_pipe2.h>
 #include <reco/utils/cpp_exception_util.h>
 #include <reco/workbench/kinect_v2_info.h>
 
@@ -19,7 +19,7 @@ namespace reco {
 namespace workbench {
 
 
-freenect2_pipe::freenect2_pipe(kinect2_data_source source, const std::string& path):runnable() {
+freenect2_pipe2::freenect2_pipe2(kinect2_data_source source, const std::string& path):runnable() {
 	switch (source) {
 	case kinect2_data_source::kinect2_device:
 		//note: will open all kinects as "single" camera
@@ -40,7 +40,7 @@ freenect2_pipe::freenect2_pipe(kinect2_data_source source, const std::string& pa
 
 }
 
-freenect2_pipe::~freenect2_pipe() {
+freenect2_pipe2::~freenect2_pipe2() {
 
 }
 
@@ -48,7 +48,7 @@ freenect2_pipe::~freenect2_pipe() {
 /*
  * Set camera using requested URI
  */
-void freenect2_pipe::set_camera(const std::string& cam_uri) {
+void freenect2_pipe2::set_camera(const std::string& cam_uri) {
 	rgbd_camera = hal::Camera(cam_uri);
 	has_camera = true;
 
@@ -97,11 +97,11 @@ void freenect2_pipe::set_camera(const std::string& cam_uri) {
  * Get number of kinect feeds
  * @return number of kinect feeds in the source, 0 if no source is available
  */
-uint freenect2_pipe::get_num_kinects(){
+uint freenect2_pipe2::get_num_kinects(){
 	return num_kinects;
 }
 
-void freenect2_pipe::run() {
+void freenect2_pipe2::run() {
 	if(has_camera){
 		bool can_capture = true;
 		std::vector<cv::Mat> images;

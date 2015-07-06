@@ -6,9 +6,10 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
+
+#ifndef MODULES_DATAPIPE_SRC_FREENECT2_PIPE2_H_
+#define MODULES_DATAPIPE_SRC_FREENECT2_PIPE2_H_
 #pragma once
-#ifndef MODULES_DATAPIPE_SRC_FREENECT2_PIPE_H_
-#define MODULES_DATAPIPE_SRC_FREENECT2_PIPE_H_
 
 //qt
 #include <QObject>
@@ -24,6 +25,7 @@
 
 //std
 #include <vector>
+#include <thread>
 
 namespace reco {
 namespace workbench {
@@ -35,7 +37,7 @@ namespace workbench {
 /*
  * TODO: integrate HAL interface
  */
-class freenect2_pipe:
+class freenect2_pipe2:
 		public datapipe::runnable {
 Q_OBJECT
 
@@ -53,8 +55,8 @@ public:
 		hal_log, kinect2_device, image_folder //TODO: implement image folder support later if needed
 	};
 
-	freenect2_pipe(kinect2_data_source source = hal_log, const std::string& path = "capture.log");
-	virtual ~freenect2_pipe();
+	freenect2_pipe2(kinect2_data_source source = hal_log, const std::string& path = "capture.log");
+	virtual ~freenect2_pipe2();
 	uint get_num_kinects();
 
 protected:

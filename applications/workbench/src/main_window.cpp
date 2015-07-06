@@ -33,7 +33,8 @@ main_window::main_window() :
 	ui->setupUi(this);
 	connect_actions();
 	ui->rgb_video_widget->set_blank(kinect_v2_info::rgb_image_width,kinect_v2_info::rgb_image_height);
-	hook_kinect_source_to_thread();
+	//hook_kinect_source_to_thread();
+	hook_kinect_source_to_buttons();
 
 }
 
@@ -75,14 +76,19 @@ void main_window::hook_kinect_source_to_thread(){
 		//set up error reporting;
 		connect(pipe.get(), SIGNAL(error(QString)), this, SLOT(report_error(QString)));
 		pipe->hook_to_thread(kinect_data_thread);
-		//connect the play and pause buttons
-		connect(ui->pause_button, SIGNAL(released()), pipe.get(), SLOT(request_pause()));
-		connect(ui->play_button, SIGNAL(released()), pipe.get(), SLOT(start()));
-		//connect the pipe output to viewer
-		connect(pipe.get(), SIGNAL(frame(std::vector<cv::Mat>)), this, SLOT(tmp_display_image(std::vector<cv::Mat>)));
+		hook_kinect_source_to_buttons();
 		kinect_data_thread->start();
 		//pipe->request_pause();
 	}
+}
+
+void main_window::hook_kinect_source_to_buttons(){
+	//connect the play and pause buttons
+	connect(ui->pause_button, SIGNAL(released()), pipe.get(), SLOT(request_pause()));
+	connect(ui->play_button, SIGNAL(released()), pipe.get(), SLOT(start()));
+	//connect the pipe output to viewer
+	connect(pipe.get(), SIGNAL(frame(std::vector<cv::Mat>)), this, SLOT(tmp_display_image(std::vector<cv::Mat>)));
+	connect(pipe.get(), SIGNAL(rgb_frame(cv::Mat)), this, SLOT(tmp_display_rgb(cv::Mat)));
 }
 
 void main_window::tmp_display_image(std::vector<cv::Mat> images){
@@ -95,6 +101,9 @@ void main_window::tmp_display_image(std::vector<cv::Mat> images){
 
 	//images[0].copyTo(copy);
 	ui->rgb_video_widget->set_image_fast(images[0]);
+}
+void main_window::tmp_display_rgb(cv::Mat rgb){
+	ui->rgb_video_widget->set_image_fast(rgb);
 }
 
 void main_window::on_play_button_released() {

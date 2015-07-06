@@ -51,6 +51,7 @@ private:
 
 	void connect_actions();
 	void hook_kinect_source_to_thread();
+	void hook_kinect_source_to_buttons();
 
 
 
@@ -61,6 +62,7 @@ private slots:
 	void open_hal_log();
 	void open_image_folder();
 	void tmp_display_image(std::vector<cv::Mat> images);
+	void tmp_display_rgb(cv::Mat rgb);
 
 };
 
