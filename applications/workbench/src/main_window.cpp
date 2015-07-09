@@ -18,7 +18,6 @@
 
 //HAL
 
-
 namespace reco {
 namespace workbench {
 
@@ -28,13 +27,15 @@ namespace workbench {
 
 main_window::main_window() :
 		ui(new Ui_main_window),
-				pipe(new freenect2_pipe(freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH))
+				buffer(new utils::pessimistic_swap_buffer<std::vector<cv::Mat>>()),
+				pipe(buffer, new freenect2_pipe(freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH))
 {
 	ui->setupUi(this);
 	connect_actions();
-	ui->rgb_video_widget->set_blank(kinect_v2_info::rgb_image_width,kinect_v2_info::rgb_image_height);
-	//hook_kinect_source_to_thread();
-	hook_kinect_source_to_buttons();
+	ui->rgb_video_widget->set_blank(kinect_v2_info::rgb_image_width,
+			kinect_v2_info::rgb_image_height);
+	hook_kinect_source_signals();
+	//hook_kinect_source_to_buttons();
 
 }
 
@@ -45,7 +46,7 @@ main_window::~main_window() {
 /**
  * Connect QAction objects to the methods they should trigger
  */
-void main_window::connect_actions(){
+void main_window::connect_actions() {
 	connect(ui->action_open_kinect_devices, SIGNAL(triggered()), this, SLOT(open_kinect_devices()));
 	connect(ui->action_open_hal_log, SIGNAL(triggered()), this, SLOT(open_hal_log()));
 	connect(ui->action_open_image_folder, SIGNAL(triggered()), this, SLOT(open_image_folder()));
@@ -53,63 +54,38 @@ void main_window::connect_actions(){
 /**
  * Open kinect feed source from actual devices (if possible)
  */
-void main_window::open_kinect_devices(){
+void main_window::open_kinect_devices() {
 
 }
 /**
  * Open kinect feed source from hal log file
  */emit
-void main_window::open_hal_log(){
+void main_window::open_hal_log() {
 
 }
 /**
  * Open kinect feed from image folder
  */
-void main_window::open_image_folder(){
+void main_window::open_image_folder() {
 
 }
 
-void main_window::hook_kinect_source_to_thread(){
-	if (!kinect_data_thread) {
-		kinect_data_thread = new QThread;
-		pipe.get()->moveToThread(kinect_data_thread);
-		//set up error reporting;
-		connect(pipe.get(), SIGNAL(error(QString)), this, SLOT(report_error(QString)));
-		pipe->hook_to_thread(kinect_data_thread);
-		hook_kinect_source_to_buttons();
-		kinect_data_thread->start();
-		//pipe->request_pause();
-	}
-}
+void main_window::hook_pipe_signals() {
 
-void main_window::hook_kinect_source_to_buttons(){
+	//set up error reporting;
+	connect(pipe.get(), SIGNAL(error(QString)), this, SLOT(report_error(QString)));
 	//connect the play and pause buttons
 	connect(ui->pause_button, SIGNAL(released()), pipe.get(), SLOT(request_pause()));
 	connect(ui->play_button, SIGNAL(released()), pipe.get(), SLOT(start()));
 	//connect the pipe output to viewer
-	connect(pipe.get(), SIGNAL(frame(std::vector<cv::Mat>)), this, SLOT(tmp_display_image(std::vector<cv::Mat>)));
-	connect(pipe.get(), SIGNAL(rgb_frame(cv::Mat)), this, SLOT(tmp_display_rgb(cv::Mat)));
+	connect(pipe.get(), SIGNAL(frame(std::shared_ptr<std::vector<cv::Mat>>)), this,
+			SLOT(tmp_display_image(std::shared_ptr<std::vector<cv::Mat>>)));
+
 }
 
-void main_window::tmp_display_image(std::vector<cv::Mat> images){
-//	using namespace std;
-//	std::cout << "Num images: " << images.size() << std::endl;
-//	std::cout << "rows X cols: " << images[0].rows << " X " << images[0].cols << endl;
-	std::cout << "channels: " << images[0].channels() << std::endl;
-	std::cout << "type: " << images[0].type() << std::endl << std::endl;
-	//cv::Mat copy = cv::Mat(images[0].rows,images[0].cols,images[0].type());
 
-	//images[0].copyTo(copy);
-	ui->rgb_video_widget->set_image_fast(images[0]);
-}
-void main_window::tmp_display_rgb(cv::Mat rgb){
-	ui->rgb_video_widget->set_image_fast(rgb);
-}
-
-void main_window::on_play_button_released() {
-	if(kinect_data_thread){
-
-	}
+void main_window::tmp_display_image(std::shared_ptr<std::vector<cv::Mat>> images) {
+	ui->rgb_video_widget->set_image_fast(images->operator [](0));
 }
 
 void main_window::report_error(QString string) {
@@ -117,9 +93,6 @@ void main_window::report_error(QString string) {
 }
 
 void main_window::closeEvent(QCloseEvent* event) {
-	if (kinect_data_thread && !kinect_data_thread->isFinished()) {
-		pipe->request_stop();
-	}
 }
 
 } //end namespace reco

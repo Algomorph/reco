@@ -26,9 +26,11 @@ Q_OBJECT
 public:
 	runnable();
 	virtual ~runnable();
-	void hook_to_thread(QThread* thread);
+
+
 
 private:
+	void run_in_thread();
 	void run_helper();
 
 
@@ -42,12 +44,14 @@ protected:
 	 * Manually set from the caller thread via the request_stop() slot when the job is
 	 * requested to stop before finishing.
 	 */
-	bool stop_requested;
-	bool pause_requested;
-	bool is_paused;
+	bool stop_requested = false;
+	bool pause_requested = false;
+	bool is_running = false;
 
-public slots:
+private slots:
 	virtual void start();
+public slots:
+	virtual void request_start();
 	virtual void request_stop();
 	virtual void request_pause();
 

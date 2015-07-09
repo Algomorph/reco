@@ -12,11 +12,15 @@
 
 //qt
 #include <QObject>
+
 //opencv
 #include <opencv2/core/core.hpp>
 
 //datapipe
 #include <reco/datapipe/runnable.h>
+
+//utils
+#include <reco/utils/swap_buffer.h>
 
 //arpg
 #include <HAL/Camera/CameraDriverInterface.h>
@@ -24,6 +28,9 @@
 
 //std
 #include <vector>
+#include <thread>
+#include <condition_variable>
+#include <mutex>
 
 namespace reco {
 namespace workbench {
@@ -35,17 +42,23 @@ namespace workbench {
 /*
  * TODO: integrate HAL interface
  */
-class freenect2_pipe:
-		public datapipe::runnable {
+class freenect2_pipe : public QObject {
 Q_OBJECT
+protected:
+	bool is_paused;
+	std::condition_variable pause_cv;
+	std::mutex pause_mtx;
+	void run();
 
 private:
 	hal::Camera rgbd_camera;
 	bool has_camera = false;
 	uint num_kinects = 0;
-	std::shared_ptr<std::vector<cv::Mat>> images;
 
 	void set_camera(const std::string& cam_uri);
+	std::shared_ptr<utils::swap_buffer<std::vector<cv::Mat>>> buffer;
+	std::thread runner_thread;
+
 
 public:
 
@@ -53,13 +66,17 @@ public:
 		hal_log, kinect2_device, image_folder //TODO: implement image folder support later if needed
 	};
 
-	freenect2_pipe(kinect2_data_source source = hal_log, const std::string& path = "capture.log");
+	freenect2_pipe(std::shared_ptr<utils::swap_buffer<std::vector<cv::Mat>>> buffer,
+			kinect2_data_source source = hal_log, const std::string& path = "capture.log");
 	virtual ~freenect2_pipe();
 	uint get_num_kinects();
 
-protected:
 
-	virtual void run();
+
+
+public slots:
+	void pause();
+	void play();
 
 signals:
 	/**
@@ -71,8 +88,7 @@ signals:
 	 * Emitted when a new frame had been processed
 	 * @param
 	 */
-	void frame(std::vector<cv::Mat> images);
-	void rgb_frame(cv::Mat image);
+	void frame();
 	void output_ready();
 };
 

@@ -23,6 +23,9 @@
 //local
 #include "freenect2_pipe.h"
 
+//utils
+#include <reco/utils/swap_buffer.h>
+
 //OpenCV
 #include <opencv2/core/core.hpp>
 
@@ -39,6 +42,7 @@ namespace workbench{
 class main_window: public QMainWindow {
 	Q_OBJECT
 public:
+
 	main_window();
 	virtual ~main_window();
 protected:
@@ -46,23 +50,23 @@ protected:
 	virtual void closeEvent(QCloseEvent* event);
 private:
 	Ui_main_window* ui;
-	QThread* kinect_data_thread = NULL;
+
+
+	std::shared_ptr<utils::swap_buffer<std::vector<cv::Mat>>> buffer;
 	std::unique_ptr<freenect2_pipe> pipe;
 
+
 	void connect_actions();
-	void hook_kinect_source_to_thread();
-	void hook_kinect_source_to_buttons();
+	void hook_pipe_signals();
 
 
 
 private slots:
-	void on_play_button_released();
 	void report_error(QString string);
 	void open_kinect_devices();
 	void open_hal_log();
 	void open_image_folder();
-	void tmp_display_image(std::vector<cv::Mat> images);
-	void tmp_display_rgb(cv::Mat rgb);
+	void tmp_display_image(std::shared_ptr<std::vector<cv::Mat>> images);
 
 };
 
