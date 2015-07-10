@@ -118,11 +118,11 @@ void freenect2_pipe::run() {
 		}
 		if (!has_camera) {
 			err(std::runtime_error)
-					<< "freenect2_pipe::run(): failed to run because there is no camera connected.";
+			<< "freenect2_pipe::run(): failed to run because there is no camera connected.";
 			return;
 		}
 		std::shared_ptr<hal::ImageArray> images = hal::ImageArray::Create();
-		while (playback_allowed
+		while (!stop_requested && playback_allowed
 				&& rgbd_camera.Capture(*images)) {
 
 			this->buffer->push_back(images);
@@ -153,14 +153,21 @@ void freenect2_pipe::play() {
 }
 
 void freenect2_pipe::join_thread() {
+
 	this->runner_thread.join();
 }
 
-void freenect2_pipe::stop(){
-	playback_allowed = false;
+void freenect2_pipe::stop() {
+	{
+		std::unique_lock<std::mutex> lk(this->pause_mtx);
+		if (!playback_allowed) {
+			playback_allowed = true;
+			pause_cv.notify_one();
+		}
+	}
 	stop_requested = true;
-}
 
+}
 
 } /* namespace workbench */
 } /* namespace reco */

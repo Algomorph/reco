@@ -31,6 +31,7 @@ template<typename T> class queue {
 public:
 	virtual void push_back(const T& item) = 0;
 	virtual T pop_front() = 0;
+	virtual void clear() = 0;
 
 	protected:
 	queue() {
@@ -53,6 +54,7 @@ public:
 	virtual ~pessimistic_assignment_swap_buffer();
 	virtual void push_back(const T& item);
 	virtual T pop_front();
+	virtual void clear();
 
 private:
 	std::mutex mutex;
@@ -75,6 +77,10 @@ template<typename T> pessimistic_assignment_swap_buffer<T>::pessimistic_assignme
 
 template<typename T> pessimistic_assignment_swap_buffer<T>::~pessimistic_assignment_swap_buffer() {
 
+}
+
+template<typename T> void pessimistic_assignment_swap_buffer<T>::clear(){
+	cv_push.notify_all();
 }
 
 template<typename T> void pessimistic_assignment_swap_buffer<T>::push_back(const T& item) {
@@ -116,6 +122,7 @@ public:
 	virtual ~pessimistic_copy_swap_buffer();
 	virtual void push_back(const T& item);
 	virtual T pop_front();
+	virtual void clear();
 
 private:
 	std::mutex mutex;
@@ -135,6 +142,11 @@ template<typename T> pessimistic_copy_swap_buffer<T>::pessimistic_copy_swap_buff
 
 template<typename T> pessimistic_copy_swap_buffer<T>::~pessimistic_copy_swap_buffer() {
 
+}
+
+template<typename T> void pessimistic_copy_swap_buffer<T>::clear(){
+	empty = true;
+	cv_push.notify_all();
 }
 
 template<typename T> void pessimistic_copy_swap_buffer<T>::push_back(const T& item) {
@@ -168,6 +180,7 @@ public:
 	virtual ~optimistic_assignment_swap_buffer();
 	virtual void push_back(const T& item);
 	virtual T pop_front();
+	virtual void clear();
 
 private:
 	std::atomic_bool allow_pop;
@@ -185,6 +198,12 @@ template<typename T> optimistic_assignment_swap_buffer<T>::optimistic_assignment
 
 template<typename T> optimistic_assignment_swap_buffer<T>::~optimistic_assignment_swap_buffer() {
 
+}
+
+template<typename T> void optimistic_assignment_swap_buffer<T>::clear(){
+
+	allow_pop.store(false);
+	allow_push.store(true);
 }
 
 template<typename T> void optimistic_assignment_swap_buffer<T>::push_back(const T& item) {
@@ -221,6 +240,7 @@ public:
 	virtual ~optimistic_copy_swap_buffer();
 	virtual void push_back(const T& item);
 	virtual T pop_front();
+	virtual void clear();
 
 private:
 	std::atomic_bool allow_pop;
@@ -236,6 +256,12 @@ template<typename T> optimistic_copy_swap_buffer<T>::optimistic_copy_swap_buffer
 
 template<typename T> optimistic_copy_swap_buffer<T>::~optimistic_copy_swap_buffer() {
 
+}
+
+template<typename T> void optimistic_copy_swap_buffer<T>::clear(){
+
+	allow_pop.store(false);
+	allow_push.store(true);
 }
 
 template<typename T> void optimistic_copy_swap_buffer<T>::push_back(const T& item) {

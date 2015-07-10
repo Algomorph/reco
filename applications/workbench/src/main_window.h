@@ -20,7 +20,6 @@
 #include <reco/datapipe/webcam_video_source.h>
 #include <reco/datapipe/image_file_video_source.h>
 
-
 //local
 #include "freenect2_pipe.h"
 
@@ -48,7 +47,7 @@ public:
 	virtual ~main_window();
 protected:
 	//keep qt naming convention here (override)
-	virtual void closeEvent(QCloseEvent* evenuniquet);
+	virtual void closeEvent(QCloseEvent* event);
 private:
 	Ui_main_window* ui;
 

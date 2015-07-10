@@ -95,10 +95,9 @@ void main_window::report_error(QString string) {
 
 void main_window::closeEvent(QCloseEvent* event) {
 	pipe->stop();
-
+	buffer->clear();//let one more item onto the queue
 	pipe->join_thread();
 }
 
 } //end namespace reco
 } //end namespace workbench
-
