@@ -15,33 +15,38 @@
 #include <condition_variable>
 #include <atomic>
 #include <cstring>
+#include <iostream>
+
+#define SWAP_INT(x) (x = (x + 1) % 2)
 
 namespace reco {
 namespace utils {
 
 /**
- * Abstract 1-slot queue
+ * Abstract  queue
  **/
-template<typename T> class swap_buffer {
+template<typename T> class queue {
 
 public:
 	virtual void push_back(const T& item) = 0;
 	virtual T pop_front() = 0;
+
 	protected:
-	swap_buffer() {
+	queue() {
 	}
 	;
-	virtual ~swap_buffer() {
+	virtual ~queue() {
 	}
 	;
 
 };
 
+
 /**
  * A thread-safe 1-slot queue with pessimistic locking that uses assignment
  **/
 template<typename T> class pessimistic_assignment_swap_buffer:
-		public swap_buffer<T> {
+		public queue<T> {
 public:
 	pessimistic_assignment_swap_buffer();
 	virtual ~pessimistic_assignment_swap_buffer();
@@ -52,9 +57,12 @@ private:
 	std::mutex mutex;
 	std::condition_variable cv_push;
 	std::condition_variable cv_pop;
+
 	bool empty;
 
-	T storage;
+	T storage[2];
+	int push_ix = 0;
+	int pop_ix = 0;
 };
 
 template<typename T> pessimistic_assignment_swap_buffer<T>::pessimistic_assignment_swap_buffer() :
@@ -73,7 +81,9 @@ template<typename T> void pessimistic_assignment_swap_buffer<T>::push_back(const
 	while (!empty) {
 		cv_push.wait(lock);
 	}
-	this->storage = item;
+	std::cout << "Produced, pushing to " << push_ix << std::endl;
+	this->storage[push_ix] = item;
+	SWAP_INT(push_ix);
 	empty = false;
 	cv_pop.notify_one();
 }
@@ -83,16 +93,19 @@ template<typename T> T pessimistic_assignment_swap_buffer<T>::pop_front() {
 	while (empty) {
 		cv_pop.wait(lock);
 	}
+	std::cout << "Consumed, pulling from " << pop_ix <<  std::endl;
 	empty = true;
 	cv_push.notify_one();
-	return this->storage;
+	int pull_from = pop_ix;
+	SWAP_INT(pop_ix);
+	return this->storage[pull_from];
 }
 
 /**
- * A thread-safe 1-slot queue with pessimistic locking that uses direct copying
+ * A thread-safe 1-slot queue with pessimistic locking that Produceduses direct copying
  **/
 template<typename T> class pessimistic_copy_swap_buffer:
-		public swap_buffer<T> {
+		public queue<T> {
 public:
 	pessimistic_copy_swap_buffer();
 	virtual ~pessimistic_copy_swap_buffer();
@@ -145,7 +158,7 @@ template<typename T> T pessimistic_copy_swap_buffer<T>::pop_front() {
  * A thread-safe 1-slot queue with optimistic waiting (requires non-0 items)
  **/
 template<typename T> class optimistic_swap_queue:
-		public swap_buffer<T> {
+		public queue<T> {
 public:
 	optimistic_swap_queue();
 	virtual ~optimistic_swap_queue();

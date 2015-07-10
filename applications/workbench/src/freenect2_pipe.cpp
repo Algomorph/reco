@@ -14,6 +14,7 @@
 //std
 #include <stdexcept>
 #include <memory>
+#include <unistd.h>
 
 namespace reco {
 namespace workbench {
@@ -102,26 +103,36 @@ uint freenect2_pipe::get_num_kinects() {
 	return num_kinects;
 }
 
+static bool say_index(int ix){
+	std::cout<< "Filling local: " << ix << std::endl;
+	return true;
+}
+
 void freenect2_pipe::run() {
+
 	{
 		std::unique_lock<std::mutex> lk(this->pause_mtx);
-		if (is_paused) {
-			//wait until resumed
-			pause_cv.wait(lk);
-			is_paused = false;
-		}
+		std::cout <<"heya, playback allowed: " << playback_allowed <<std::endl;
+		pause_cv.wait(lk, [&]{return playback_allowed;});
 	}
+
 //todo: later, change from current datatype to something more primitive and fast, perhaps accessing the freenect driver directly.
 //Allocate a specific memory region, keep copying it to the buffer and overwriting it, instead of constantly re-allocating the image array
 	std::shared_ptr<std::vector<cv::Mat>> images0(new std::vector<cv::Mat>());
 	std::shared_ptr<std::vector<cv::Mat>> images1(new std::vector<cv::Mat>());
-	std::shared_ptr<std::vector<cv::Mat>> images[2] = {images0,images1};
+	std::shared_ptr<std::vector<cv::Mat>> images2(new std::vector<cv::Mat>());
+	std::shared_ptr<std::vector<cv::Mat>> images[3] = {images0,images1,images2};
+	//std::shared_ptr<std::vector<cv::Mat>> images[1] = {images0};
 	int ix = 0;
-	while (!is_paused
+	while (playback_allowed && say_index(ix)
 			&& rgbd_camera.Capture(*images[ix])) {
+
+
 		buffer->push_back(images[ix]);
+
 		emit frame();
-		ix = (ix+1) % 2;
+		ix = (ix+1) % 3;
+		//sleep(1);
 	}
 }
 
@@ -130,7 +141,7 @@ void freenect2_pipe::run() {
  */
 void freenect2_pipe::pause() {
 	std::unique_lock<std::mutex> lk(this->pause_mtx);
-	is_paused = true;
+	playback_allowed = false;
 }
 
 /**
@@ -138,7 +149,9 @@ void freenect2_pipe::pause() {
  */
 void freenect2_pipe::play() {
 	std::unique_lock<std::mutex> lk(this->pause_mtx);
+	playback_allowed = true;
 	pause_cv.notify_one();
+
 }
 
 } /* namespace workbench */

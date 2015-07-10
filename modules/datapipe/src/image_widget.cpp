@@ -55,8 +55,9 @@ void image_widget::set_image_fast(const cv::Mat& mat) {
 	if(mat.type() != CV_8UC3){
 		err(std::invalid_argument) << "Error caught in image_widget::set_image_fast...Wrong image type: " << mat.type() << "." << std::endl << enderr;
 	}
-
+	std::cout<<"Got to cvtColor" << std::endl;
 	cvtColor(mat, tmp, CV_BGR2RGB);
+	std::cout<<"CvtColor successful" << std::endl;
 	//image = QImage(mat.data, mat.cols, mat.rows, mat.cols * 3, QImage::Format_RGB888);
 	// Assign OpenCV's image buffer to the QImage. Note that the bytesPerLine parameter
 	// is 3*width because each pixel has three bytes.

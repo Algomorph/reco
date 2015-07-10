@@ -43,18 +43,17 @@ void runnable::request_start() {
  * Start the runnable job until either paused or stopped
  */
 void runnable::start() {
-	is_running = false; //reset pause flag in case this was paused before start
+	is_running = true; //reset pause flag in case this was paused before start
 
 	run();
 	if (stop_requested) {
 		emit stopped();
 		stop_requested = false;
-		is_running = false;
 	} else if (pause_requested) {
 		emit paused();
-		is_running = false;
 		pause_requested = false;
 	}
+	is_running = false;
 }
 
 /**

@@ -27,7 +27,7 @@ namespace workbench {
 
 main_window::main_window() :
 		ui(new Ui_main_window),
-				buffer(new utils::pessimistic_copy_swap_buffer<std::shared_ptr<std::vector<cv::Mat>>>()),
+				buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<std::vector<cv::Mat>>>()),
 				pipe(new freenect2_pipe(buffer,freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH))
 {
 	ui->setupUi(this);
