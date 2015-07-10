@@ -116,7 +116,6 @@ void freenect2_pipe::run() {
 			&& rgbd_camera.Capture(images)) {
 		buffer->push_back(images);
 		emit frame();
-		images.clear();
 	}
 }
 

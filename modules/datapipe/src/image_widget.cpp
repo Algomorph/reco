@@ -8,6 +8,7 @@
 
 //local
 #include <reco/datapipe/image_widget.h>
+#include <reco/utils/cpp_exception_util.h>
 
 //qt
 #include <QPainter>
@@ -52,7 +53,7 @@ void image_widget::set_image_fast(const cv::Mat& mat) {
 	// Convert the image to the RGB888 format
 	// assume BGR image
 	if(mat.type() != CV_8UC3){
-		std::cout <<  "Image type: " << mat.type() << "." << std::endl;
+		err(std::invalid_argument) << "Error caught in image_widget::set_image_fast...Wrong image type: " << mat.type() << "." << std::endl << enderr;
 	}
 
 	cvtColor(mat, tmp, CV_BGR2RGB);
