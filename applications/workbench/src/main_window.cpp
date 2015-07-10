@@ -35,8 +35,8 @@ main_window::main_window() :
 	ui->setupUi(this);
 	connect_actions();
 	ui->rgb_video_widget->set_blank(kinect_v2_info::rgb_image_width,kinect_v2_info::rgb_image_height);
-	hook_kinect_source_to_thread();
-	//hook_kinect_source_to_buttons();
+
+	hook_pipe_signals();
 
 }
 
@@ -71,23 +71,19 @@ void main_window::open_image_folder(){
 
 }
 
-void main_window::hook_kinect_source_to_thread(){
-	if (!kinect_data_thread) {
-		kinect_data_thread = new QThread;
-		pipe.get()->moveToThread(kinect_data_thread);
-		//set up error reporting;
-		connect(pipe.get(), SIGNAL(error(QString)), this, SLOT(report_error(QString)));
-		pipe->hook_to_thread(kinect_data_thread);
-		hook_kinect_source_to_buttons();
-		kinect_data_thread->start();
-		pipe->request_pause();
-	}
+void main_window::hook_pipe_signals(){
+	connect(pipe.get(), SIGNAL(error(QString)), this, SLOT(report_error(QString)));
+	hook_kinect_source_to_buttons();
+}
+
+void main_window::on_play_button_released(){
+	pipe->request_start();
 }
 
 void main_window::hook_kinect_source_to_buttons(){
 	//connect the play and pause buttons
 	connect(ui->pause_button, SIGNAL(released()), pipe.get(), SLOT(request_pause()));
-	connect(ui->play_button, SIGNAL(released()), pipe.get(), SLOT(start()));
+	connect(ui->play_button, SIGNAL(released()), pipe.get(), SLOT(request_start()));
 	//connect the pipe output to viewer
 	connect(pipe.get(), SIGNAL(frame(std::shared_ptr<std::vector<cv::Mat>>)), this, SLOT(tmp_display_image(std::shared_ptr<std::vector<cv::Mat>>)));
 }
@@ -96,20 +92,14 @@ void main_window::tmp_display_image(std::shared_ptr<std::vector<cv::Mat>> images
 	ui->rgb_video_widget->set_image_fast(images->operator[](0));
 }
 
-void main_window::on_play_button_released() {
-	if(kinect_data_thread){
-
-	}
-}
-
 void main_window::report_error(QString string) {
 	qDebug() << string;
 }
 
 void main_window::closeEvent(QCloseEvent* event) {
-	if (kinect_data_thread && !kinect_data_thread->isFinished()) {
-		pipe->request_stop();
-	}
+
+	pipe->request_stop();
+
 }
 
 } //end namespace reco

@@ -16,11 +16,9 @@
 #include <opencv2/core/core.hpp>
 
 //datapipe
-#include <reco/datapipe/runnable.h>
-
-//arpg
 #include <HAL/Camera/CameraDriverInterface.h>
 #include <HAL/Camera/CameraDevice.h>
+#include <reco/datapipe/qt_runnable.h>
 
 //std
 #include <vector>
@@ -36,16 +34,22 @@ namespace workbench {
  * TODO: integrate HAL interface
  */
 class freenect2_pipe:
-		public datapipe::runnable {
+		public datapipe::qt_runnable {
 Q_OBJECT
 
 private:
-	cv::Mat rgb;
-	hal::Camera rgbd_camera;
 	bool has_camera = false;
 	uint num_kinects = 0;
+
+
+	cv::Mat rgb;
+	hal::Camera rgbd_camera;
+
 	std::shared_ptr<std::vector<cv::Mat>> images;
 	std::shared_ptr<std::vector<cv::Mat>> take_images();
+
+
+
 	void set_camera(const std::string& cam_uri);
 
 public:

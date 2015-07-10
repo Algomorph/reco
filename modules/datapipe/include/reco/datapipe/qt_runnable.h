@@ -1,5 +1,5 @@
 /*
- * runnable.h
+ * qt_runnable.h
  *
  *  Created on: May 28, 2015
  *      Author: Gregory Kramida
@@ -17,24 +17,23 @@
 namespace reco {
 namespace datapipe {
 /**
- * Base abstract runnable object that represents a job that can be submitted to a thread
+ * Base abstract qt_runnable object that represents a job that can be submitted to a thread
  */
-class runnable:
+class qt_runnable:
 		public QObject {
 Q_OBJECT
 
 public:
-	runnable();
-	virtual ~runnable();
-	void hook_to_thread(QThread* thread);
+	qt_runnable();
+	virtual ~qt_runnable();
+
 
 private:
-	void run_helper();
-
+	void hook_to_thread();
 
 protected:
 	/**
-	 * Primary job function which is executed on the thread hooked to this runnable.
+	 * Primary job function which is executed on the thread hooked to this qt_runnable.
 	 * May check the stop_requested flag to safely terminate.
 	 */
 	virtual void run() = 0;
@@ -42,12 +41,17 @@ protected:
 	 * Manually set from the caller thread via the request_stop() slot when the job is
 	 * requested to stop before finishing.
 	 */
-	bool stop_requested;
-	bool pause_requested;
-	bool is_paused;
+	bool stop_requested = false;
+	bool pause_requested = false;
+	bool is_paused = false;
+
+	QThread* kinect_data_thread = NULL;
+
+private slots:
+	virtual void start();
 
 public slots:
-	virtual void start();
+	virtual void request_start();
 	virtual void request_stop();
 	virtual void request_pause();
 

@@ -19,7 +19,7 @@ namespace reco {
 namespace workbench {
 
 
-freenect2_pipe::freenect2_pipe(kinect2_data_source source, const std::string& path):runnable(),
+freenect2_pipe::freenect2_pipe(kinect2_data_source source, const std::string& path):qt_runnable(),
 		images(){
 	switch (source) {
 	case kinect2_data_source::kinect2_device:

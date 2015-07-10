@@ -50,12 +50,12 @@ protected:
 	virtual void closeEvent(QCloseEvent* evenuniquet);
 private:
 	Ui_main_window* ui;
-	QThread* kinect_data_thread = NULL;
+
 	std::shared_ptr<utils::swap_buffer<std::vector<cv::Mat>>> buffer;
 	std::shared_ptr<freenect2_pipe> pipe;
 
 	void connect_actions();
-	void hook_kinect_source_to_thread();
+	void hook_pipe_signals();
 	void hook_kinect_source_to_buttons();
 
 

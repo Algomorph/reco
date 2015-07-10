@@ -32,13 +32,65 @@
    </property>
    <layout class="QVBoxLayout" name="verticalLayout">
     <item>
-     <layout class="QGridLayout" name="central_layout">
-      <item row="4" column="0">
+     <layout class="QVBoxLayout" name="central_layout">
+      <item>
+       <widget class="reco::datapipe::video_widget" name="rgb_video_widget" native="true">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>200</width>
+          <height>200</height>
+         </size>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="play_control_layout">
+        <item>
+         <widget class="QPushButton" name="pause_button">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Pause</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QPushButton" name="play_button">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="text">
+           <string>Play</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
        <layout class="QHBoxLayout" name="raw_feed_layout">
         <item>
          <layout class="QVBoxLayout" name="depth_group_layout">
           <item>
            <widget class="QPushButton" name="show_depth_feed_button">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>Show Depth Feed</string>
             </property>
@@ -50,40 +102,18 @@
          <layout class="QVBoxLayout" name="rgb_group_layout">
           <item>
            <widget class="QPushButton" name="show_depth_feed_button_">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>Show RGB Feed</string>
             </property>
            </widget>
           </item>
          </layout>
-        </item>
-       </layout>
-      </item>
-      <item row="0" column="0">
-       <widget class="reco::datapipe::video_widget" name="rgb_video_widget" native="true">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <layout class="QHBoxLayout" name="horizontalLayout">
-        <item>
-         <widget class="QPushButton" name="pause_button">
-          <property name="text">
-           <string>Pause</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QPushButton" name="play_button">
-          <property name="text">
-           <string>Play</string>
-          </property>
-         </widget>
         </item>
        </layout>
       </item>
@@ -134,7 +164,7 @@
   </action>
   <action name="actionClose_RGB_D_Stream">
    <property name="text">
-    <string>Close RGB-D Stream</string>
+    <string>&amp;Close RGB-D Stream</string>
    </property>
   </action>
  </widget>
