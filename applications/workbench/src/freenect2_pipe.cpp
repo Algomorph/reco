@@ -16,34 +16,45 @@
 #include <memory>
 #include <unistd.h>
 
+//opencv
+
+#include <opencv2/core/types_c.h>
+
+#define SWAP_BIN_IX(ix) (ix = (ix + 1) % 2);
+
 namespace reco {
 namespace workbench {
 
 freenect2_pipe::freenect2_pipe(buffer_type buffer,
-kinect2_data_source source, const std::string& path):
-		buffer(buffer),
-		runner_thread(&freenect2_pipe::run,this)
+		kinect2_data_source source, const std::string& path) :
+				buffer(buffer),
+				runner_thread(&freenect2_pipe::run, this)
 {
 	switch (source) {
-		case kinect2_data_source::kinect2_device:
+	case kinect2_data_source::kinect2_device:
 		//note: will open all kinects as "single" camera
 		set_camera("freenect2:[rgb=1,ir=0,depth=1]//");
 		break;
-		case kinect2_data_source::hal_log:
+	case kinect2_data_source::hal_log:
 		set_camera("log://" + path);
 		break;
-		case kinect2_data_source::image_folder:
+	case kinect2_data_source::image_folder:
 		//TODO: implementation pending. not sure if "set_camera("file")" is the right way to read image files
 		throw reco::utils::not_implemented();
 		break;
-		default:
-		err(std::invalid_argument) << "Unknown value for kinect2_data_source. Got: " << source	<< enderr;
+	default:
+		err(std::invalid_argument) << "Unknown value for kinect2_data_source. Got: " << source
+				<< enderr;
 		break;
 	}
 }
 
 freenect2_pipe::~freenect2_pipe() {
-
+	if (has_camera) {
+		for (void* data_part : data) {
+			free(data_part);
+		}
+	}
 }
 
 /*
@@ -93,6 +104,13 @@ void freenect2_pipe::set_camera(const std::string& cam_uri) {
 				<< "Got casm_uri: " << cam_uri << enderr;
 	}
 
+	//allocate memory for output
+	size_t image_set_size = num_kinects *
+			(kinect_v2_info::rgb_image_size + kinect_v2_info::depth_image_size);
+	for (int i_data_part = 0; i_data_part < 2; i_data_part++) {
+		data[i_data_part] = (uchar*)malloc(image_set_size);
+	}
+
 }
 
 /**
@@ -103,36 +121,49 @@ uint freenect2_pipe::get_num_kinects() {
 	return num_kinects;
 }
 
-static bool say_index(int ix){
-	std::cout<< "Filling local: " << ix << std::endl;
-	return true;
-}
-
 void freenect2_pipe::run() {
 
 	{
 		std::unique_lock<std::mutex> lk(this->pause_mtx);
-		std::cout <<"heya, playback allowed: " << playback_allowed <<std::endl;
-		pause_cv.wait(lk, [&]{return playback_allowed;});
+		std::cout << "heya, playback allowed: " << playback_allowed << std::endl;
+		pause_cv.wait(lk, [&] {return playback_allowed;});
+	}
+	if (!has_camera) {
+		std::cout << "No camera connected..." << std::endl;
+		return;
 	}
 
-//todo: later, change from current datatype to something more primitive and fast, perhaps accessing the freenect driver directly.
-//Allocate a specific memory region, keep copying it to the buffer and overwriting it, instead of constantly re-allocating the image array
-	std::shared_ptr<std::vector<cv::Mat>> images0(new std::vector<cv::Mat>());
-	std::shared_ptr<std::vector<cv::Mat>> images1(new std::vector<cv::Mat>());
-	std::shared_ptr<std::vector<cv::Mat>> images2(new std::vector<cv::Mat>());
-	std::shared_ptr<std::vector<cv::Mat>> images[3] = {images0,images1,images2};
-	//std::shared_ptr<std::vector<cv::Mat>> images[1] = {images0};
+
+
+	const int num_channels = this->rgbd_camera.NumChannels();
+	std::vector<cv::Mat> mats0(num_channels);
+	std::vector<cv::Mat> mats1(num_channels);
+	std::array<std::vector<cv::Mat>, 2> mats = { mats0, mats1 };
+	int offset = 0;
+
+	for (int i_mat = 0; i_mat < num_channels; i_mat += 2) {
+		for (std::vector<cv::Mat> mat_vec : mats) {
+			mat_vec[i_mat] = cv::Mat(kinect_v2_info::rgb_image_height,
+					kinect_v2_info::rgb_image_width, CV_8UC3, data[0] + offset);
+			mat_vec[i_mat + 1] = cv::Mat(kinect_v2_info::rgb_image_height,
+					kinect_v2_info::rgb_image_width, CV_8UC3,
+					data[0] + offset + kinect_v2_info::rgb_image_size);
+		}
+		offset += (kinect_v2_info::rgb_image_size + kinect_v2_info::depth_image_size);
+	}
+
 	int ix = 0;
-	while (playback_allowed && say_index(ix)
-			&& rgbd_camera.Capture(*images[ix])) {
+	std::shared_ptr<hal::ImageArray> images = hal::ImageArray::Create();
+	while (playback_allowed
+			&& rgbd_camera.Capture(*images)) {
 
+		std::unique_ptr<hal::CameraMsg> pCameraMsg(new hal::CameraMsg);
 
-		buffer->push_back(images[ix]);
+		this->buffer->push_back(images);
 
 		emit frame();
-		ix = (ix+1) % 3;
-		//sleep(1);
+		images = hal::ImageArray::Create();
+		ix = (ix + 1) % 2;
 	}
 }
 

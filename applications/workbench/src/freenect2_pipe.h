@@ -16,6 +16,9 @@
 //opencv
 #include <opencv2/core/core.hpp>
 
+//local
+#include <reco/workbench/camera.h>
+
 //datapipe
 #include <reco/datapipe/runnable.h>
 
@@ -47,7 +50,7 @@ class freenect2_pipe : public QObject {
 Q_OBJECT
 
 public:
-	typedef std::shared_ptr<utils::queue<std::shared_ptr<std::vector<cv::Mat>>>> buffer_type;
+	typedef std::shared_ptr<utils::queue<std::shared_ptr<hal::ImageArray>>> buffer_type;
 
 protected:
 	bool playback_allowed = false;//start out paused
@@ -59,6 +62,7 @@ private:
 	hal::Camera rgbd_camera;
 	bool has_camera = false;
 	uint num_kinects = 0;
+	std::array<uchar*,2> data;
 
 	void set_camera(const std::string& cam_uri);
 	buffer_type buffer;

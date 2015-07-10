@@ -27,7 +27,7 @@ namespace workbench {
 
 main_window::main_window() :
 		ui(new Ui_main_window),
-				buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<std::vector<cv::Mat>>>()),
+				buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 				pipe(new freenect2_pipe(buffer,freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH))
 {
 	ui->setupUi(this);
@@ -70,7 +70,6 @@ void main_window::open_image_folder() {
 }
 
 void main_window::hook_pipe_signals() {
-
 	//set up error reporting;
 	connect(pipe.get(), SIGNAL(error(QString)), this, SLOT(report_error(QString)));
 	//connect the play and pause buttons
@@ -79,13 +78,15 @@ void main_window::hook_pipe_signals() {
 	//connect the pipe output to viewer
 	connect(pipe.get(), SIGNAL(frame()), this,
 			SLOT(tmp_display_image()));
-
 }
 
 
 void main_window::tmp_display_image() {
-	std::shared_ptr<std::vector<cv::Mat>> images = this->buffer->pop_front();
-	ui->rgb_video_widget->set_image_fast(images->operator [](0));
+	std::shared_ptr<hal::ImageArray> images = this->buffer->pop_front();
+	std::shared_ptr<hal::Image> img = images->at(0);
+
+
+	ui->rgb_video_widget->set_image_fast(*img);
 	std::cout << "displayed one" << std::endl;
 }
 
