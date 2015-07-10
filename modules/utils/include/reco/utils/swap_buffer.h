@@ -17,6 +17,7 @@
 #include <cstring>
 #include <iostream>
 
+//#define VERBOSE
 #define SWAP_INT(x) (x = (x + 1) % 2)
 
 namespace reco {
@@ -81,7 +82,9 @@ template<typename T> void pessimistic_assignment_swap_buffer<T>::push_back(const
 	while (!empty) {
 		cv_push.wait(lock);
 	}
+#ifdef VERBOSE
 	std::cout << "Produced, pushing to " << push_ix << std::endl;
+#endif
 	this->storage[push_ix] = item;
 	SWAP_INT(push_ix);
 	empty = false;
@@ -93,12 +96,14 @@ template<typename T> T pessimistic_assignment_swap_buffer<T>::pop_front() {
 	while (empty) {
 		cv_pop.wait(lock);
 	}
-	std::cout << "Consumed, pulling from " << pop_ix <<  std::endl;
+#ifdef VERBOSE
+	std::cout << "Consumed, popping from " << pop_ix <<  std::endl;
+#endif
 	empty = true;
 	cv_push.notify_one();
-	int pull_from = pop_ix;
+	int pop_from = pop_ix;
 	SWAP_INT(pop_ix);
-	return this->storage[pull_from];
+	return this->storage[pop_from];
 }
 
 /**
@@ -153,15 +158,67 @@ template<typename T> T pessimistic_copy_swap_buffer<T>::pop_front() {
 	cv_push.notify_one();
 	return ret;
 }
-
 /**
- * A thread-safe 1-slot queue with optimistic waiting (requires non-0 items)
+ * A thread-safe 1-slot queue with optimistic waiting.
  **/
-template<typename T> class optimistic_swap_queue:
+template<typename T> class optimistic_assignment_swap_buffer:
 		public queue<T> {
 public:
-	optimistic_swap_queue();
-	virtual ~optimistic_swap_queue();
+	optimistic_assignment_swap_buffer();
+	virtual ~optimistic_assignment_swap_buffer();
+	virtual void push_back(const T& item);
+	virtual T pop_front();
+
+private:
+	std::atomic_bool allow_pop;
+	std::atomic_bool allow_push;
+	std::atomic<T> storage_a;
+	T storage[2];
+	int push_ix = 0;
+	int pop_ix = 0;
+};
+
+template<typename T> optimistic_assignment_swap_buffer<T>::optimistic_assignment_swap_buffer() :
+		allow_pop(false),
+				allow_push(true) {
+}
+
+template<typename T> optimistic_assignment_swap_buffer<T>::~optimistic_assignment_swap_buffer() {
+
+}
+
+template<typename T> void optimistic_assignment_swap_buffer<T>::push_back(const T& item) {
+	bool exp;
+	//wait for item to get popped
+	do {
+		exp = true;
+	} while (!allow_push.compare_exchange_weak(exp, false)); //cork up the bottle as soon as we get through
+	this->storage[push_ix] = item;
+	SWAP_INT(push_ix);
+	allow_pop.store(true);
+}
+
+template<typename T> T optimistic_assignment_swap_buffer<T>::pop_front() {
+	bool exp;
+	//wait for item to get pushed
+	do {
+		exp = true;
+	} while (!allow_pop.compare_exchange_weak(exp, false)); //cork up the bottle as soon as we get through
+	T ret = this->storage[pop_ix];
+	SWAP_INT(pop_ix);
+	allow_push.store(true);
+	return ret;
+}
+
+/**
+ * A thread-safe 1-slot queue with optimistic waiting (requires non-0, non-pointer items)
+ * Reliant on direct memory copy.
+ **/
+template<typename T> class optimistic_copy_swap_buffer:
+		public queue<T> {
+public:
+	optimistic_copy_swap_buffer();
+	virtual ~optimistic_copy_swap_buffer();
 	virtual void push_back(const T& item);
 	virtual T pop_front();
 
@@ -172,16 +229,16 @@ private:
 	T storage[1];
 };
 
-template<typename T> optimistic_swap_queue<T>::optimistic_swap_queue() :
+template<typename T> optimistic_copy_swap_buffer<T>::optimistic_copy_swap_buffer() :
 		allow_pop(false),
 				allow_push(true) {
 }
 
-template<typename T> optimistic_swap_queue<T>::~optimistic_swap_queue() {
+template<typename T> optimistic_copy_swap_buffer<T>::~optimistic_copy_swap_buffer() {
 
 }
 
-template<typename T> void optimistic_swap_queue<T>::push_back(const T& item) {
+template<typename T> void optimistic_copy_swap_buffer<T>::push_back(const T& item) {
 	bool exp;
 	//wait for item to get popped
 	do {
@@ -191,7 +248,7 @@ template<typename T> void optimistic_swap_queue<T>::push_back(const T& item) {
 	allow_pop.store(true);
 }
 
-template<typename T> T optimistic_swap_queue<T>::pop_front() {
+template<typename T> T optimistic_copy_swap_buffer<T>::pop_front() {
 	bool exp;
 	//wait for item to get pushed
 	do {
@@ -202,6 +259,7 @@ template<typename T> T optimistic_swap_queue<T>::pop_front() {
 	allow_push.store(true);
 	return ret;
 }
+
 
 } // end namespace utils
 } // end namespace reco

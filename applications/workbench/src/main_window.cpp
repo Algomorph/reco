@@ -27,7 +27,7 @@ namespace workbench {
 
 main_window::main_window() :
 		ui(new Ui_main_window),
-				buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
+				buffer(new utils::optimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 				pipe(new freenect2_pipe(buffer,freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH))
 {
 	ui->setupUi(this);
@@ -87,7 +87,6 @@ void main_window::tmp_display_image() {
 
 
 	ui->rgb_video_widget->set_image_fast(*img);
-	std::cout << "displayed one" << std::endl;
 }
 
 void main_window::report_error(QString string) {
@@ -95,6 +94,9 @@ void main_window::report_error(QString string) {
 }
 
 void main_window::closeEvent(QCloseEvent* event) {
+	pipe->stop();
+
+	pipe->join_thread();
 }
 
 } //end namespace reco

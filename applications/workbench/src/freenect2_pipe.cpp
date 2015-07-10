@@ -50,11 +50,6 @@ freenect2_pipe::freenect2_pipe(buffer_type buffer,
 }
 
 freenect2_pipe::~freenect2_pipe() {
-	if (has_camera) {
-		for (void* data_part : data) {
-			free(data_part);
-		}
-	}
 }
 
 /*
@@ -104,13 +99,6 @@ void freenect2_pipe::set_camera(const std::string& cam_uri) {
 				<< "Got casm_uri: " << cam_uri << enderr;
 	}
 
-	//allocate memory for output
-	size_t image_set_size = num_kinects *
-			(kinect_v2_info::rgb_image_size + kinect_v2_info::depth_image_size);
-	for (int i_data_part = 0; i_data_part < 2; i_data_part++) {
-		data[i_data_part] = (uchar*)malloc(image_set_size);
-	}
-
 }
 
 /**
@@ -123,48 +111,27 @@ uint freenect2_pipe::get_num_kinects() {
 
 void freenect2_pipe::run() {
 
-	{
-		std::unique_lock<std::mutex> lk(this->pause_mtx);
-		std::cout << "heya, playback allowed: " << playback_allowed << std::endl;
-		pause_cv.wait(lk, [&] {return playback_allowed;});
-	}
-	if (!has_camera) {
-		std::cout << "No camera connected..." << std::endl;
-		return;
-	}
-
-
-
-	const int num_channels = this->rgbd_camera.NumChannels();
-	std::vector<cv::Mat> mats0(num_channels);
-	std::vector<cv::Mat> mats1(num_channels);
-	std::array<std::vector<cv::Mat>, 2> mats = { mats0, mats1 };
-	int offset = 0;
-
-	for (int i_mat = 0; i_mat < num_channels; i_mat += 2) {
-		for (std::vector<cv::Mat> mat_vec : mats) {
-			mat_vec[i_mat] = cv::Mat(kinect_v2_info::rgb_image_height,
-					kinect_v2_info::rgb_image_width, CV_8UC3, data[0] + offset);
-			mat_vec[i_mat + 1] = cv::Mat(kinect_v2_info::rgb_image_height,
-					kinect_v2_info::rgb_image_width, CV_8UC3,
-					data[0] + offset + kinect_v2_info::rgb_image_size);
+	while (!stop_requested) {
+		{
+			std::unique_lock<std::mutex> lk(this->pause_mtx);
+			pause_cv.wait(lk, [&] {return playback_allowed;});
 		}
-		offset += (kinect_v2_info::rgb_image_size + kinect_v2_info::depth_image_size);
+		if (!has_camera) {
+			err(std::runtime_error)
+					<< "freenect2_pipe::run(): failed to run because there is no camera connected.";
+			return;
+		}
+		std::shared_ptr<hal::ImageArray> images = hal::ImageArray::Create();
+		while (playback_allowed
+				&& rgbd_camera.Capture(*images)) {
+
+			this->buffer->push_back(images);
+
+			emit frame();
+			images = hal::ImageArray::Create();
+		}
 	}
 
-	int ix = 0;
-	std::shared_ptr<hal::ImageArray> images = hal::ImageArray::Create();
-	while (playback_allowed
-			&& rgbd_camera.Capture(*images)) {
-
-		std::unique_ptr<hal::CameraMsg> pCameraMsg(new hal::CameraMsg);
-
-		this->buffer->push_back(images);
-
-		emit frame();
-		images = hal::ImageArray::Create();
-		ix = (ix + 1) % 2;
-	}
 }
 
 /**
@@ -183,6 +150,15 @@ void freenect2_pipe::play() {
 	playback_allowed = true;
 	pause_cv.notify_one();
 
+}
+
+void freenect2_pipe::join_thread() {
+	this->runner_thread.join();
+}
+
+void freenect2_pipe::stop(){
+	playback_allowed = false;
+	stop_requested = true;
 }
 
 } /* namespace workbench */

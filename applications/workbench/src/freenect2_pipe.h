@@ -54,6 +54,7 @@ public:
 
 protected:
 	bool playback_allowed = false;//start out paused
+	bool stop_requested = false;
 	std::condition_variable pause_cv;
 	std::mutex pause_mtx;
 	void run();
@@ -62,7 +63,6 @@ private:
 	hal::Camera rgbd_camera;
 	bool has_camera = false;
 	uint num_kinects = 0;
-	std::array<uchar*,2> data;
 
 	void set_camera(const std::string& cam_uri);
 	buffer_type buffer;
@@ -79,11 +79,13 @@ public:
 			kinect2_data_source source = hal_log, const std::string& path = "capture.log");
 	virtual ~freenect2_pipe();
 	uint get_num_kinects();
+	void join_thread();
 
 
 
 
 public slots:
+	void stop();
 	void pause();
 	void play();
 
