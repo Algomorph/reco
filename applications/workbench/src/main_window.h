@@ -20,13 +20,17 @@
 #include <reco/datapipe/webcam_video_source.h>
 #include <reco/datapipe/image_file_video_source.h>
 
+//utils
+#include <reco/utils/optimistic_swap_buffer.h>
+
 //local
 #include "freenect2_pipe.h"
+#include "freenect2_pipe2.h"
 
 //OpenCV
 #include <opencv2/core/core.hpp>
 
-//std
+//std::
 #include <memory>
 #include <vector>
 
@@ -43,11 +47,13 @@ public:
 	virtual ~main_window();
 protected:
 	//keep qt naming convention here (override)
-	virtual void closeEvent(QCloseEvent* event);
+	virtual void closeEvent(QCloseEvent* evenuniquet);
 private:
 	Ui_main_window* ui;
 	QThread* kinect_data_thread = NULL;
-	std::unique_ptr<freenect2_pipe> pipe;
+	std::shared_ptr<utils::swap_buffer<std::vector<cv::Mat>>> buffer;
+	//std::shared_ptr<freenect2_pipe2> pipe;
+	std::shared_ptr<freenect2_pipe> pipe;
 
 	void connect_actions();
 	void hook_kinect_source_to_thread();
@@ -62,7 +68,11 @@ private slots:
 	void open_hal_log();
 	void open_image_folder();
 	void tmp_display_image(std::vector<cv::Mat> images);
+	void tmp_display_image2();
+	void tmp_display_image3(std::shared_ptr<std::vector<cv::Mat>> images);
 	void tmp_display_rgb(cv::Mat rgb);
+	void tmp_display_rgb2(const cv::Mat& rgb);
+
 
 };
 

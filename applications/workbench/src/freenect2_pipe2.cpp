@@ -18,23 +18,24 @@
 namespace reco {
 namespace workbench {
 
-
-freenect2_pipe2::freenect2_pipe2(kinect2_data_source source, const std::string& path):runnable() {
+freenect2_pipe2::freenect2_pipe2(std::shared_ptr<utils::swap_buffer<std::vector<cv::Mat>>> buffer,
+		kinect2_data_source source, const std::string& path):thread_runnable(),
+				buffer(buffer){
 	switch (source) {
-	case kinect2_data_source::kinect2_device:
+		case kinect2_data_source::kinect2_device:
 		//note: will open all kinects as "single" camera
 		set_camera("freenect2:[rgb=1,ir=0,depth=1]//");
 		break;
-	case kinect2_data_source::hal_log:
+		case kinect2_data_source::hal_log:
 		set_camera("log://" + path);
 		break;
-	case kinect2_data_source::image_folder:
+		case kinect2_data_source::image_folder:
 		//TODO: implementation pending. not sure if "set_camera("file")" is the right way to read image files
 		throw reco::utils::not_implemented();
 		break;
-	default:
+		default:
 		err(std::invalid_argument) << "Unknown value for kinect2_data_source. Got: " << source
-				<< enderr;
+		<< enderr;
 		break;
 	}
 
@@ -43,7 +44,6 @@ freenect2_pipe2::freenect2_pipe2(kinect2_data_source source, const std::string& 
 freenect2_pipe2::~freenect2_pipe2() {
 
 }
-
 
 /*
  * Set camera using requested URI
@@ -58,8 +58,9 @@ void freenect2_pipe2::set_camera(const std::string& cam_uri) {
 	//the total number of channels must be evenly divisible by the number of channels per feed
 	if (num_channels % kinect_v2_info::num_channels_per_feed != 0) {
 		err(std::invalid_argument)
-				<< "Incorrect number of channels for Kinect v2 feed! Need exactly "
-				<< kinect_v2_info::num_channels_per_feed << "! Please check cam uri. Got " << cam_uri
+		<< "Incorrect number of channels for Kinect v2 feed! Need exactly "
+				<< kinect_v2_info::num_channels_per_feed << "! Please check cam uri. Got "
+				<< cam_uri
 				<< enderr;
 	}
 
@@ -97,22 +98,23 @@ void freenect2_pipe2::set_camera(const std::string& cam_uri) {
  * Get number of kinect feeds
  * @return number of kinect feeds in the source, 0 if no source is available
  */
-uint freenect2_pipe2::get_num_kinects(){
+uint freenect2_pipe2::get_num_kinects() {
 	return num_kinects;
 }
 
 void freenect2_pipe2::run() {
-	if(has_camera){
-		bool can_capture = true;
+	if (has_camera) {
+
 		std::vector<cv::Mat> images;
 		while (!stop_requested && !pause_requested
 				&& rgbd_camera.Capture(images)
-				) {
-			//emit frame(images); //TODO: breaks when trying to access the frame (Qt-related)
-			emit rgb_frame(images[0]);
+		) {
+			buffer->push_back(images);
+			emit frame();
+			//images.clear();
 		}
 	}
 }
 
-} /* namespace workbench */
-} /* namespace reco */
+} /* end namespace workbench */
+} /* end namespace reco */

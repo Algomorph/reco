@@ -40,11 +40,12 @@ class freenect2_pipe:
 Q_OBJECT
 
 private:
+	cv::Mat rgb;
 	hal::Camera rgbd_camera;
 	bool has_camera = false;
 	uint num_kinects = 0;
 	std::shared_ptr<std::vector<cv::Mat>> images;
-
+	std::shared_ptr<std::vector<cv::Mat>> take_images();
 	void set_camera(const std::string& cam_uri);
 
 public:
@@ -71,8 +72,7 @@ signals:
 	 * Emitted when a new frame had been processed
 	 * @param
 	 */
-	void frame(std::vector<cv::Mat> images);
-	void rgb_frame(cv::Mat image);
+	void frame(std::shared_ptr<std::vector<cv::Mat>> images);
 	void output_ready();
 };
 

@@ -19,7 +19,8 @@ namespace reco {
 namespace workbench {
 
 
-freenect2_pipe::freenect2_pipe(kinect2_data_source source, const std::string& path):runnable() {
+freenect2_pipe::freenect2_pipe(kinect2_data_source source, const std::string& path):runnable(),
+		images(){
 	switch (source) {
 	case kinect2_data_source::kinect2_device:
 		//note: will open all kinects as "single" camera
@@ -101,18 +102,22 @@ uint freenect2_pipe::get_num_kinects(){
 	return num_kinects;
 }
 
+std::shared_ptr<std::vector<cv::Mat>> freenect2_pipe::take_images(){
+	return this->images;
+}
+
 void freenect2_pipe::run() {
 	if(has_camera){
 		bool can_capture = true;
-		std::vector<cv::Mat> images;
+		images.reset(new std::vector<cv::Mat>());
 		while (!stop_requested && !pause_requested
-				&& rgbd_camera.Capture(images)
+				&& rgbd_camera.Capture(*images)
 				) {
-			//emit frame(images); //TODO: breaks when trying to access the frame (Qt-related)
-			emit rgb_frame(images[0]);
+			emit frame(take_images());
 		}
 	}
 }
+
 
 } /* namespace workbench */
 } /* namespace reco */

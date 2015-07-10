@@ -28,13 +28,15 @@ namespace workbench {
 
 main_window::main_window() :
 		ui(new Ui_main_window),
+				buffer(new utils::optimistic_swap_buffer<std::vector<cv::Mat>>()),
+				//pipe(new freenect2_pipe2(buffer,freenect2_pipe2::hal_log, DEFAULT_LOG_FILE_PATH))
 				pipe(new freenect2_pipe(freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH))
 {
 	ui->setupUi(this);
 	connect_actions();
 	ui->rgb_video_widget->set_blank(kinect_v2_info::rgb_image_width,kinect_v2_info::rgb_image_height);
-	//hook_kinect_source_to_thread();
-	hook_kinect_source_to_buttons();
+	hook_kinect_source_to_thread();
+	//hook_kinect_source_to_buttons();
 
 }
 
@@ -58,7 +60,7 @@ void main_window::open_kinect_devices(){
 }
 /**
  * Open kinect feed source from hal log file
- */emit
+ */
 void main_window::open_hal_log(){
 
 }
@@ -87,8 +89,11 @@ void main_window::hook_kinect_source_to_buttons(){
 	connect(ui->pause_button, SIGNAL(released()), pipe.get(), SLOT(request_pause()));
 	connect(ui->play_button, SIGNAL(released()), pipe.get(), SLOT(start()));
 	//connect the pipe output to viewer
-	connect(pipe.get(), SIGNAL(frame(std::vector<cv::Mat>)), this, SLOT(tmp_display_image(std::vector<cv::Mat>)));
-	connect(pipe.get(), SIGNAL(rgb_frame(cv::Mat)), this, SLOT(tmp_display_rgb(cv::Mat)));
+	//connect(pipe.get(), SIGNAL(frame(std::vector<cv::Mat>)), this, SLOT(tmp_display_image(std::vector<cv::Mat>)));
+	//connect(pipe.get(), SIGNAL(frame()), this, SLOT(tmp_display_image2()));
+	//connect(pipe.get(), SIGNAL(rgb_frame(cv::Mat)), this, SLOT(tmp_display_rgb(cv::Mat)));
+	//connect(pipe.get(), SIGNAL(rgb_frame2(cv::Mat)), this, SLOT(tmp_display_rgb2(cv::Mat)));
+	connect(pipe.get(), SIGNAL(frame(std::shared_ptr<std::vector<cv::Mat>>)), this, SLOT(tmp_display_image3(std::shared_ptr<std::vector<cv::Mat>>)));
 }
 
 void main_window::tmp_display_image(std::vector<cv::Mat> images){
@@ -102,7 +107,21 @@ void main_window::tmp_display_image(std::vector<cv::Mat> images){
 	//images[0].copyTo(copy);
 	ui->rgb_video_widget->set_image_fast(images[0]);
 }
+
+void main_window::tmp_display_image2(){
+	std::vector<cv::Mat> images = buffer->pop_front();
+	ui->rgb_video_widget->set_image_fast(images[0]);
+}
+
+void main_window::tmp_display_image3(std::shared_ptr<std::vector<cv::Mat>> images){
+	ui->rgb_video_widget->set_image_fast(images->operator[](0));
+}
+
 void main_window::tmp_display_rgb(cv::Mat rgb){
+	ui->rgb_video_widget->set_image_fast(rgb);
+}
+
+void main_window::tmp_display_rgb2(const cv::Mat& rgb){
 	ui->rgb_video_widget->set_image_fast(rgb);
 }
 

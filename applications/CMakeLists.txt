@@ -23,8 +23,8 @@ reco_add_subproject(playback
     DEPENDENCIES LibDL PCL Boost OpenCV Calibu HAL utils
     LIGHTWEIGHT_APPLICATION)
     
-reco_add_subproject(test
-    SOURCES test.cpp
+reco_add_subproject(tester
+    SOURCES tester.cpp
     DEPENDENCIES OpenCV HAL utils
     LIGHTWEIGHT_APPLICATION)
     
