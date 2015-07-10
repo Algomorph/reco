@@ -25,6 +25,10 @@ public:
 	static const unsigned int num_channels_per_feed;
 	static const unsigned int depth_channel_offset;
 	static const unsigned int rgb_channel_offset;
+	static const unsigned int rgb_element_size;
+	static const unsigned int depth_element_size;
+	static const unsigned int rgb_image_size;
+	static const unsigned int depth_image_size;
 	virtual ~kinect_v2_info();
 };
 

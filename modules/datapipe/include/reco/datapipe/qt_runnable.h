@@ -24,9 +24,14 @@ class qt_runnable:
 Q_OBJECT
 
 public:
-	qt_runnable();
-	virtual ~qt_runnable();
+	runnable();
+	virtual ~runnable();
 
+
+
+private:
+	void run_in_thread();
+	void run_helper();
 
 private:
 	void hook_to_thread();
@@ -43,13 +48,10 @@ protected:
 	 */
 	bool stop_requested = false;
 	bool pause_requested = false;
-	bool is_paused = false;
-
-	QThread* kinect_data_thread = NULL;
+	bool is_running = false;
 
 private slots:
 	virtual void start();
-
 public slots:
 	virtual void request_start();
 	virtual void request_stop();

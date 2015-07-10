@@ -12,19 +12,33 @@
 
 //qt
 #include <QObject>
+
 //opencv
 #include <opencv2/core/core.hpp>
 
+//local
+#include <reco/workbench/camera.h>
+
 //datapipe
+#include <reco/datapipe/runnable.h>
+
+//utils
+#include <reco/utils/swap_buffer.h>
+
+//arpg
 #include <HAL/Camera/CameraDriverInterface.h>
 #include <HAL/Camera/CameraDevice.h>
 #include <reco/datapipe/qt_runnable.h>
 
 //std
 #include <vector>
+#include <thread>
+#include <condition_variable>
+#include <mutex>
 
 namespace reco {
 namespace workbench {
+
 
 /**
  * Object for retrieving kinect data (from "somewhere" in HAL) and pushing it off to various downstream actors,
@@ -33,24 +47,27 @@ namespace workbench {
 /*
  * TODO: integrate HAL interface
  */
-class freenect2_pipe:
-		public datapipe::qt_runnable {
+class freenect2_pipe : public QObject {
 Q_OBJECT
+
+public:
+	typedef std::shared_ptr<utils::queue<std::shared_ptr<hal::ImageArray>>> buffer_type;
+
+protected:
+	bool playback_allowed = false;//start out paused
+	bool stop_requested = false;
+	std::condition_variable pause_cv;
+	std::mutex pause_mtx;
+	void run();
 
 private:
 	bool has_camera = false;
 	uint num_kinects = 0;
 
-
-	cv::Mat rgb;
-	hal::Camera rgbd_camera;
-
-	std::shared_ptr<std::vector<cv::Mat>> images;
-	std::shared_ptr<std::vector<cv::Mat>> take_images();
-
-
-
 	void set_camera(const std::string& cam_uri);
+	buffer_type buffer;
+	std::thread runner_thread;
+
 
 public:
 
@@ -58,13 +75,19 @@ public:
 		hal_log, kinect2_device, image_folder //TODO: implement image folder support later if needed
 	};
 
-	freenect2_pipe(kinect2_data_source source = hal_log, const std::string& path = "capture.log");
+	freenect2_pipe(buffer_type buffer,
+			kinect2_data_source source = hal_log, const std::string& path = "capture.log");
 	virtual ~freenect2_pipe();
 	uint get_num_kinects();
+	void join_thread();
 
-protected:
 
-	virtual void run();
+
+
+public slots:
+	void stop();
+	void pause();
+	void play();
 
 signals:
 	/**
@@ -76,8 +99,10 @@ signals:
 	 * Emitted when a new frame had been processed
 	 * @param
 	 */
-	void frame(std::shared_ptr<std::vector<cv::Mat>> images);
+	void frame();
 	void output_ready();
+	void paused();
+	void stopped();
 };
 
 } /* namespace workbench */

@@ -165,8 +165,8 @@ namespace utl
   inline
   void getDepthDiscontinuities(const cv::Mat &depth, cv::Mat &depth_disc, const float &depth_diff_thresh = 50.0f)
   {
-    int xRes = depth.cols;
-    int yRes = depth.rows;
+    //int xRes = depth.cols;
+    //int yRes = depth.rows;
 
     cv::Mat dDepth;
     cv::Mat kernel = - cv::Mat::ones(3, 3, CV_32F);
@@ -201,7 +201,7 @@ namespace utl
       {
         // Get center pixel value
         float centerDepth = static_cast<float> (depth.at<ushort>(y,x));
-        float maxDiff = 0.0;        
+        //float maxDiff = 0.0;
         
         // Get neighbour coordinates
         std::vector<std::pair<int,int> > neighbours(8);

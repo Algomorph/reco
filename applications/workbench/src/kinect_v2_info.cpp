@@ -21,6 +21,12 @@ const unsigned int kinect_v2_info::num_channels_per_feed = 2;
 const unsigned int kinect_v2_info::depth_channel_offset = 1;
 const unsigned int kinect_v2_info::rgb_channel_offset = 0;
 
+const unsigned int kinect_v2_info::rgb_element_size = 3;
+const unsigned int kinect_v2_info::depth_element_size = 4;
+
+const unsigned int kinect_v2_info::rgb_image_size = kinect_v2_info::rgb_image_width * kinect_v2_info::rgb_image_height * kinect_v2_info::rgb_element_size;
+const unsigned int kinect_v2_info::depth_image_size = kinect_v2_info::depth_image_width * kinect_v2_info::depth_image_height * kinect_v2_info::depth_element_size;
+
 
 //inaccessible
 kinect_v2_info::kinect_v2_info()

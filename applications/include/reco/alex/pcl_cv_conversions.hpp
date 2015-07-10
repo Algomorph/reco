@@ -288,8 +288,8 @@ void cvDepth32F2pclCloudColor(const cv::Mat& depth, const cv::Mat& K, Eigen::Mat
 	const float oy = K.at<float>(1, 2);
 
 	Eigen::Vector3f pt;
-	for (size_t row = 0; row < depth.rows; row++) {
-		for (size_t col = 0; col < depth.cols; col++) {
+	for (int row = 0; row < depth.rows; row++) {
+		for (int col = 0; col < depth.cols; col++) {
 			float z = depth.at<float>(row, col) / 1000.0F;   //convert mm to m
 			//equivalent to multiplying the straight-up pixel coords + depth by inverse of intrinsic matrix K
 			pt << (col - ox) * z * inv_fx, (row - oy) * z * inv_fy, z;
@@ -335,8 +335,8 @@ void cvDepth32F2pclCloudColor(const cv::Mat& depth, const cv::Mat& K, Eigen::Mat
 	const float oy = K.at<float>(1, 2);
 
 	Eigen::Vector3f pt;
-	for (size_t row = 0; row < depth.rows; row++) {
-		for (size_t col = 0; col < depth.cols; col++) {
+	for (int row = 0; row < depth.rows; row++) {
+		for (int col = 0; col < depth.cols; col++) {
 			float z = depth.at<float>(row, col) / 1000.0F;   //convert mm to m
 			//equivalent to multiplying the straight-up pixel coords + depth by inverse of intrinsic matrix K
 			pt << (col - ox) * z * inv_fx, (row - oy) * z * inv_fy, z;
@@ -402,8 +402,8 @@ bool cvDepth2pclCloud(const cv::Mat& depth, const cv::Mat& K, pcl::PointCloud<Po
 
 	bool isDense = true;
 
-	for (size_t x = 0; x < width; x++) {
-		for (size_t y = 0; y < height; y++) {
+	for (int x = 0; x < width; x++) {
+		for (int y = 0; y < height; y++) {
 			float z = static_cast<float>(depth.at<unsigned short>(y, x)) / 1000;   // Convert milimetres to metres here
 			z *= depth_scaling;
 
@@ -442,9 +442,9 @@ void cvDepthRGB2pclCloud(const cv::Mat& depth, const cv::Mat& rgb, const cv::Mat
 	const int width = depth.size().width;
 	const int height = depth.size().height;
 
-	for (size_t x = 0; x < width; x++)
+	for (int x = 0; x < width; x++)
 			{
-		for (size_t y = 0; y < height; y++)
+		for (int y = 0; y < height; y++)
 				{
 			cloud.at(x, y).b = rgb.at<cv::Vec3b>(y, x)[0];
 			cloud.at(x, y).g = rgb.at<cv::Vec3b>(y, x)[1];

@@ -14,13 +14,22 @@
 //std
 #include <stdexcept>
 #include <memory>
+#include <unistd.h>
+
+//opencv
+
+#include <opencv2/core/types_c.h>
+
+#define SWAP_BIN_IX(ix) (ix = (ix + 1) % 2);
 
 namespace reco {
 namespace workbench {
 
-
-freenect2_pipe::freenect2_pipe(kinect2_data_source source, const std::string& path):qt_runnable(),
-		images(){
+freenect2_pipe::freenect2_pipe(buffer_type buffer,
+		kinect2_data_source source, const std::string& path) :
+				buffer(buffer),
+				runner_thread(&freenect2_pipe::run, this)
+{
 	switch (source) {
 	case kinect2_data_source::kinect2_device:
 		//note: will open all kinects as "single" camera
@@ -38,13 +47,10 @@ freenect2_pipe::freenect2_pipe(kinect2_data_source source, const std::string& pa
 				<< enderr;
 		break;
 	}
-
 }
 
 freenect2_pipe::~freenect2_pipe() {
-
 }
-
 
 /*
  * Set camera using requested URI
@@ -59,8 +65,9 @@ void freenect2_pipe::set_camera(const std::string& cam_uri) {
 	//the total number of channels must be evenly divisible by the number of channels per feed
 	if (num_channels % kinect_v2_info::num_channels_per_feed != 0) {
 		err(std::invalid_argument)
-				<< "Incorrect number of channels for Kinect v2 feed! Need exactly "
-				<< kinect_v2_info::num_channels_per_feed << "! Please check cam uri. Got " << cam_uri
+		<< "Incorrect number of channels for Kinect v2 feed! Need exactly "
+				<< kinect_v2_info::num_channels_per_feed << "! Please check cam uri. Got "
+				<< cam_uri
 				<< enderr;
 	}
 
@@ -98,7 +105,7 @@ void freenect2_pipe::set_camera(const std::string& cam_uri) {
  * Get number of kinect feeds
  * @return number of kinect feeds in the source, 0 if no source is available
  */
-uint freenect2_pipe::get_num_kinects(){
+uint freenect2_pipe::get_num_kinects() {
 	return num_kinects;
 }
 
@@ -107,15 +114,55 @@ std::shared_ptr<std::vector<cv::Mat>> freenect2_pipe::take_images(){
 }
 
 void freenect2_pipe::run() {
-	if(has_camera){
-		bool can_capture = true;
-		images.reset(new std::vector<cv::Mat>());
-		while (!stop_requested && !pause_requested
-				&& rgbd_camera.Capture(*images)
-				) {
-			emit frame(take_images());
+
+	while (!stop_requested) {
+		{
+			std::unique_lock<std::mutex> lk(this->pause_mtx);
+			pause_cv.wait(lk, [&] {return playback_allowed;});
+		}
+		if (!has_camera) {
+			err(std::runtime_error)
+					<< "freenect2_pipe::run(): failed to run because there is no camera connected.";
+			return;
+		}
+		std::shared_ptr<hal::ImageArray> images = hal::ImageArray::Create();
+		while (playback_allowed
+				&& rgbd_camera.Capture(*images)) {
+
+			this->buffer->push_back(images);
+
+			emit frame();
+			images = hal::ImageArray::Create();
 		}
 	}
+
+}
+
+/**
+ * Pause playback
+ */
+void freenect2_pipe::pause() {
+	std::unique_lock<std::mutex> lk(this->pause_mtx);
+	playback_allowed = false;
+}
+
+/**
+ * Start/resume playback
+ */
+void freenect2_pipe::play() {
+	std::unique_lock<std::mutex> lk(this->pause_mtx);
+	playback_allowed = true;
+	pause_cv.notify_one();
+
+}
+
+void freenect2_pipe::join_thread() {
+	this->runner_thread.join();
+}
+
+void freenect2_pipe::stop(){
+	playback_allowed = false;
+	stop_requested = true;
 }
 
 

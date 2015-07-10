@@ -18,7 +18,6 @@
 
 //HAL
 
-
 namespace reco {
 namespace workbench {
 
@@ -28,14 +27,13 @@ namespace workbench {
 
 main_window::main_window() :
 		ui(new Ui_main_window),
-				buffer(new utils::optimistic_swap_buffer<std::vector<cv::Mat>>()),
-				//pipe(new freenect2_pipe2(buffer,freenect2_pipe2::hal_log, DEFAULT_LOG_FILE_PATH))
-				pipe(new freenect2_pipe(freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH))
+				buffer(new utils::optimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
+				pipe(new freenect2_pipe(buffer,freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH))
 {
 	ui->setupUi(this);
 	connect_actions();
-	ui->rgb_video_widget->set_blank(kinect_v2_info::rgb_image_width,kinect_v2_info::rgb_image_height);
-
+	ui->rgb_video_widget->set_blank(kinect_v2_info::rgb_image_width,
+			kinect_v2_info::rgb_image_height);
 	hook_pipe_signals();
 
 }
@@ -47,7 +45,7 @@ main_window::~main_window() {
 /**
  * Connect QAction objects to the methods they should trigger
  */
-void main_window::connect_actions(){
+void main_window::connect_actions() {
 	connect(ui->action_open_kinect_devices, SIGNAL(triggered()), this, SLOT(open_kinect_devices()));
 	connect(ui->action_open_hal_log, SIGNAL(triggered()), this, SLOT(open_hal_log()));
 	connect(ui->action_open_image_folder, SIGNAL(triggered()), this, SLOT(open_image_folder()));
@@ -55,41 +53,40 @@ void main_window::connect_actions(){
 /**
  * Open kinect feed source from actual devices (if possible)
  */
-void main_window::open_kinect_devices(){
+void main_window::open_kinect_devices() {
 
 }
 /**
  * Open kinect feed source from hal log file
- */
-void main_window::open_hal_log(){
+ */emit
+void main_window::open_hal_log() {
 
 }
 /**
  * Open kinect feed from image folder
  */
-void main_window::open_image_folder(){
+void main_window::open_image_folder() {
 
 }
 
-void main_window::hook_pipe_signals(){
+void main_window::hook_pipe_signals() {
+	//set up error reporting;
 	connect(pipe.get(), SIGNAL(error(QString)), this, SLOT(report_error(QString)));
-	hook_kinect_source_to_buttons();
-}
-
-void main_window::on_play_button_released(){
-	pipe->request_start();
-}
-
-void main_window::hook_kinect_source_to_buttons(){
 	//connect the play and pause buttons
-	connect(ui->pause_button, SIGNAL(released()), pipe.get(), SLOT(request_pause()));
-	connect(ui->play_button, SIGNAL(released()), pipe.get(), SLOT(request_start()));
+	connect(ui->pause_button, SIGNAL(released()), pipe.get(), SLOT(pause()));
+	connect(ui->play_button, SIGNAL(released()), pipe.get(), SLOT(play()));
 	//connect the pipe output to viewer
-	connect(pipe.get(), SIGNAL(frame(std::shared_ptr<std::vector<cv::Mat>>)), this, SLOT(tmp_display_image(std::shared_ptr<std::vector<cv::Mat>>)));
+	connect(pipe.get(), SIGNAL(frame()), this,
+			SLOT(tmp_display_image()));
 }
 
-void main_window::tmp_display_image(std::shared_ptr<std::vector<cv::Mat>> images){
-	ui->rgb_video_widget->set_image_fast(images->operator[](0));
+
+void main_window::tmp_display_image() {
+	std::shared_ptr<hal::ImageArray> images = this->buffer->pop_front();
+	std::shared_ptr<hal::Image> img = images->at(0);
+
+
+	ui->rgb_video_widget->set_image_fast(*img);
 }
 
 void main_window::report_error(QString string) {
@@ -97,9 +94,9 @@ void main_window::report_error(QString string) {
 }
 
 void main_window::closeEvent(QCloseEvent* event) {
+	pipe->stop();
 
-	pipe->request_stop();
-
+	pipe->join_thread();
 }
 
 } //end namespace reco
