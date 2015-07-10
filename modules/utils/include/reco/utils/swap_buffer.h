@@ -41,7 +41,7 @@ public:
  * A thread-safe 1-slot queue with pessimistic locking
  **/
 template<typename T> class pessimistic_swap_buffer:
-		swap_buffer<T> {
+		public swap_buffer<T> {
 public:
 	pessimistic_swap_buffer();
 	virtual ~pessimistic_swap_buffer();
@@ -94,7 +94,7 @@ template<typename T> T pessimistic_swap_buffer<T>::pop_front() {
  * A thread-safe 1-slot queue with optimistic waiting (requires non-0 items)
  **/
 template<typename T> class optimistic_swap_queue:
-		swap_buffer<T> {
+		public swap_buffer<T> {
 public:
 	optimistic_swap_queue();
 	virtual ~optimistic_swap_queue();

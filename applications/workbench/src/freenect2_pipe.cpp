@@ -21,7 +21,6 @@ namespace workbench {
 freenect2_pipe::freenect2_pipe(std::shared_ptr<utils::swap_buffer<std::vector<cv::Mat>>>buffer,
 kinect2_data_source source, const std::string& path):
 		buffer(buffer),
-		is_paused(true),
 		runner_thread(&freenect2_pipe::run,this)
 {
 	switch (source) {
@@ -37,8 +36,7 @@ kinect2_data_source source, const std::string& path):
 		throw reco::utils::not_implemented();
 		break;
 		default:
-		err(std::invalid_argument) << "Unknown value for kinect2_data_source. Got: " << source
-		<< enderr;
+		err(std::invalid_argument) << "Unknown value for kinect2_data_source. Got: " << source	<< enderr;
 		break;
 	}
 }

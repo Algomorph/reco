@@ -45,7 +45,7 @@ namespace workbench {
 class freenect2_pipe : public QObject {
 Q_OBJECT
 protected:
-	bool is_paused;
+	bool is_paused = true;
 	std::condition_variable pause_cv;
 	std::mutex pause_mtx;
 	void run();
@@ -90,6 +90,8 @@ signals:
 	 */
 	void frame();
 	void output_ready();
+	void paused();
+	void stopped();
 };
 
 } /* namespace workbench */

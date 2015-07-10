@@ -66,7 +66,7 @@ private slots:
 	void open_kinect_devices();
 	void open_hal_log();
 	void open_image_folder();
-	void tmp_display_image(std::shared_ptr<std::vector<cv::Mat>> images);
+	void tmp_display_image();
 
 };
 

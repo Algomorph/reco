@@ -28,14 +28,13 @@ namespace workbench {
 main_window::main_window() :
 		ui(new Ui_main_window),
 				buffer(new utils::pessimistic_swap_buffer<std::vector<cv::Mat>>()),
-				pipe(buffer, new freenect2_pipe(freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH))
+				pipe(new freenect2_pipe(buffer,freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH))
 {
 	ui->setupUi(this);
 	connect_actions();
 	ui->rgb_video_widget->set_blank(kinect_v2_info::rgb_image_width,
 			kinect_v2_info::rgb_image_height);
-	hook_kinect_source_signals();
-	//hook_kinect_source_to_buttons();
+	hook_pipe_signals();
 
 }
 
@@ -75,17 +74,19 @@ void main_window::hook_pipe_signals() {
 	//set up error reporting;
 	connect(pipe.get(), SIGNAL(error(QString)), this, SLOT(report_error(QString)));
 	//connect the play and pause buttons
-	connect(ui->pause_button, SIGNAL(released()), pipe.get(), SLOT(request_pause()));
-	connect(ui->play_button, SIGNAL(released()), pipe.get(), SLOT(start()));
+	connect(ui->pause_button, SIGNAL(released()), pipe.get(), SLOT(pause()));
+	connect(ui->play_button, SIGNAL(released()), pipe.get(), SLOT(play()));
 	//connect the pipe output to viewer
-	connect(pipe.get(), SIGNAL(frame(std::shared_ptr<std::vector<cv::Mat>>)), this,
-			SLOT(tmp_display_image(std::shared_ptr<std::vector<cv::Mat>>)));
+	connect(pipe.get(), SIGNAL(frame()), this,
+			SLOT(tmp_display_image()));
 
 }
 
 
-void main_window::tmp_display_image(std::shared_ptr<std::vector<cv::Mat>> images) {
-	ui->rgb_video_widget->set_image_fast(images->operator [](0));
+void main_window::tmp_display_image() {
+	std::vector<cv::Mat> images = this->buffer->pop_front();
+	ui->rgb_video_widget->set_image_fast(images[0]);
+	std::cout << "displayed one" << std::endl;
 }
 
 void main_window::report_error(QString string) {

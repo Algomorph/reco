@@ -39,6 +39,12 @@
          <layout class="QVBoxLayout" name="depth_group_layout">
           <item>
            <widget class="QPushButton" name="show_depth_feed_button">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>Show Depth Feed</string>
             </property>
@@ -50,6 +56,12 @@
          <layout class="QVBoxLayout" name="rgb_group_layout">
           <item>
            <widget class="QPushButton" name="show_depth_feed_button_">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
             <property name="text">
              <string>Show RGB Feed</string>
             </property>
@@ -62,10 +74,16 @@
       <item row="0" column="0">
        <widget class="reco::datapipe::video_widget" name="rgb_video_widget" native="true">
         <property name="sizePolicy">
-         <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
+        </property>
+        <property name="minimumSize">
+         <size>
+          <width>200</width>
+          <height>200</height>
+         </size>
         </property>
        </widget>
       </item>
@@ -73,6 +91,12 @@
        <layout class="QHBoxLayout" name="horizontalLayout">
         <item>
          <widget class="QPushButton" name="pause_button">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="text">
            <string>Pause</string>
           </property>
@@ -80,6 +104,12 @@
         </item>
         <item>
          <widget class="QPushButton" name="play_button">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
           <property name="text">
            <string>Play</string>
           </property>
@@ -134,7 +164,7 @@
   </action>
   <action name="actionClose_RGB_D_Stream">
    <property name="text">
-    <string>Close RGB-D Stream</string>
+    <string>&amp;Close RGB-D Stream</string>
    </property>
   </action>
  </widget>

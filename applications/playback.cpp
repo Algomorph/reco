@@ -39,7 +39,7 @@
  * @param camera - (out) camera to be initialized
  * @param num_kinects - (out) # of kinects in the source
  */
-void set_camera(const std::string& cam_uri, hal::Camera& camera, int& num_kinects) {
+void set_camera(const std::string& cam_uri, hal::Camera& camera, uint& num_kinects) {
 		try {
 			camera = hal::Camera(cam_uri);
 		} catch (const hal::DeviceException& e) {
@@ -70,7 +70,7 @@ void get_image_sizes(const hal::Camera& camera, cv::Size& rgb_size, cv::Size& de
 // Get command line parameters
 //------------------------------------------------------------------------------
 bool parse_command_line(int argc, char** argv, std::string &input_file, std::string &calibration_file,
-		int& numKinects) {
+		uint& numKinects) {
 	if (pcl::console::parse_argument(argc, argv, "-i", input_file) < 0) {
 		std::cout << "You must provide a HAL logfile with depth & RGB images." << std::endl;
 		return false;
@@ -107,7 +107,7 @@ int main(int argc, char* argv[]) {
 
 	std::string input_file;
 	std::string calibration_file;
-	int num_kinects;
+	uint num_kinects;
 
 	parse_command_line(argc, argv, input_file, calibration_file, num_kinects);
 
