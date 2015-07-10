@@ -25,7 +25,7 @@
 
 //local
 #include "freenect2_pipe.h"
-#include "freenect2_pipe2.h"
+
 
 //OpenCV
 #include <opencv2/core/core.hpp>
@@ -52,7 +52,6 @@ private:
 	Ui_main_window* ui;
 	QThread* kinect_data_thread = NULL;
 	std::shared_ptr<utils::swap_buffer<std::vector<cv::Mat>>> buffer;
-	//std::shared_ptr<freenect2_pipe2> pipe;
 	std::shared_ptr<freenect2_pipe> pipe;
 
 	void connect_actions();
@@ -67,12 +66,7 @@ private slots:
 	void open_kinect_devices();
 	void open_hal_log();
 	void open_image_folder();
-	void tmp_display_image(std::vector<cv::Mat> images);
-	void tmp_display_image2();
-	void tmp_display_image3(std::shared_ptr<std::vector<cv::Mat>> images);
-	void tmp_display_rgb(cv::Mat rgb);
-	void tmp_display_rgb2(const cv::Mat& rgb);
-
+	void tmp_display_image(std::shared_ptr<std::vector<cv::Mat>> images);
 
 };
 

@@ -80,7 +80,7 @@ void main_window::hook_kinect_source_to_thread(){
 		pipe->hook_to_thread(kinect_data_thread);
 		hook_kinect_source_to_buttons();
 		kinect_data_thread->start();
-		//pipe->request_pause();
+		pipe->request_pause();
 	}
 }
 
@@ -89,40 +89,11 @@ void main_window::hook_kinect_source_to_buttons(){
 	connect(ui->pause_button, SIGNAL(released()), pipe.get(), SLOT(request_pause()));
 	connect(ui->play_button, SIGNAL(released()), pipe.get(), SLOT(start()));
 	//connect the pipe output to viewer
-	//connect(pipe.get(), SIGNAL(frame(std::vector<cv::Mat>)), this, SLOT(tmp_display_image(std::vector<cv::Mat>)));
-	//connect(pipe.get(), SIGNAL(frame()), this, SLOT(tmp_display_image2()));
-	//connect(pipe.get(), SIGNAL(rgb_frame(cv::Mat)), this, SLOT(tmp_display_rgb(cv::Mat)));
-	//connect(pipe.get(), SIGNAL(rgb_frame2(cv::Mat)), this, SLOT(tmp_display_rgb2(cv::Mat)));
-	connect(pipe.get(), SIGNAL(frame(std::shared_ptr<std::vector<cv::Mat>>)), this, SLOT(tmp_display_image3(std::shared_ptr<std::vector<cv::Mat>>)));
+	connect(pipe.get(), SIGNAL(frame(std::shared_ptr<std::vector<cv::Mat>>)), this, SLOT(tmp_display_image(std::shared_ptr<std::vector<cv::Mat>>)));
 }
 
-void main_window::tmp_display_image(std::vector<cv::Mat> images){
-//	using namespace std;
-//	std::cout << "Num images: " << images.size() << std::endl;
-//	std::cout << "rows X cols: " << images[0].rows << " X " << images[0].cols << endl;
-	std::cout << "channels: " << images[0].channels() << std::endl;
-	std::cout << "type: " << images[0].type() << std::endl << std::endl;
-	//cv::Mat copy = cv::Mat(images[0].rows,images[0].cols,images[0].type());
-
-	//images[0].copyTo(copy);
-	ui->rgb_video_widget->set_image_fast(images[0]);
-}
-
-void main_window::tmp_display_image2(){
-	std::vector<cv::Mat> images = buffer->pop_front();
-	ui->rgb_video_widget->set_image_fast(images[0]);
-}
-
-void main_window::tmp_display_image3(std::shared_ptr<std::vector<cv::Mat>> images){
+void main_window::tmp_display_image(std::shared_ptr<std::vector<cv::Mat>> images){
 	ui->rgb_video_widget->set_image_fast(images->operator[](0));
-}
-
-void main_window::tmp_display_rgb(cv::Mat rgb){
-	ui->rgb_video_widget->set_image_fast(rgb);
-}
-
-void main_window::tmp_display_rgb2(const cv::Mat& rgb){
-	ui->rgb_video_widget->set_image_fast(rgb);
 }
 
 void main_window::on_play_button_released() {
