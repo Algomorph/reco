@@ -111,13 +111,17 @@ void freenect2_pipe::run() {
 			is_paused = false;
 		}
 	}
-//todo: later, change from cv::Mat to something more primitive and fast, perhaps accessing the freenect driver directly.
+//todo: later, change from current datatype to something more primitive and fast, perhaps accessing the freenect driver directly.
 //Allocate a specific memory region, keep copying it to the buffer and overwriting it, instead of constantly re-allocating the image array
-	std::shared_ptr<std::vector<cv::Mat>> images(new std::vector<cv::Mat>());
+	std::shared_ptr<std::vector<cv::Mat>> images0(new std::vector<cv::Mat>());
+	std::shared_ptr<std::vector<cv::Mat>> images1(new std::vector<cv::Mat>());
+	std::shared_ptr<std::vector<cv::Mat>> images[2] = {images0,images1};
+	int ix = 0;
 	while (!is_paused
-			&& rgbd_camera.Capture(*images)) {
-		buffer->push_back(images);
+			&& rgbd_camera.Capture(*images[ix])) {
+		buffer->push_back(images[ix]);
 		emit frame();
+		ix = (ix+1) % 2;
 	}
 }
 

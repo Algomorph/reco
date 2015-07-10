@@ -38,13 +38,13 @@ public:
 };
 
 /**
- * A thread-safe 1-slot queue with pessimistic locking
+ * A thread-safe 1-slot queue with pessimistic locking that uses assignment
  **/
-template<typename T> class pessimistic_swap_buffer:
+template<typename T> class pessimistic_assignment_swap_buffer:
 		public swap_buffer<T> {
 public:
-	pessimistic_swap_buffer();
-	virtual ~pessimistic_swap_buffer();
+	pessimistic_assignment_swap_buffer();
+	virtual ~pessimistic_assignment_swap_buffer();
 	virtual void push_back(const T& item);
 	virtual T pop_front();
 
@@ -54,42 +54,91 @@ private:
 	std::condition_variable cv_pop;
 	bool empty;
 
-	//T storage[1];
-	T item;
+	T storage;
 };
 
-template<typename T> pessimistic_swap_buffer<T>::pessimistic_swap_buffer() :
+template<typename T> pessimistic_assignment_swap_buffer<T>::pessimistic_assignment_swap_buffer() :
 		mutex(),
 				cv_push(),
 				cv_pop(),
 				empty(true) {
 }
 
-template<typename T> pessimistic_swap_buffer<T>::~pessimistic_swap_buffer() {
+template<typename T> pessimistic_assignment_swap_buffer<T>::~pessimistic_assignment_swap_buffer() {
 
 }
 
-template<typename T> void pessimistic_swap_buffer<T>::push_back(const T& item) {
+template<typename T> void pessimistic_assignment_swap_buffer<T>::push_back(const T& item) {
 	std::unique_lock<std::mutex> lock(mutex);
 	while (!empty) {
 		cv_push.wait(lock);
 	}
-	//memcpy(&storage[0], &item, sizeof(T));
-	this->item = item;
+	this->storage = item;
 	empty = false;
 	cv_pop.notify_one();
 }
 
-template<typename T> T pessimistic_swap_buffer<T>::pop_front() {
+template<typename T> T pessimistic_assignment_swap_buffer<T>::pop_front() {
 	std::unique_lock<std::mutex> lock(mutex);
 	while (empty) {
 		cv_pop.wait(lock);
 	}
-	//T ret;
-	//memcpy(&ret, &storage[0], sizeof(T));
 	empty = true;
 	cv_push.notify_one();
-	return this->item;
+	return this->storage;
+}
+
+/**
+ * A thread-safe 1-slot queue with pessimistic locking that uses direct copying
+ **/
+template<typename T> class pessimistic_copy_swap_buffer:
+		public swap_buffer<T> {
+public:
+	pessimistic_copy_swap_buffer();
+	virtual ~pessimistic_copy_swap_buffer();
+	virtual void push_back(const T& item);
+	virtual T pop_front();
+
+private:
+	std::mutex mutex;
+	std::condition_variable cv_push;
+	std::condition_variable cv_pop;
+	bool empty;
+
+	T storage[1];
+};
+
+template<typename T> pessimistic_copy_swap_buffer<T>::pessimistic_copy_swap_buffer() :
+		mutex(),
+				cv_push(),
+				cv_pop(),
+				empty(true) {
+}
+
+template<typename T> pessimistic_copy_swap_buffer<T>::~pessimistic_copy_swap_buffer() {
+
+}
+
+template<typename T> void pessimistic_copy_swap_buffer<T>::push_back(const T& item) {
+	std::unique_lock<std::mutex> lock(mutex);
+	while (!empty) {
+		cv_push.wait(lock);
+	}
+	memcpy(&storage[0], &item, sizeof(T));
+	empty = false;
+	cv_pop.notify_one();	//this->item = item;
+}
+
+template<typename T> T pessimistic_copy_swap_buffer<T>::pop_front() {
+	std::unique_lock<std::mutex> lock(mutex);
+	while (empty) {
+		cv_pop.wait(lock);
+	}
+	T ret;
+	memcpy(&ret, &storage[0], sizeof(T));
+	empty = true;
+	cv_push.notify_one();
+	return ret;
 }
 
 /**
