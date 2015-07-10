@@ -18,7 +18,7 @@
 namespace reco {
 namespace workbench {
 
-freenect2_pipe::freenect2_pipe(std::shared_ptr<utils::swap_buffer<std::vector<cv::Mat>>>buffer,
+freenect2_pipe::freenect2_pipe(buffer_type buffer,
 kinect2_data_source source, const std::string& path):
 		buffer(buffer),
 		runner_thread(&freenect2_pipe::run,this)
@@ -111,9 +111,11 @@ void freenect2_pipe::run() {
 			is_paused = false;
 		}
 	}
-	std::vector<cv::Mat> images;
+//todo: later, change from cv::Mat to something more primitive and fast, perhaps accessing the freenect driver directly.
+//Allocate a specific memory region, keep copying it to the buffer and overwriting it, instead of constantly re-allocating the image array
+	std::shared_ptr<std::vector<cv::Mat>> images(new std::vector<cv::Mat>());
 	while (!is_paused
-			&& rgbd_camera.Capture(images)) {
+			&& rgbd_camera.Capture(*images)) {
 		buffer->push_back(images);
 		emit frame();
 	}

@@ -52,7 +52,7 @@ private:
 	Ui_main_window* ui;
 
 
-	std::shared_ptr<utils::swap_buffer<std::vector<cv::Mat>>> buffer;
+	freenect2_pipe::buffer_type buffer;
 	std::unique_ptr<freenect2_pipe> pipe;
 
 

@@ -35,6 +35,7 @@
 namespace reco {
 namespace workbench {
 
+
 /**
  * Object for retrieving kinect data (from "somewhere" in HAL) and pushing it off to various downstream actors,
  * such as display node(s), recording/storing node(s), and/or processing node(s).
@@ -44,6 +45,10 @@ namespace workbench {
  */
 class freenect2_pipe : public QObject {
 Q_OBJECT
+
+public:
+	typedef std::shared_ptr<utils::swap_buffer<std::shared_ptr<std::vector<cv::Mat>>>> buffer_type;
+
 protected:
 	bool is_paused = true;
 	std::condition_variable pause_cv;
@@ -56,7 +61,7 @@ private:
 	uint num_kinects = 0;
 
 	void set_camera(const std::string& cam_uri);
-	std::shared_ptr<utils::swap_buffer<std::vector<cv::Mat>>> buffer;
+	buffer_type buffer;
 	std::thread runner_thread;
 
 
@@ -66,7 +71,7 @@ public:
 		hal_log, kinect2_device, image_folder //TODO: implement image folder support later if needed
 	};
 
-	freenect2_pipe(std::shared_ptr<utils::swap_buffer<std::vector<cv::Mat>>> buffer,
+	freenect2_pipe(buffer_type buffer,
 			kinect2_data_source source = hal_log, const std::string& path = "capture.log");
 	virtual ~freenect2_pipe();
 	uint get_num_kinects();

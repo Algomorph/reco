@@ -27,7 +27,7 @@ namespace workbench {
 
 main_window::main_window() :
 		ui(new Ui_main_window),
-				buffer(new utils::pessimistic_swap_buffer<std::vector<cv::Mat>>()),
+				buffer(new utils::pessimistic_swap_buffer<std::shared_ptr<std::vector<cv::Mat>>>()),
 				pipe(new freenect2_pipe(buffer,freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH))
 {
 	ui->setupUi(this);
@@ -84,8 +84,8 @@ void main_window::hook_pipe_signals() {
 
 
 void main_window::tmp_display_image() {
-	std::vector<cv::Mat> images = this->buffer->pop_front();
-	ui->rgb_video_widget->set_image_fast(images[0]);
+	std::shared_ptr<std::vector<cv::Mat>> images = this->buffer->pop_front();
+	ui->rgb_video_widget->set_image_fast(images->operator [](0));
 	std::cout << "displayed one" << std::endl;
 }
 

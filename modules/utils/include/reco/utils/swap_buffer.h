@@ -54,7 +54,8 @@ private:
 	std::condition_variable cv_pop;
 	bool empty;
 
-	T storage[1];
+	//T storage[1];
+	T item;
 };
 
 template<typename T> pessimistic_swap_buffer<T>::pessimistic_swap_buffer() :
@@ -73,7 +74,8 @@ template<typename T> void pessimistic_swap_buffer<T>::push_back(const T& item) {
 	while (!empty) {
 		cv_push.wait(lock);
 	}
-	memcpy(&storage[0], &item, sizeof(T));
+	//memcpy(&storage[0], &item, sizeof(T));
+	this->item = item;
 	empty = false;
 	cv_pop.notify_one();
 }
@@ -83,11 +85,11 @@ template<typename T> T pessimistic_swap_buffer<T>::pop_front() {
 	while (empty) {
 		cv_pop.wait(lock);
 	}
-	T ret;
-	memcpy(&ret, &storage[0], sizeof(T));
+	//T ret;
+	//memcpy(&ret, &storage[0], sizeof(T));
 	empty = true;
 	cv_push.notify_one();
-	return ret;
+	return this->item;
 }
 
 /**
