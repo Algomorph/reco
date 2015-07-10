@@ -19,8 +19,6 @@
 //local
 #include <reco/workbench/camera.h>
 
-//datapipe
-#include <reco/datapipe/runnable.h>
 
 //utils
 #include <reco/utils/swap_buffer.h>
@@ -28,7 +26,6 @@
 //arpg
 #include <HAL/Camera/CameraDriverInterface.h>
 #include <HAL/Camera/CameraDevice.h>
-#include <reco/datapipe/qt_runnable.h>
 
 //std
 #include <vector>
@@ -61,6 +58,7 @@ protected:
 	void run();
 
 private:
+	hal::Camera rgbd_camera;
 	bool has_camera = false;
 	uint num_kinects = 0;
 

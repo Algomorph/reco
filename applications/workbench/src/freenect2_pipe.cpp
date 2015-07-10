@@ -109,10 +109,6 @@ uint freenect2_pipe::get_num_kinects() {
 	return num_kinects;
 }
 
-std::shared_ptr<std::vector<cv::Mat>> freenect2_pipe::take_images(){
-	return this->images;
-}
-
 void freenect2_pipe::run() {
 
 	while (!stop_requested) {

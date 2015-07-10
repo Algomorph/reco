@@ -20,8 +20,6 @@
 #include <reco/datapipe/webcam_video_source.h>
 #include <reco/datapipe/image_file_video_source.h>
 
-//utils
-#include <reco/utils/optimistic_swap_buffer.h>
 
 //local
 #include "freenect2_pipe.h"
@@ -32,7 +30,7 @@
 //OpenCV
 #include <opencv2/core/core.hpp>
 
-//std::
+//std
 #include <memory>
 #include <vector>
 
