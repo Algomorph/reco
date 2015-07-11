@@ -25,6 +25,8 @@
 namespace reco {
 namespace workbench {
 
+
+
 freenect2_pipe::freenect2_pipe(buffer_type buffer,
 		kinect2_data_source source, const std::string& path) :
 				buffer(buffer),
@@ -134,17 +136,12 @@ void freenect2_pipe::run() {
 
 }
 
-/**
- * Pause playback
- */
+
 void freenect2_pipe::pause() {
 	std::unique_lock<std::mutex> lk(this->pause_mtx);
 	playback_allowed = false;
 }
 
-/**
- * Start/resume playback
- */
 void freenect2_pipe::play() {
 	std::unique_lock<std::mutex> lk(this->pause_mtx);
 	playback_allowed = true;

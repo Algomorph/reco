@@ -38,11 +38,9 @@ namespace workbench {
 
 
 /**
+ * @brief A kinect v2 source object based on ARPG HAL and compatible with Qt
  * Object for retrieving kinect data (from "somewhere" in HAL) and pushing it off to various downstream actors,
  * such as display node(s), recording/storing node(s), and/or processing node(s).
- */
-/*
- * TODO: integrate HAL interface
  */
 class freenect2_pipe : public QObject {
 Q_OBJECT
@@ -73,6 +71,13 @@ public:
 		hal_log, kinect2_device, image_folder //TODO: implement image folder support later if needed
 	};
 
+	/**
+	 * @brief Primary constructor
+	 * Constructs the object with the specified buffer and initializes the retrieval based on the kinect2 data source
+	 * @param buffer a thread-safe buffer object for storing the output RGB & Depth feeds
+	 * @param source type of the input source
+	 * @param path necessary when the source is either an ARPG HAL log (in which case, represents path to the log file) or a file folder (in which case, represents the directory)
+	 */
 	freenect2_pipe(buffer_type buffer,
 			kinect2_data_source source = hal_log, const std::string& path = "capture.log");
 	virtual ~freenect2_pipe();
@@ -83,8 +88,21 @@ public:
 
 
 public slots:
+	/**
+	 * Shuts down the pipe & feed for good.
+	 * Intended to be called at the end of the program's execution.
+	 * @note Can only be called once after objects' creation. Afterward, the object is unusable.
+	 */
 	void stop();
+
+	/**
+	 * Pause playback
+	 */
 	void pause();
+
+	/**
+	 * Start/resume playback
+	 */
 	void play();
 
 signals:
@@ -98,9 +116,7 @@ signals:
 	 * @param
 	 */
 	void frame();
-	void output_ready();
-	void paused();
-	void stopped();
+
 };
 
 } /* namespace workbench */
