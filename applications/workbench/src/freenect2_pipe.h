@@ -38,7 +38,7 @@ namespace workbench {
 
 
 /**
- * @brief A kinect v2 source object based on ARPG HAL and compatible with Qt
+ * @brief Directs one or more kinect v2 feeds from an ARPG HAL-based source to apps that process and output the data
  * Object for retrieving kinect data (from "somewhere" in HAL) and pushing it off to various downstream actors,
  * such as display node(s), recording/storing node(s), and/or processing node(s).
  */
@@ -46,6 +46,9 @@ class freenect2_pipe : public QObject {
 Q_OBJECT
 
 public:
+/**
+ * Type of the buffer object required to use the pipe
+ */
 	typedef std::shared_ptr<utils::queue<std::shared_ptr<hal::ImageArray>>> buffer_type;
 
 protected:

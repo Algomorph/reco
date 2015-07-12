@@ -10,6 +10,7 @@ reco_find_dependency(Protobuf QUIET)
 reco_find_dependency(Calibu QUIET)
 reco_find_dependency(Kangaroo QUIET)
 reco_find_dependency(LibDL QUIET)
+reco_find_dependency(VTK QUIET)
 
 #find python, numpy
 include("DetectPython")

@@ -1,5 +1,5 @@
 set(_module workbench)
 
 reco_add_subproject(${_module}
-    DEPENDENCIES datapipe utils OpenCV HAL
+    DEPENDENCIES datapipe utils OpenCV HAL VTK
     APPLICATION QT)

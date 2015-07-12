@@ -2,7 +2,6 @@
 #define PY_ARRAY_UNIQUE_SYMBOL reco_ARRAY_API
 #include <boost/python.hpp>
 #include <reco/python/cv_boost_converter.hpp>
-
 namespace reco {
 namespace python {
 
