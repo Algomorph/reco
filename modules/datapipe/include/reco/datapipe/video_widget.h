@@ -23,7 +23,7 @@ class video_widget: public image_widget {
 	Q_OBJECT
 public:
 	video_widget(QWidget *parent = NULL);
-	virtual ~video_widget(){};
+	virtual ~video_widget();
 	void connect_to_video_pipeline(const base_video_pipeline* pipeline);
 
 };

@@ -16,7 +16,13 @@
 #include <QThread>
 #include <QDebug>
 
-//HAL
+// Point Cloud Library
+#include <pcl/point_cloud.h>
+#include <pcl/point_types.h>
+#include <pcl/visualization/pcl_visualizer.h>
+
+// Visualization Toolkit (VTK)
+#include <vtkRenderWindow.h>
 
 namespace reco {
 namespace workbench {

@@ -11,14 +11,9 @@
 
 namespace reco {
 namespace datapipe{
-video_widget::video_widget(QWidget *parent) : image_widget(parent) {
-	// TODO Auto-generated constructor stub
+video_widget::video_widget(QWidget *parent) : image_widget(parent) {}
 
-}
-
-//VideoWidget::~VideoWidget() {
-	// TODO Auto-generated destructor stub
-//}
+video_widget::~video_widget() {}
 
 void video_widget::connect_to_video_pipeline(const base_video_pipeline* pipeline){
 	connect(pipeline, SIGNAL(frameReady(cv::Mat)),this, SLOT(setImageFast(cv::Mat)));
