@@ -10,9 +10,12 @@
 #include "feed_viewer.h"
 #include <reco/workbench/kinect_v2_info.h>
 
+#define channel_is_rgb(channel_ix) (channel_ix % 2 == 0)
 
 namespace reco {
 namespace workbench {
+
+const float feed_viewer::depth_inv_factor = 4500.0 / 255.0f;
 
 feed_viewer::feed_viewer(QString window_title, QWidget* parent):
 		QWidget(parent),
@@ -39,7 +42,9 @@ void feed_viewer::add_video_widget(int ix_channel){
 	this->video_widgets.emplace_back(ix_channel,vid_widget);
 }
 
-
+//TODO: need to make two separate classes with a single base, rgb_feed_viewer and depth_feed_viewer,
+//instead of passing in the flag and checking channel index in the on_frame slot.
+//TODO: we don't need to retain any reference here neither to the pipe, nor to the buffer
 void feed_viewer::hook_to_pipe(std::shared_ptr<freenect2_pipe> pipe, feed_type type){
 	if(this->pipe){
 		//if already hooked to a pipe, unhook
@@ -91,8 +96,14 @@ void feed_viewer::unhook_from_pipe(){
 
 void feed_viewer::on_frame(std::shared_ptr<hal::ImageArray> images){
 	for(std::tuple<int,datapipe::video_widget*> vid_widget_tuple : this->video_widgets){
-		std::shared_ptr<hal::Image> img = images->at(std::get<0>(vid_widget_tuple));
-		std::get<1>(vid_widget_tuple)->set_image_fast(*img);
+		int channel_index = std::get<0>(vid_widget_tuple);
+		std::shared_ptr<hal::Image> img = images->at(channel_index);
+		if(channel_is_rgb(channel_index)){
+			std::get<1>(vid_widget_tuple)->set_bgr_image_fast(*img);
+		}else{
+			cv::Mat img_mat = static_cast<cv::Mat>(*img) / feed_viewer::depth_inv_factor;
+			std::get<1>(vid_widget_tuple)->set_float_image_fast(img_mat);
+		}
 	}
 }
 

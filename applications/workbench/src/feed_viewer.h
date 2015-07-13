@@ -30,10 +30,9 @@ private:
 	std::shared_ptr<freenect2_pipe> pipe;
 	freenect2_pipe::buffer_type buffer;
 	std::vector<std::tuple<int,datapipe::video_widget*>> video_widgets;
-
-
 	void add_video_widget(int ix_feed);
 public:
+	static const float depth_inv_factor;
 	enum feed_type{
 		RGB = 0,
 		DEPTH = 1,
@@ -57,6 +56,10 @@ public:
 	 */
 	void unhook_from_pipe();
 public slots:
+	/**
+	 * @brief triggered when a new frame becomes available.
+	 * @param images
+	 */
 	void on_frame(std::shared_ptr<hal::ImageArray> images);
 
 };

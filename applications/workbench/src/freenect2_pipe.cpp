@@ -155,7 +155,7 @@ void freenect2_pipe::play() {
 }
 
 void freenect2_pipe::join_thread() {
-
+	this->rgbd_camera.Clear();
 	this->runner_thread.join();
 }
 

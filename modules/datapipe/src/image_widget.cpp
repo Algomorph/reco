@@ -48,15 +48,40 @@ image_widget::~image_widget() {
  * Fast version of setImage: assumes BGR mat (CV_8UC3), does not resize widget
  * @param mat matrix to use for current image
  */
-void image_widget::set_image_fast(const cv::Mat& mat) {
+void image_widget::set_bgr_image_fast(const cv::Mat& mat) {
 
 	// Convert the image to the RGB888 format
 	// assume BGR image
+#ifdef DO_IMG_TYPE_CHECKING
 	if(mat.type() != CV_8UC3){
 		err(std::invalid_argument) << "Error caught in image_widget::set_image_fast...Wrong image type: " << mat.type() << "." << std::endl << enderr;
 	}
+#endif
 
 	cvtColor(mat, tmp, CV_BGR2RGB);
+
+	// Assign OpenCV's image buffer to the QImage. Note that the bytesPerLine parameter
+	// is 3*width because each pixel has three bytes.
+	image = QImage(tmp.data, tmp.cols, tmp.rows, tmp.cols * 3, QImage::Format_RGB888);
+
+	repaint();
+}
+
+/**
+ * Fast version of setImage: assumes BGR mat (CV_8UC3), does not resize widget
+ * @param mat matrix to use for current image
+ */
+void image_widget::set_float_image_fast(const cv::Mat& mat) {
+
+	// Convert the image to the RGB888 format
+	// assume BGR image
+#ifdef DO_IMG_TYPE_CHECKING
+	if(mat.type() != CV_8UC3){
+		err(std::invalid_argument) << "Error caught in image_widget::set_image_fast...Wrong image type: " << mat.type() << "." << std::endl << enderr;
+	}
+#endif
+
+	mat.convertTo(tmp,CV_8UC3);
 
 	// Assign OpenCV's image buffer to the QImage. Note that the bytesPerLine parameter
 	// is 3*width because each pixel has three bytes.

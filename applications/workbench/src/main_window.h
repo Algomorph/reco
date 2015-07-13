@@ -53,6 +53,7 @@ private:
 	Ui_main_window* ui;
 
 	feed_viewer rgb_viewer;
+	feed_viewer depth_viewer;
 
 	freenect2_pipe::buffer_type buffer;
 	std::shared_ptr<freenect2_pipe> pipe;
@@ -70,6 +71,7 @@ private slots:
 	void open_image_folder();
 	void display_feeds();
 	void on_show_rgb_feed_button_clicked();
+	void on_show_depth_feed_button_clicked();
 
 };
 

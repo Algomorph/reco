@@ -86,12 +86,14 @@ void main_window::hook_pipe_signals() {
 	connect(pipe.get(), SIGNAL(frame()), this,
 			SLOT(display_feeds()));
 	rgb_viewer.hook_to_pipe(pipe,feed_viewer::feed_type::RGB);
+	depth_viewer.hook_to_pipe(pipe,feed_viewer::feed_type::DEPTH);
 }
 
 
 void main_window::display_feeds() {
 	std::shared_ptr<hal::ImageArray> images = this->buffer->pop_front();
 	this->rgb_viewer.on_frame(images);
+	this->depth_viewer.on_frame(images);
 }
 
 void main_window::report_error(QString string) {
@@ -100,6 +102,7 @@ void main_window::report_error(QString string) {
 
 void main_window::closeEvent(QCloseEvent* event) {
 	rgb_viewer.close();
+	depth_viewer.close();
 	pipe->stop();
 	buffer->clear();//let one more item onto the queue
 	pipe->join_thread();
@@ -108,6 +111,9 @@ void main_window::closeEvent(QCloseEvent* event) {
 
 void main_window::on_show_rgb_feed_button_clicked(){
 	this->rgb_viewer.setVisible(true);
+}
+void main_window::on_show_depth_feed_button_clicked(){
+	this->depth_viewer.setVisible(true);
 }
 
 } //end namespace reco
