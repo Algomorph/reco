@@ -22,6 +22,7 @@
 
 //local
 #include "freenect2_pipe.h"
+#include "feed_viewer.h"
 
 //utils
 #include <reco/utils/swap_buffer.h>
@@ -51,9 +52,10 @@ protected:
 private:
 	Ui_main_window* ui;
 
+	feed_viewer rgb_viewer;
 
 	freenect2_pipe::buffer_type buffer;
-	std::unique_ptr<freenect2_pipe> pipe;
+	std::shared_ptr<freenect2_pipe> pipe;
 
 
 	void connect_actions();
@@ -66,7 +68,8 @@ private slots:
 	void open_kinect_devices();
 	void open_hal_log();
 	void open_image_folder();
-	void tmp_display_image();
+	void display_feeds();
+	void on_show_rgb_feed_button_clicked();
 
 };
 

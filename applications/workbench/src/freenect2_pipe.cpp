@@ -61,7 +61,7 @@ void freenect2_pipe::set_camera(const std::string& cam_uri) {
 	rgbd_camera = hal::Camera(cam_uri);
 	has_camera = true;
 
-	const size_t num_channels = rgbd_camera.NumChannels();
+	num_channels = (int)rgbd_camera.NumChannels();
 
 	//check that we have appropriate number of channels
 	//the total number of channels must be evenly divisible by the number of channels per feed
@@ -103,12 +103,17 @@ void freenect2_pipe::set_camera(const std::string& cam_uri) {
 
 }
 
-/**
- * Get number of kinect feeds
- * @return number of kinect feeds in the source, 0 if no source is available
- */
-uint freenect2_pipe::get_num_kinects() {
+
+int freenect2_pipe::get_num_kinects() {
 	return num_kinects;
+}
+
+int freenect2_pipe::get_num_channels() {
+	return num_channels;
+}
+
+freenect2_pipe::buffer_type freenect2_pipe::get_buffer(){
+	return this->buffer;
 }
 
 void freenect2_pipe::run() {

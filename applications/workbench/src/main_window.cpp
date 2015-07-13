@@ -33,8 +33,9 @@ namespace workbench {
 
 main_window::main_window() :
 		ui(new Ui_main_window),
-				buffer(new utils::optimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
-				pipe(new freenect2_pipe(buffer,freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH))
+		rgb_viewer("RGB Feed",NULL),
+		buffer(new utils::optimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
+		pipe(new freenect2_pipe(buffer,freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH))
 {
 	ui->setupUi(this);
 	connect_actions();
@@ -49,7 +50,7 @@ main_window::~main_window() {
 
 }
 /**
- * Connect QAction objects to the methods they should trigger
+ * Connect QAction objects to the methods displaythey should trigger
  */
 void main_window::connect_actions() {
 	connect(ui->action_open_kinect_devices, SIGNAL(triggered()), this, SLOT(open_kinect_devices()));
@@ -83,16 +84,14 @@ void main_window::hook_pipe_signals() {
 	connect(ui->play_button, SIGNAL(released()), pipe.get(), SLOT(play()));
 	//connect the pipe output to viewer
 	connect(pipe.get(), SIGNAL(frame()), this,
-			SLOT(tmp_display_image()));
+			SLOT(display_feeds()));
+	rgb_viewer.hook_to_pipe(pipe,feed_viewer::feed_type::RGB);
 }
 
 
-void main_window::tmp_display_image() {
+void main_window::display_feeds() {
 	std::shared_ptr<hal::ImageArray> images = this->buffer->pop_front();
-	std::shared_ptr<hal::Image> img = images->at(0);
-
-
-	ui->rgb_video_widget->set_image_fast(*img);
+	this->rgb_viewer.on_frame(images);
 }
 
 void main_window::report_error(QString string) {
@@ -100,9 +99,15 @@ void main_window::report_error(QString string) {
 }
 
 void main_window::closeEvent(QCloseEvent* event) {
+	rgb_viewer.close();
 	pipe->stop();
 	buffer->clear();//let one more item onto the queue
 	pipe->join_thread();
+
+}
+
+void main_window::on_show_rgb_feed_button_clicked(){
+	this->rgb_viewer.setVisible(true);
 }
 
 } //end namespace reco

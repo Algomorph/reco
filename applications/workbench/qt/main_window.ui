@@ -55,7 +55,7 @@
         <item>
          <layout class="QVBoxLayout" name="rgb_group_layout">
           <item>
-           <widget class="QPushButton" name="show_depth_feed_button_">
+           <widget class="QPushButton" name="show_rgb_feed_button">
             <property name="sizePolicy">
              <sizepolicy hsizetype="MinimumExpanding" vsizetype="Minimum">
               <horstretch>0</horstretch>

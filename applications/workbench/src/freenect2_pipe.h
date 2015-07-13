@@ -7,8 +7,8 @@
  */
 
 #pragma once
-#ifndef MODULES_DATAPIPE_SRC_FREENECT2_PIPE_H_
-#define MODULES_DATAPIPE_SRC_FREENECT2_PIPE_H_
+#ifndef RECO_WORKBENCH_FREENECT2_PIPE_H_
+#define RECO_WORKBENCH_FREENECT2_PIPE_H_
 
 //qt
 #include <QObject>
@@ -61,7 +61,8 @@ protected:
 private:
 	hal::Camera rgbd_camera;
 	bool has_camera = false;
-	uint num_kinects = 0;
+	int num_kinects = 0;
+	int num_channels = 0;
 
 	void set_camera(const std::string& cam_uri);
 	buffer_type buffer;
@@ -84,8 +85,24 @@ public:
 	freenect2_pipe(buffer_type buffer,
 			kinect2_data_source source = hal_log, const std::string& path = "capture.log");
 	virtual ~freenect2_pipe();
-	uint get_num_kinects();
+	/**
+	 * @return number of source's kinect devices.
+	 */
+	int get_num_kinects();
+
+	/**
+	 * @return number of source's kinect devices.
+	 */
+	int get_num_channels();
+	/**
+	 * @brief For shutting down the thread at the end of the program.
+	 */
 	void join_thread();
+
+	/**
+	 * @return a shared pointer to the buffer
+	 */
+	buffer_type get_buffer();
 
 
 
