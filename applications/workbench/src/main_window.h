@@ -30,6 +30,9 @@
 //OpenCV
 #include <opencv2/core/core.hpp>
 
+//pcl
+#include <pcl/visualization/pcl_visualizer.h>
+
 //std
 #include <memory>
 #include <vector>
@@ -61,8 +64,6 @@ private:
 
 	void connect_actions();
 	void hook_pipe_signals();
-
-
 
 private slots:
 	void report_error(QString string);

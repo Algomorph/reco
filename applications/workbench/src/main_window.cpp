@@ -19,7 +19,7 @@
 // Point Cloud Library
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-#include <pcl/visualization/pcl_visualizer.h>
+//#include <pcl/visualization/pcl_visualizer.h>
 
 // Visualization Toolkit (VTK)
 #include <vtkRenderWindow.h>
@@ -29,7 +29,7 @@ namespace workbench {
 
 #define CAMERA_PX_WIDTH 1920
 #define CAMERA_PX_HEIGHT 1080
-#define DEFAULT_LOG_FILE_PATH "/media/algomorph/Data/reco/cap/pos_D_slow_rotating_human_2_kinects_1240_frames.log"
+#define DEFAULT_LOG_FILE_PATH "/media/algomorph/Data/reco/cap/pos_E_moving_human_4_kinects.log"
 
 main_window::main_window() :
 		ui(new Ui_main_window),

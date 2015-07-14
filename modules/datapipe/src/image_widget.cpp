@@ -31,7 +31,6 @@ image_widget::image_widget(QWidget *parent) :
 }
 
 image_widget::~image_widget() {
-	// TODO Auto-generated destructor stub
 }
 
 #define CV_IMAGE_WIDGET_CONF_MAT(mat) 	\
