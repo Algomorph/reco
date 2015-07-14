@@ -6,10 +6,10 @@
  *   Copyright: (c) Gregory Kramida 2015 
  */
 
-#include <reco/workbench/kinect_v2_info.h>
+#include <reco/datapipe/kinect_v2_info.h>
 
 namespace reco {
-namespace workbench {
+namespace datapipe {
 
 // kinect v2 resolution
 const unsigned int kinect_v2_info::depth_image_width = 512;
@@ -35,5 +35,5 @@ kinect_v2_info::kinect_v2_info()
 kinect_v2_info::~kinect_v2_info()
 {}
 
-} /* namespace workbench */
+} /* namespace datapipe */
 } /* namespace reco */

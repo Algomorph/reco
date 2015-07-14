@@ -19,10 +19,8 @@
 #include <reco/datapipe/video_widget.h>
 #include <reco/datapipe/webcam_video_source.h>
 #include <reco/datapipe/image_file_video_source.h>
-
-//local
-#include "freenect2_pipe.h"
-#include "feed_viewer.h"
+#include <reco/datapipe/freenect2_pipe.h>
+#include <reco/datapipe/feed_viewer.h>
 
 //utils
 #include <reco/utils/swap_buffer.h>
@@ -55,12 +53,12 @@ protected:
 private:
 	Ui_main_window* ui;
 
-	feed_viewer rgb_viewer;
-	feed_viewer depth_viewer;
+	datapipe::feed_viewer rgb_viewer;
+	datapipe::feed_viewer depth_viewer;
 	std::shared_ptr<pcl::visualization::PCLVisualizer> result_viewer;
 
-	freenect2_pipe::buffer_type buffer;
-	std::shared_ptr<freenect2_pipe> pipe;
+	datapipe::freenect2_pipe::buffer_type buffer;
+	std::shared_ptr<datapipe::freenect2_pipe> pipe;
 
 
 	void connect_actions();

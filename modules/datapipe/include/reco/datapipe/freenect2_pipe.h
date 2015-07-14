@@ -7,18 +7,14 @@
  */
 
 #pragma once
-#ifndef RECO_WORKBENCH_FREENECT2_PIPE_H_
-#define RECO_WORKBENCH_FREENECT2_PIPE_H_
+#ifndef RECO_DATAPIPE_FREENECT2_PIPE_H_
+#define RECO_DATAPIPE_FREENECT2_PIPE_H_
 
 //qt
 #include <QObject>
 
 //opencv
 #include <opencv2/core/core.hpp>
-
-//local
-#include <reco/workbench/camera.h>
-
 
 //utils
 #include <reco/utils/swap_buffer.h>
@@ -34,7 +30,7 @@
 #include <mutex>
 
 namespace reco {
-namespace workbench {
+namespace datapipe {
 
 
 /**
@@ -139,7 +135,7 @@ signals:
 
 };
 
-} /* namespace workbench */
+} /* namespace datapipe */
 } /* namespace reco */
 
-#endif /* MODULES_DATAPIPE_SRC_FREENECT2_PIPE_H_ */
+#endif /* RECO_DATAPIPE_SRC_FREENECT2_PIPE_H_ */

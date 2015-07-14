@@ -6,10 +6,13 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
-//local
-#include <src/freenect2_pipe.h>
+//datapipe
+#include <reco/datapipe/freenect2_pipe.h>
+#include <reco/datapipe/kinect_v2_info.h>
+
+//utils
 #include <reco/utils/cpp_exception_util.h>
-#include <reco/workbench/kinect_v2_info.h>
+
 
 //std
 #include <stdexcept>
@@ -23,7 +26,7 @@
 #define SWAP_BIN_IX(ix) (ix = (ix + 1) % 2);
 
 namespace reco {
-namespace workbench {
+namespace datapipe {
 
 
 
@@ -171,5 +174,5 @@ void freenect2_pipe::stop() {
 
 }
 
-} /* namespace workbench */
+} /* namespace datapipe */
 } /* namespace reco */

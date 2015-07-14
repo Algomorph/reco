@@ -6,21 +6,21 @@
  *   Copyright: (c) Gregory Kramida 2015 
  */
 
-#ifndef APPLICATIONS_WORKBENCH_SRC_FEED_VIEWER_H_
-#define APPLICATIONS_WORKBENCH_SRC_FEED_VIEWER_H_
+#ifndef RECO_DATAPIPE_SRC_FEED_VIEWER_H_
+#define RECO_DATAPIPE_SRC_FEED_VIEWER_H_
 #pragma once
 
-//qt
+//Qt
 #include <QWidget>
 #include <QLabel>
 #include <QVBoxLayout>
 
-//local
+//datapipe
 #include <reco/datapipe/video_widget.h>
-#include "freenect2_pipe.h"
+#include <reco/datapipe/freenect2_pipe.h>
 
 namespace reco {
-namespace workbench {
+namespace datapipe {
 
 class feed_viewer: public QWidget {
 	Q_OBJECT
@@ -64,7 +64,7 @@ public slots:
 
 };
 
-} /* namespace workbench */
+} /* namespace datapipe */
 } /* namespace reco */
 
-#endif /* APPLICATIONS_WORKBENCH_SRC_FEED_VIEWER_H_ */
+#endif /* DATAPIPE_SRC_FEED_VIEWER_H_ */

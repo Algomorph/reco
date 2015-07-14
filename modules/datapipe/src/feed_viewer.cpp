@@ -6,14 +6,14 @@
  *   Copyright: (c) Gregory Kramida 2015 
  */
 
-//local
-#include "feed_viewer.h"
-#include <reco/workbench/kinect_v2_info.h>
+//datapipe
+#include <reco/datapipe/feed_viewer.h>
+#include <reco/datapipe/kinect_v2_info.h>
 
 #define channel_is_rgb(channel_ix) (channel_ix % 2 == 0)
 
 namespace reco {
-namespace workbench {
+namespace datapipe {
 
 const float feed_viewer::depth_inv_factor = 4500.0 / 255.0f;
 
@@ -107,5 +107,5 @@ void feed_viewer::on_frame(std::shared_ptr<hal::ImageArray> images){
 	}
 }
 
-} /* namespace workbench */
+} /* namespace datapipe */
 } /* namespace reco */

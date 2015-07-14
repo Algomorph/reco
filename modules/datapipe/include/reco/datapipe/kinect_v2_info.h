@@ -6,12 +6,12 @@
  *   Copyright: (c) Gregory Kramida 2015 
  */
 
-#ifndef RECO_WORKBENCH_KINECT_V2_INFO_H_
-#define RECO_WORKBENCH_KINECT_V2_INFO_H_
+#ifndef RECO_DATAPIPE_KINECT_V2_INFO_H_
+#define RECO_DATAPIPE_KINECT_V2_INFO_H_
 #pragma once
 
 namespace reco {
-namespace workbench {
+namespace datapipe {
 
 class kinect_v2_info {
 
@@ -32,7 +32,7 @@ public:
 	virtual ~kinect_v2_info();
 };
 
-} /* namespace workbench */
+} /* namespace datapipe */
 } /* namespace reco */
 
-#endif /* APPLICATIONS_WORKBENCH_SRC_KINECT_V2_INFO_H_ */
+#endif /* RECO_DATAPIPE_SRC_KINECT_V2_INFO_H_ */

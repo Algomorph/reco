@@ -10,7 +10,11 @@
 //local
 #include <src/main_window.h>
 #include "ui_main_window.h"
-#include <reco/workbench/kinect_v2_info.h>
+
+//datapipe
+#include <reco/datapipe/kinect_v2_info.h>
+#include <reco/datapipe/freenect2_pipe.h>
+#include <reco/datapipe/feed_viewer.h>
 
 //qt
 #include <QThread>
@@ -37,7 +41,7 @@ main_window::main_window() :
 		ui(new Ui_main_window),
 		rgb_viewer("RGB Feed",NULL),
 		buffer(new utils::optimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
-		pipe(new freenect2_pipe(buffer,freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH))
+		pipe(new datapipe::freenect2_pipe(buffer,datapipe::freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH))
 {
 	ui->setupUi(this);
 
@@ -73,7 +77,7 @@ void main_window::open_kinect_devices() {
 }
 /**
  * Open kinect feed source from hal log file
- */emit
+ */
 void main_window::open_hal_log() {
 
 }
@@ -84,6 +88,9 @@ void main_window::open_image_folder() {
 
 }
 
+/**
+ * Connect pipe signals to output and GUI buttons to pipe slots
+ */
 void main_window::hook_pipe_signals() {
 	//set up error reporting;
 	connect(pipe.get(), SIGNAL(error(QString)), this, SLOT(report_error(QString)));
@@ -93,8 +100,8 @@ void main_window::hook_pipe_signals() {
 	//connect the pipe output to viewer
 	connect(pipe.get(), SIGNAL(frame()), this,
 			SLOT(display_feeds()));
-	rgb_viewer.hook_to_pipe(pipe,feed_viewer::feed_type::RGB);
-	depth_viewer.hook_to_pipe(pipe,feed_viewer::feed_type::DEPTH);
+	rgb_viewer.hook_to_pipe(pipe,datapipe::feed_viewer::feed_type::RGB);
+	depth_viewer.hook_to_pipe(pipe,datapipe::feed_viewer::feed_type::DEPTH);
 }
 
 
