@@ -22,7 +22,7 @@
 namespace reco {
 namespace datapipe {
 
-class feed_viewer: public QWidget {
+class multichannel_viewer: public QWidget {
 	Q_OBJECT
 private:
 	QLayout* layout = new QVBoxLayout();
@@ -43,9 +43,9 @@ public:
 	 * @param window_title what to set the title of the window is this widget is shown in a separate window
 	 * @param parent the widget's parent widget
 	 */
-	feed_viewer(QString window_title = "Feed Viewer", QWidget* parent = NULL);
+	multichannel_viewer(QString window_title = "Feed Viewer", QWidget* parent = NULL);
 
-	virtual ~feed_viewer();
+	virtual ~multichannel_viewer();
 	/**
 	 * @brief Hooks current object to show feed from the desired pipe
 	 * @param pipe the kinect v2 rgb/depth pipe to hook to

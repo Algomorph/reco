@@ -14,9 +14,6 @@
 //datapipe
 #include <reco/datapipe/kinect_v2_info.h>
 #include <reco/datapipe/freenect2_pipe.h>
-#include <reco/datapipe/feed_viewer.h>
-
-//qt
 #include <QThread>
 #include <QDebug>
 
@@ -28,6 +25,7 @@
 // Visualization Toolkit (VTK)
 #include <vtkRenderWindow.h>
 #include <QVTKWidget.h>
+#include <reco/datapipe/multichannel_viewer.h>
 
 namespace reco {
 namespace workbench {
@@ -100,8 +98,8 @@ void main_window::hook_pipe_signals() {
 	//connect the pipe output to viewer
 	connect(pipe.get(), SIGNAL(frame()), this,
 			SLOT(display_feeds()));
-	rgb_viewer.hook_to_pipe(pipe,datapipe::feed_viewer::feed_type::RGB);
-	depth_viewer.hook_to_pipe(pipe,datapipe::feed_viewer::feed_type::DEPTH);
+	rgb_viewer.hook_to_pipe(pipe,datapipe::multichannel_viewer::feed_type::RGB);
+	depth_viewer.hook_to_pipe(pipe,datapipe::multichannel_viewer::feed_type::DEPTH);
 }
 
 

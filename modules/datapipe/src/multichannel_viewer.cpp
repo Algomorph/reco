@@ -7,17 +7,17 @@
  */
 
 //datapipe
-#include <reco/datapipe/feed_viewer.h>
 #include <reco/datapipe/kinect_v2_info.h>
+#include <reco/datapipe/multichannel_viewer.h>
 
 #define channel_is_rgb(channel_ix) (channel_ix % 2 == 0)
 
 namespace reco {
 namespace datapipe {
 
-const float feed_viewer::depth_inv_factor = 4500.0 / 255.0f;
+const float multichannel_viewer::depth_inv_factor = 4500.0 / 255.0f;
 
-feed_viewer::feed_viewer(QString window_title, QWidget* parent):
+multichannel_viewer::multichannel_viewer(QString window_title, QWidget* parent):
 		QWidget(parent),
 		buffer(),
 		video_widgets(){
@@ -31,12 +31,12 @@ feed_viewer::feed_viewer(QString window_title, QWidget* parent):
 	this->layout->addWidget(this->no_source_connected_label);
 }
 
-feed_viewer::~feed_viewer(){
+multichannel_viewer::~multichannel_viewer(){
 	this->unhook_from_pipe();
 }
 
 //add video widget for the specified channel
-void feed_viewer::add_video_widget(int ix_channel){
+void multichannel_viewer::add_video_widget(int ix_channel){
 	datapipe::video_widget* vid_widget = new datapipe::video_widget();
 	layout->addWidget(vid_widget);
 	this->video_widgets.emplace_back(ix_channel,vid_widget);
@@ -45,7 +45,7 @@ void feed_viewer::add_video_widget(int ix_channel){
 //TODO: need to make two separate classes with a single base, rgb_feed_viewer and depth_feed_viewer,
 //instead of passing in the flag and checking channel index in the on_frame slot.
 //TODO: we don't need to retain any reference here neither to the pipe, nor to the buffer
-void feed_viewer::hook_to_pipe(std::shared_ptr<freenect2_pipe> pipe, feed_type type){
+void multichannel_viewer::hook_to_pipe(std::shared_ptr<freenect2_pipe> pipe, feed_type type){
 	if(this->pipe){
 		//if already hooked to a pipe, unhook
 		this->unhook_from_pipe();
@@ -79,7 +79,7 @@ void feed_viewer::hook_to_pipe(std::shared_ptr<freenect2_pipe> pipe, feed_type t
 
 }
 
-void feed_viewer::unhook_from_pipe(){
+void multichannel_viewer::unhook_from_pipe(){
 	if(this->pipe){
 		this->setVisible(false);
 		//remove each video widget from the layout and delete it.
@@ -94,14 +94,14 @@ void feed_viewer::unhook_from_pipe(){
 	}
 }
 
-void feed_viewer::on_frame(std::shared_ptr<hal::ImageArray> images){
+void multichannel_viewer::on_frame(std::shared_ptr<hal::ImageArray> images){
 	for(std::tuple<int,datapipe::video_widget*> vid_widget_tuple : this->video_widgets){
 		int channel_index = std::get<0>(vid_widget_tuple);
 		std::shared_ptr<hal::Image> img = images->at(channel_index);
 		if(channel_is_rgb(channel_index)){
 			std::get<1>(vid_widget_tuple)->set_bgr_image_fast(*img);
 		}else{
-			cv::Mat img_mat = static_cast<cv::Mat>(*img) / feed_viewer::depth_inv_factor;
+			cv::Mat img_mat = static_cast<cv::Mat>(*img) / multichannel_viewer::depth_inv_factor;
 			std::get<1>(vid_widget_tuple)->set_float_image_fast(img_mat);
 		}
 	}
