@@ -19,10 +19,11 @@
 // Point Cloud Library
 #include <pcl/point_cloud.h>
 #include <pcl/point_types.h>
-//#include <pcl/visualization/pcl_visualizer.h>
+#include <pcl/visualization/pcl_visualizer.h>
 
 // Visualization Toolkit (VTK)
 #include <vtkRenderWindow.h>
+#include <QVTKWidget.h>
 
 namespace reco {
 namespace workbench {
@@ -31,6 +32,7 @@ namespace workbench {
 #define CAMERA_PX_HEIGHT 1080
 #define DEFAULT_LOG_FILE_PATH "/media/algomorph/Data/reco/cap/pos_E_moving_human_4_kinects.log"
 
+
 main_window::main_window() :
 		ui(new Ui_main_window),
 		rgb_viewer("RGB Feed",NULL),
@@ -38,10 +40,16 @@ main_window::main_window() :
 		pipe(new freenect2_pipe(buffer,freenect2_pipe::hal_log, DEFAULT_LOG_FILE_PATH))
 {
 	ui->setupUi(this);
+
+	// Set up the QVTK window
+	result_viewer.reset (new pcl::visualization::PCLVisualizer ("result view", false));
+	ui->qvtk_widget->SetRenderWindow (result_viewer->getRenderWindow ());
+	result_viewer->setupInteractor (ui->qvtk_widget->GetInteractor (), ui->qvtk_widget->GetRenderWindow ());
+	ui->qvtk_widget->update();
+
 	connect_actions();
-	ui->rgb_video_widget->set_blank(kinect_v2_info::rgb_image_width,
-			kinect_v2_info::rgb_image_height);
 	hook_pipe_signals();
+	//ui->qvtk_widget->update();
 
 }
 

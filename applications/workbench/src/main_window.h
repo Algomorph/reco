@@ -57,6 +57,7 @@ private:
 
 	feed_viewer rgb_viewer;
 	feed_viewer depth_viewer;
+	std::shared_ptr<pcl::visualization::PCLVisualizer> result_viewer;
 
 	freenect2_pipe::buffer_type buffer;
 	std::shared_ptr<freenect2_pipe> pipe;
