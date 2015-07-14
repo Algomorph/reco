@@ -11,22 +11,14 @@
 namespace reco {
 namespace datapipe {
 
-// kinect v2 resolution
-const unsigned int kinect_v2_info::depth_image_width = 512;
-const unsigned int kinect_v2_info::depth_image_height = 424;
-const unsigned int kinect_v2_info::rgb_image_width = 1920;
-const unsigned int kinect_v2_info::rgb_image_height = 1080;
-// assumed channel offsets
-const unsigned int kinect_v2_info::num_channels_per_feed = 2;
-const unsigned int kinect_v2_info::depth_channel_offset = 1;
-const unsigned int kinect_v2_info::rgb_channel_offset = 0;
-
-const unsigned int kinect_v2_info::rgb_element_size = 3;
-const unsigned int kinect_v2_info::depth_element_size = 4;
-
-const unsigned int kinect_v2_info::rgb_image_size = kinect_v2_info::rgb_image_width * kinect_v2_info::rgb_image_height * kinect_v2_info::rgb_element_size;
-const unsigned int kinect_v2_info::depth_image_size = kinect_v2_info::depth_image_width * kinect_v2_info::depth_image_height * kinect_v2_info::depth_element_size;
-
+//TODO: avoid magic numbers for channel offset via static const functions
+enum channel_offset{
+		RGB = 0,
+		DEPTH = 1
+	};
+const data_channel kinect_v2_info::rgb_channel("RGB channel",1920,1080,0,3);
+const data_channel kinect_v2_info::depth_channel("depth channel",512,424,1,4);
+const std::array<const data_channel*,2> kinect_v2_info::channels({&rgb_channel,&depth_channel});
 
 //inaccessible
 kinect_v2_info::kinect_v2_info()

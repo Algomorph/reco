@@ -13,7 +13,6 @@
 //utils
 #include <reco/utils/cpp_exception_util.h>
 
-
 //std
 #include <stdexcept>
 #include <memory>
@@ -27,8 +26,6 @@
 
 namespace reco {
 namespace datapipe {
-
-
 
 freenect2_pipe::freenect2_pipe(buffer_type buffer,
 		kinect2_data_source source, const std::string& path) :
@@ -57,6 +54,21 @@ freenect2_pipe::freenect2_pipe(buffer_type buffer,
 freenect2_pipe::~freenect2_pipe() {
 }
 
+static void check_channel_dimensions(const hal::Camera& rgbd_camera, const std::string& cam_uri,
+		int ix_channel, int channel_offset) {
+	if ((int) rgbd_camera.Width(ix_channel) != kinect_v2_info::channels[channel_offset]->width()
+			||
+			(int) rgbd_camera.Height(ix_channel)
+					!= kinect_v2_info::channels[channel_offset]->height()) {
+		err(std::invalid_argument) << "Wrong camera dimensions. " << std::endl
+				<< "Expecting (width x height) for channel "
+				<< kinect_v2_info::channels[channel_offset]->name() << ":" << std::endl
+				<< kinect_v2_info::channels[channel_offset]->width() << " x "
+				<< kinect_v2_info::channels[channel_offset]->height() << std::endl << "Got cam_uri: " << cam_uri
+				<< enderr;
+	}
+}
+
 /*
  * Set camera using requested URI
  */
@@ -64,48 +76,27 @@ void freenect2_pipe::set_camera(const std::string& cam_uri) {
 	rgbd_camera = hal::Camera(cam_uri);
 	has_camera = true;
 
-	num_channels = (int)rgbd_camera.NumChannels();
+	num_channels = (int) rgbd_camera.NumChannels();
 
 	//check that we have appropriate number of channels
 	//the total number of channels must be evenly divisible by the number of channels per feed
-	if (num_channels % kinect_v2_info::num_channels_per_feed != 0) {
+	if (num_channels % kinect_v2_info::channels.size() != 0) {
 		err(std::invalid_argument)
-		<< "Incorrect number of channels for Kinect v2 feed! Need exactly "
-				<< kinect_v2_info::num_channels_per_feed << "! Please check cam uri. Got "
+		<< "Incorrect number of channels for a set of Kinect v2 feeds! Need a multiple of "
+				<< kinect_v2_info::channels.size() << "! Please check cam uri. Current uri: "
 				<< cam_uri
 				<< enderr;
 	}
 
-	num_kinects = num_channels / kinect_v2_info::num_channels_per_feed;
+	num_kinects = num_channels / kinect_v2_info::channels.size();
 
 	//check that the feed sizes match for RGB & depth, for each kinect
-	if (rgbd_camera.Width(kinect_v2_info::rgb_channel_offset) != kinect_v2_info::rgb_image_width
-			||
-			rgbd_camera.Height(kinect_v2_info::rgb_channel_offset)
-					!= kinect_v2_info::rgb_image_height
-			||
-			rgbd_camera.Width(kinect_v2_info::depth_channel_offset)
-					!= kinect_v2_info::depth_image_width
-			||
-			rgbd_camera.Height(kinect_v2_info::depth_channel_offset)
-					!= kinect_v2_info::depth_image_height
-					) {
-		err(std::invalid_argument) << "Wrong camera dimensions. " << std::endl
-				<< "Expecting (width x height): " << std::endl
-				<< "  RGB: " << kinect_v2_info::rgb_image_width << " x "
-				<< kinect_v2_info::rgb_image_height << std::endl
-				<< "  depth: " << kinect_v2_info::depth_image_width << " x "
-				<< kinect_v2_info::depth_image_height << std::endl
-				<< "Got:" << std::endl
-				<< "  RGB: " << rgbd_camera.Width(kinect_v2_info::rgb_channel_offset) << " x "
-				<< rgbd_camera.Height(kinect_v2_info::rgb_channel_offset) << std::endl
-				<< "  depth: " << rgbd_camera.Width(kinect_v2_info::depth_channel_offset) << " x "
-				<< rgbd_camera.Height(kinect_v2_info::depth_channel_offset) << std::endl
-				<< "Got casm_uri: " << cam_uri << enderr;
+	for (int ix_channel; ix_channel < num_channels; ix_channel++) {
+		check_channel_dimensions(rgbd_camera, cam_uri, ix_channel,
+				ix_channel % kinect_v2_info::channels.size());
 	}
 
 }
-
 
 int freenect2_pipe::get_num_kinects() {
 	return num_kinects;
@@ -115,7 +106,7 @@ int freenect2_pipe::get_num_channels() {
 	return num_channels;
 }
 
-freenect2_pipe::buffer_type freenect2_pipe::get_buffer(){
+freenect2_pipe::buffer_type freenect2_pipe::get_buffer() {
 	return this->buffer;
 }
 
@@ -143,7 +134,6 @@ void freenect2_pipe::run() {
 	}
 
 }
-
 
 void freenect2_pipe::pause() {
 	std::unique_lock<std::mutex> lk(this->pause_mtx);

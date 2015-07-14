@@ -10,6 +10,12 @@
 #define RECO_DATAPIPE_KINECT_V2_INFO_H_
 #pragma once
 
+//datapipe
+#include <reco/datapipe/data_channel.h>
+
+//Standard Library
+#include <array>
+
 namespace reco {
 namespace datapipe {
 
@@ -18,17 +24,12 @@ class kinect_v2_info {
 private:
 	kinect_v2_info();
 public:
-	static const unsigned int rgb_image_width;
-	static const unsigned int rgb_image_height;
-	static const unsigned int depth_image_width;
-	static const unsigned int depth_image_height;
-	static const unsigned int num_channels_per_feed;
-	static const unsigned int depth_channel_offset;
-	static const unsigned int rgb_channel_offset;
-	static const unsigned int rgb_element_size;
-	static const unsigned int depth_element_size;
-	static const unsigned int rgb_image_size;
-	static const unsigned int depth_image_size;
+
+	static const data_channel depth_channel;
+	static const data_channel rgb_channel;
+
+	static const std::array<const data_channel*,2> channels;
+
 	virtual ~kinect_v2_info();
 };
 
