@@ -20,7 +20,8 @@
 #include <reco/datapipe/webcam_video_source.h>
 #include <reco/datapipe/image_file_video_source.h>
 #include <reco/datapipe/freenect2_pipe.h>
-#include <reco/datapipe/multichannel_viewer.h>
+#include <reco/datapipe/multi_kinect_rgb_viewer.h>
+#include <reco/datapipe/multi_kinect_depth_viewer.h>
 
 //utils
 #include <reco/utils/swap_buffer.h>
@@ -53,8 +54,8 @@ protected:
 private:
 	Ui_main_window* ui;
 
-	datapipe::multichannel_viewer rgb_viewer;
-	datapipe::multichannel_viewer depth_viewer;
+	datapipe::multi_kinect_rgb_viewer rgb_viewer;
+	datapipe::multi_kinect_depth_viewer depth_viewer;
 	std::shared_ptr<pcl::visualization::PCLVisualizer> result_viewer;
 
 	datapipe::freenect2_pipe::buffer_type buffer;

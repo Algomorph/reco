@@ -24,11 +24,15 @@ class kinect_v2_info {
 private:
 	kinect_v2_info();
 public:
-
+	enum channel_type{
+			RGB = 0,
+			DEPTH = 1,
+			ALL = 2
+		};
 	static const data_channel depth_channel;
 	static const data_channel rgb_channel;
-
 	static const std::array<const data_channel*,2> channels;
+	static const float depth_inv_factor;
 
 	virtual ~kinect_v2_info();
 };

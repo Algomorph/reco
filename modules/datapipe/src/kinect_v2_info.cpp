@@ -12,13 +12,11 @@ namespace reco {
 namespace datapipe {
 
 //TODO: avoid magic numbers for channel offset via static const functions
-enum channel_offset{
-		RGB = 0,
-		DEPTH = 1
-	};
-const data_channel kinect_v2_info::rgb_channel("RGB channel",1920,1080,0,3);
-const data_channel kinect_v2_info::depth_channel("depth channel",512,424,1,4);
+
+const data_channel kinect_v2_info::rgb_channel("RGB channel",1920,1080,RGB,3);
+const data_channel kinect_v2_info::depth_channel("depth channel",512,424,DEPTH,4);
 const std::array<const data_channel*,2> kinect_v2_info::channels({&rgb_channel,&depth_channel});
+const float kinect_v2_info::depth_inv_factor = 4500.0f / 255.0f;
 
 //inaccessible
 kinect_v2_info::kinect_v2_info()

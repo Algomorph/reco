@@ -25,14 +25,15 @@
 // Visualization Toolkit (VTK)
 #include <vtkRenderWindow.h>
 #include <QVTKWidget.h>
-#include <reco/datapipe/multichannel_viewer.h>
+
 
 namespace reco {
 namespace workbench {
 
 #define CAMERA_PX_WIDTH 1920
 #define CAMERA_PX_HEIGHT 1080
-#define DEFAULT_LOG_FILE_PATH "/media/algomorph/Data/reco/cap/pos_E_moving_human_4_kinects.log"
+#define DEFAULT_LOG_FILE_PATH "/media/algomorph/Data/reco/cap/pos_D_slow_rotating_human_2_kinects_1240_frames.log"
+//#define DEFAULT_LOG_FILE_PATH "/media/algomorph/Data/reco/cap/pos_E_moving_human_4_kinects.log"
 
 
 main_window::main_window() :
@@ -98,8 +99,8 @@ void main_window::hook_pipe_signals() {
 	//connect the pipe output to viewer
 	connect(pipe.get(), SIGNAL(frame()), this,
 			SLOT(display_feeds()));
-	rgb_viewer.hook_to_pipe(pipe,datapipe::multichannel_viewer::feed_type::RGB);
-	depth_viewer.hook_to_pipe(pipe,datapipe::multichannel_viewer::feed_type::DEPTH);
+	rgb_viewer.configure_for_pipe(pipe->get_num_channels());
+	depth_viewer.configure_for_pipe(pipe->get_num_channels());
 }
 
 

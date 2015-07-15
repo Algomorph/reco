@@ -15,11 +15,10 @@
 namespace reco {
 namespace datapipe {
 
-const float multichannel_viewer::depth_inv_factor = 4500.0 / 255.0f;
+
 
 multichannel_viewer::multichannel_viewer(QString window_title, QWidget* parent):
 		QWidget(parent),
-		buffer(),
 		video_widgets(){
 	//UI initial setup
 	this->setWindowTitle(window_title);
@@ -32,7 +31,7 @@ multichannel_viewer::multichannel_viewer(QString window_title, QWidget* parent):
 }
 
 multichannel_viewer::~multichannel_viewer(){
-	this->unhook_from_pipe();
+	this->clear_gui_configuration();
 }
 
 //add video widget for the specified channel
@@ -42,45 +41,36 @@ void multichannel_viewer::add_video_widget(int ix_channel){
 	this->video_widgets.emplace_back(ix_channel,vid_widget);
 }
 
-//TODO: need to make two separate classes with a single base, rgb_feed_viewer and depth_feed_viewer,
-//instead of passing in the flag and checking channel index in the on_frame slot.
-//TODO: we don't need to retain any reference here neither to the pipe, nor to the buffer
-void multichannel_viewer::hook_to_pipe(std::shared_ptr<freenect2_pipe> pipe, feed_type type){
-	if(this->pipe){
+void multichannel_viewer::configure_for_pipe(int num_channels){
+	if(this->configured_for_pipe){
 		//if already hooked to a pipe, unhook
-		this->unhook_from_pipe();
+		this->clear_gui_configuration();
 	}else{
 		this->setVisible(false);
 	}
 	//get rid of the "no source connected" label
 	this->layout->removeWidget(this->no_source_connected_label);
 
-	this->pipe = pipe;
-	this->buffer = pipe->get_buffer();
-
-	//figure out how to traverse the pipe's channels
-	int num_channels = pipe->get_num_channels();
-	int step, offset, total_channels_to_show;
-	if(type == feed_type::ALL){
-		step = 1;
-		offset = 0;
-		total_channels_to_show = num_channels;
-	}else{
-		step = 2;
-		offset = type;
-		total_channels_to_show = num_channels >>1;
-	}
-	this->video_widgets.reserve(total_channels_to_show);
+	//select channels from feed
+	std::vector<int> channel_selections = this->select_channels(num_channels);
 
 	//add a video widget for each channel
-	for(int ix_channel = 0; ix_channel < num_channels; ix_channel+=step){
-		this->add_video_widget(ix_channel+offset);
+	for(int channel : channel_selections){
+		this->add_video_widget(channel);
 	}
-
 }
 
-void multichannel_viewer::unhook_from_pipe(){
-	if(this->pipe){
+std::vector<int> multichannel_viewer::select_channels(int total_channels){
+	std::vector<int> selection;
+	for(int i = 0; i < total_channels; i++){
+		selection.push_back(i);
+	}
+	return selection;
+}
+
+
+void multichannel_viewer::clear_gui_configuration(){
+	if(this->configured_for_pipe){
 		this->setVisible(false);
 		//remove each video widget from the layout and delete it.
 		for(std::tuple<int,datapipe::video_widget*> vid_widget_tuple : this->video_widgets){
@@ -90,7 +80,7 @@ void multichannel_viewer::unhook_from_pipe(){
 		}
 		this->video_widgets.clear();
 		this->layout->addWidget(this->no_source_connected_label);
-		this->pipe.reset();
+		configured_for_pipe = false;
 	}
 }
 
@@ -98,14 +88,11 @@ void multichannel_viewer::on_frame(std::shared_ptr<hal::ImageArray> images){
 	for(std::tuple<int,datapipe::video_widget*> vid_widget_tuple : this->video_widgets){
 		int channel_index = std::get<0>(vid_widget_tuple);
 		std::shared_ptr<hal::Image> img = images->at(channel_index);
-		if(channel_is_rgb(channel_index)){
-			std::get<1>(vid_widget_tuple)->set_bgr_image_fast(*img);
-		}else{
-			cv::Mat img_mat = static_cast<cv::Mat>(*img) / multichannel_viewer::depth_inv_factor;
-			std::get<1>(vid_widget_tuple)->set_float_image_fast(img_mat);
-		}
+		std::get<1>(vid_widget_tuple)->set_bgr_image_fast(*img);
 	}
 }
+
+
 
 } /* namespace datapipe */
 } /* namespace reco */
