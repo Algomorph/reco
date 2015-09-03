@@ -80,7 +80,8 @@ void image_widget::set_float_image_fast(const cv::Mat& mat) {
 	}
 #endif
 
-	mat.convertTo(tmp,CV_8UC3);
+	mat.convertTo(tmp,CV_8UC1);//TODO: any more efficient way to do this?
+	cvtColor(tmp, tmp, CV_GRAY2RGB);
 
 	// Assign OpenCV's image buffer to the QImage. Note that the bytesPerLine parameter
 	// is 3*width because each pixel has three bytes.

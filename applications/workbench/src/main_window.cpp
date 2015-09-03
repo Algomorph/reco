@@ -26,6 +26,8 @@
 #include <vtkRenderWindow.h>
 #include <QVTKWidget.h>
 
+//utils
+#include <reco/utils/debug_util.h>
 
 namespace reco {
 namespace workbench {
@@ -103,13 +105,20 @@ void main_window::hook_pipe_signals() {
 	depth_viewer.configure_for_pipe(pipe->get_num_channels());
 }
 
-
+/**
+ * Displays the current frame from the buffer on the screen
+ */
 void main_window::display_feeds() {
 	std::shared_ptr<hal::ImageArray> images = this->buffer->pop_front();
 	this->rgb_viewer.on_frame(images);
 	this->depth_viewer.on_frame(images);
 }
 
+/**
+ * Slot for error reporting (eventually, errors emanating from child threads should print the error
+ * to stdout or stderr)
+ * @param string - error message
+ */
 void main_window::report_error(QString string) {
 	qDebug() << string;
 }

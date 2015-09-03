@@ -10,6 +10,9 @@
 #include <reco/datapipe/kinect_v2_info.h>
 #include <reco/datapipe/multichannel_viewer.h>
 
+//utils
+#include <reco/utils/debug_util.h>
+
 #define channel_is_rgb(channel_ix) (channel_ix % 2 == 0)
 
 namespace reco {
@@ -49,14 +52,17 @@ void multichannel_viewer::configure_for_pipe(int num_channels){
 		this->setVisible(false);
 	}
 	//get rid of the "no source connected" label
-	this->layout->removeWidget(this->no_source_connected_label);
+	//this->layout->removeWidget(this->no_source_connected_label);
+	this->no_source_connected_label->setVisible(false);
 
 	//select channels from feed
 	std::vector<int> channel_selections = this->select_channels(num_channels);
 
+
 	//add a video widget for each channel
 	for(int channel : channel_selections){
 		this->add_video_widget(channel);
+		puts("  Picking channel " << channel);
 	}
 }
 
@@ -79,7 +85,8 @@ void multichannel_viewer::clear_gui_configuration(){
 			delete widget;
 		}
 		this->video_widgets.clear();
-		this->layout->addWidget(this->no_source_connected_label);
+		//this->layout->addWidget(this->no_source_connected_label);
+		this->no_source_connected_label->setVisible(true);
 		configured_for_pipe = false;
 	}
 }

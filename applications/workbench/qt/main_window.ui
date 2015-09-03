@@ -111,7 +111,7 @@
            </sizepolicy>
           </property>
           <property name="text">
-           <string>Play</string>
+           <string>Play / Capture</string>
           </property>
          </widget>
         </item>

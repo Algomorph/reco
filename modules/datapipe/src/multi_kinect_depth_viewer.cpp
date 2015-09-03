@@ -6,7 +6,12 @@
  *   Copyright: (c) Gregory Kramida 2015 
  */
 
+//datapipe
 #include <reco/datapipe/multi_kinect_depth_viewer.h>
+
+//utils
+#include <reco/utils/debug_util.h>
+
 
 namespace reco {
 namespace datapipe {
