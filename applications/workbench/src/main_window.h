@@ -61,25 +61,25 @@ private:
 	datapipe::freenect2_pipe::buffer_type buffer;
 	std::shared_ptr<datapipe::freenect2_pipe> pipe;
 	bool pipe_signals_hooked;
+	bool calibration_loaded;
 
 
 	void connect_actions();
-	/**
-	 * Connect pipe signals from output and GUI buttons to pipe slots
-	 */
 	void hook_pipe_signals();
-	/**
-	 * Disconnect pipe signals between output/GUI buttons and pipe slots
-	 */
-	void unhook_pipe_signals();
 	void shut_pipe_down();
+	void start_reco_if_ready();
+	void clear_reco_results();
+	void load_calibration(std::string file_path);
 
 private slots:
+
 	void report_error(QString string);
 	void open_kinect_devices();
 	void open_hal_log();
 	void open_image_folder();
-	void close_stream();
+
+	void unhook_pipe_signals();
+
 	void display_feeds();
 	void on_show_rgb_feed_button_clicked();
 	void on_show_depth_feed_button_clicked();
