@@ -12,6 +12,7 @@
 
 //utils
 #include <reco/utils/cpp_exception_util.h>
+#include <reco/utils/debug_util.h>
 
 //std
 #include <stdexcept>
@@ -61,10 +62,14 @@ static void check_channel_dimensions(const hal::Camera& rgbd_camera, const std::
 			(int) rgbd_camera.Height(ix_channel)
 					!= kinect_v2_info::channels[channel_offset]->height()) {
 		err(std::invalid_argument) << "Wrong camera dimensions. " << std::endl
-				<< "Expecting (width x height) for channel "
+				<< "Expecting (width x height) for "
 				<< kinect_v2_info::channels[channel_offset]->name() << ":" << std::endl
 				<< kinect_v2_info::channels[channel_offset]->width() << " x "
-				<< kinect_v2_info::channels[channel_offset]->height() << std::endl << "Got cam_uri: " << cam_uri
+				<< kinect_v2_info::channels[channel_offset]->height() << std::endl
+				<< "Got dimensions (width x height):" << std::endl
+				<< rgbd_camera.Width(ix_channel) << " x "
+				<< rgbd_camera.Height(ix_channel) << std::endl
+				<< "Got cam_uri: " << cam_uri
 				<< enderr;
 	}
 }
@@ -132,6 +137,7 @@ void freenect2_pipe::run() {
 			images = hal::ImageArray::Create();
 		}
 	}
+	rgbd_camera.Clear();
 
 }
 
@@ -155,6 +161,7 @@ void freenect2_pipe::join_thread() {
 void freenect2_pipe::stop() {
 	{
 		std::unique_lock<std::mutex> lk(this->pause_mtx);
+		//if the feed is paused, unpause it
 		if (!playback_allowed) {
 			playback_allowed = true;
 			pause_cv.notify_one();

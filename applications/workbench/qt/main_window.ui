@@ -143,7 +143,7 @@
      <addaction name="action_open_image_folder"/>
     </widget>
     <addaction name="menu_open_rgb_stream"/>
-    <addaction name="actionClose_RGB_D_Stream"/>
+    <addaction name="action_close_stream"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -158,11 +158,14 @@
    </property>
   </action>
   <action name="action_open_image_folder">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>&amp;Image Folder</string>
    </property>
   </action>
-  <action name="actionClose_RGB_D_Stream">
+  <action name="action_close_stream">
    <property name="text">
     <string>&amp;Close RGB-D Stream</string>
    </property>

@@ -49,7 +49,7 @@ void multichannel_viewer::configure_for_pipe(int num_channels){
 		//if already hooked to a pipe, unhook
 		this->clear_gui_configuration();
 	}else{
-		this->setVisible(false);
+		//this->setVisible(false); //TODO: remove if unneeded
 	}
 	//get rid of the "no source connected" label
 	//this->layout->removeWidget(this->no_source_connected_label);
@@ -62,8 +62,8 @@ void multichannel_viewer::configure_for_pipe(int num_channels){
 	//add a video widget for each channel
 	for(int channel : channel_selections){
 		this->add_video_widget(channel);
-		puts("  Picking channel " << channel);
 	}
+	this->configured_for_pipe=true;
 }
 
 std::vector<int> multichannel_viewer::select_channels(int total_channels){
@@ -77,7 +77,7 @@ std::vector<int> multichannel_viewer::select_channels(int total_channels){
 
 void multichannel_viewer::clear_gui_configuration(){
 	if(this->configured_for_pipe){
-		this->setVisible(false);
+		//this->setVisible(false);
 		//remove each video widget from the layout and delete it.
 		for(std::tuple<int,datapipe::video_widget*> vid_widget_tuple : this->video_widgets){
 			datapipe::video_widget* widget = std::get<1>(vid_widget_tuple);

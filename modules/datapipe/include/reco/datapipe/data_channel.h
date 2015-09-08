@@ -19,14 +19,14 @@ namespace datapipe {
  */
 class data_channel {
 private:
-	int _height;
 	int _width;
+	int _height;
 	int _offset;
 	int _element_size;
 	int _chunk_size;
 	std::string _name;
 public:
-	data_channel(std::string name, int height, int width, int offset, int element_size) {
+	data_channel(std::string name,  int width, int height, int offset, int element_size) {
 		_height = height;
 		_width = width;
 		_offset = offset;
