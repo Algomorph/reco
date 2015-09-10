@@ -63,7 +63,7 @@ private:
 	datapipe::freenect2_pipe::buffer_type buffer;
 	std::shared_ptr<datapipe::freenect2_pipe> pipe;
 
-	//state variables
+	//program state variables
 	bool pipe_signals_hooked;
 	bool calibration_loaded;
 
@@ -72,15 +72,19 @@ private:
 	std::vector<Eigen::Matrix<float, 3, 3>> depth_rotations;
 	std::vector<Eigen::Matrix<float, 3, 1>> depth_translations;
 
+	//reconstruction state variables
+	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud;
+	std::vector<uint32_t> cloud_colors;
 
 
-	void connect_actions();
 
 	//data handling functions
 	void hook_pipe_signals();
+	//void assign_cloud_colors();
 	void shut_pipe_down();
 
 	//GUI functions
+	void connect_actions();
 	void toggle_reco_controls();
 
 

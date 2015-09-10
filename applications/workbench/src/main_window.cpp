@@ -37,6 +37,7 @@
 //utils
 #include <reco/utils/cpp_exception_util.h>
 #include <reco/utils/debug_util.h>
+#include <reco/utils/color_util.h>
 
 namespace reco {
 namespace workbench {
@@ -55,12 +56,20 @@ main_window::main_window() :
 								std::shared_ptr<hal::ImageArray>>()),
 				pipe(
 						new datapipe::freenect2_pipe(buffer, datapipe::freenect2_pipe::hal_log,
-								DEFAULT_LOG_FILE_PATH))
+								DEFAULT_LOG_FILE_PATH)),
+				cloud(new pcl::PointCloud<pcl::PointXYZRGB>)
 {
 	ui->setupUi(this);
 
 	// Set up the QVTK window
 	result_viewer.reset(new pcl::visualization::PCLVisualizer("result view", false));
+	result_viewer->setCameraPosition(
+			0.0, 0.0, 0.0,   // camera position
+			0.0, 0.0, 1.0,   // viewpoint
+			0.0, -1.0, 0.0,  // normal
+			0.0);            // viewport
+
+
 	ui->qvtk_widget->SetRenderWindow(result_viewer->getRenderWindow());
 	result_viewer->setupInteractor(ui->qvtk_widget->GetInteractor(),
 			ui->qvtk_widget->GetRenderWindow());
@@ -151,7 +160,7 @@ void main_window::open_calibration_file() {
 
 		//to aviod magic numbers
 		const int n_channels_per_kinect = datapipe::kinect_v2_info::channels.size();
-		const int num_kinects = pipe->get_num_channels() / n_channels_per_kinect;
+		const int num_kinects = pipe->get_num_kinects();
 		const int depth_offset = datapipe::kinect_v2_info::depth_channel.offset();
 
 		//check against the pipe's number of channels
@@ -171,7 +180,7 @@ void main_window::open_calibration_file() {
 			cv::Mat K_depth(3, 3, CV_32F);
 			cv::eigen2cv(cam_model, K_depth);
 
-			//store intrinsics
+			//store intrinsics for future use
 			depth_intrinsics.push_back(K_depth);
 			depth_rotations.push_back(
 					rig->cameras_[depth_offset + i_kinect * n_channels_per_kinect]->Pose().rotationMatrix().cast<
@@ -201,6 +210,13 @@ void main_window::hook_pipe_signals() {
 			SLOT(display_feeds()));
 	rgb_viewer.configure_for_pipe(pipe->get_num_channels());
 	depth_viewer.configure_for_pipe(pipe->get_num_channels());
+
+	cloud_colors.clear();
+	cloud_colors.reserve(pipe->get_num_kinects());
+	for(int i_kinect = 0; i_kinect < pipe->get_num_kinects(); i_kinect++){
+		cloud_colors.push_back(utils::generate_random_color());
+	}
+
 	pipe_signals_hooked = true; //set flag
 }
 
@@ -223,6 +239,7 @@ void main_window::unhook_pipe_signals() {
 		pipe_signals_hooked = false;
 		calibration_loaded = false;
 		toggle_reco_controls();
+
 
 	}
 }

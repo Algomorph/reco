@@ -23,8 +23,6 @@
 
 #include <opencv2/core/types_c.h>
 
-#define SWAP_BIN_IX(ix) (ix = (ix + 1) % 2);
-
 namespace reco {
 namespace datapipe {
 
