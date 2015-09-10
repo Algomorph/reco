@@ -54,22 +54,36 @@ protected:
 private:
 	Ui_main_window* ui;
 
+	//GUI elements
 	datapipe::multi_kinect_rgb_viewer rgb_viewer;
 	datapipe::multi_kinect_depth_viewer depth_viewer;
 	std::shared_ptr<pcl::visualization::PCLVisualizer> result_viewer;
 
+	//objects for data transfer
 	datapipe::freenect2_pipe::buffer_type buffer;
 	std::shared_ptr<datapipe::freenect2_pipe> pipe;
+
+	//state variables
 	bool pipe_signals_hooked;
 	bool calibration_loaded;
 
+	//calibration parameters
+	std::vector<cv::Mat> depth_intrinsics;
+	std::vector<Eigen::Matrix<float, 3, 3>> depth_rotations;
+	std::vector<Eigen::Matrix<float, 3, 1>> depth_translations;
+
+
 
 	void connect_actions();
+
+	//data handling functions
 	void hook_pipe_signals();
 	void shut_pipe_down();
-	void start_reco_if_ready();
-	void clear_reco_results();
-	void load_calibration(std::string file_path);
+
+	//GUI functions
+	void toggle_reco_controls();
+
+
 
 private slots:
 
@@ -77,6 +91,7 @@ private slots:
 	void open_kinect_devices();
 	void open_hal_log();
 	void open_image_folder();
+	void open_calibration_file();
 
 	void unhook_pipe_signals();
 
