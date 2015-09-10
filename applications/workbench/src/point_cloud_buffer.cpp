@@ -11,7 +11,7 @@
 #include <pcl/compression/compression_profiles.h>
 
 namespace reco {
-namespace datapipe {
+namespace workbench {
 
 void point_cloud_buffer::append_point_cloud(const pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr &cloud) {
 	//go to the end of the stream
@@ -73,5 +73,5 @@ point_cloud_buffer::~point_cloud_buffer(){
 	delete point_cloud_decoder;
 }
 
-} /* namespace datapipe */
+} /* namespace workbench */
 } /* namespace reco */

@@ -16,7 +16,7 @@
 #include <pcl/compression/octree_pointcloud_compression.h>
 
 namespace reco {
-namespace datapipe {
+namespace workbench {
 
 class point_cloud_buffer {
 
@@ -38,7 +38,7 @@ public:
 	virtual ~point_cloud_buffer();
 };
 
-} /* namespace datapipe */
+} /* namespace workbench */
 } /* namespace reco */
 
 #endif /* RECO_WORKBENCH_POINTCLOUDBUFFER_H_ */
