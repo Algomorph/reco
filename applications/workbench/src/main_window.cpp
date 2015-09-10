@@ -211,6 +211,7 @@ void main_window::hook_pipe_signals() {
 	rgb_viewer.configure_for_pipe(pipe->get_num_channels());
 	depth_viewer.configure_for_pipe(pipe->get_num_channels());
 
+	//colors have to be reinitialized per chance the number of kinects has changed
 	cloud_colors.clear();
 	cloud_colors.reserve(pipe->get_num_kinects());
 	for(int i_kinect = 0; i_kinect < pipe->get_num_kinects(); i_kinect++){
@@ -239,8 +240,6 @@ void main_window::unhook_pipe_signals() {
 		pipe_signals_hooked = false;
 		calibration_loaded = false;
 		toggle_reco_controls();
-
-
 	}
 }
 /**
