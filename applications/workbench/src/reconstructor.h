@@ -22,6 +22,7 @@
 
 //local
 #include "point_cloud_buffer.h"
+#include "calibration_parameters.h"
 
 namespace reco {
 namespace workbench {
@@ -36,15 +37,23 @@ public:
 	/**
 	 * Type of the input buffer required by the reconstructor
 	 */
-	typedef std::shared_ptr<utils::unbounded_queue<std::shared_ptr<hal::ImageArray>>> input_buffer_type;
+	typedef std::shared_ptr<utils::queue<std::shared_ptr<hal::ImageArray>>> input_buffer_type;
 private:
+
 	std::shared_ptr<point_cloud_buffer> output_buffer;
+	std::shared_ptr<calibration_parameters> calibration;
 	input_buffer_type input_buffer;
+	//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud;
+	std::vector<uint32_t> cloud_colors;
 protected:
 	virtual bool do_unit_of_work();
+	virtual void pre_thread_join();
 
 public:
-	reconstructor(std::shared_ptr<point_cloud_buffer> result_buffer);
+
+	reconstructor(input_buffer_type input_buffer,
+			std::shared_ptr<point_cloud_buffer> output_buffer,
+			std::shared_ptr<calibration_parameters> calibration);
 	virtual ~reconstructor();
 };
 

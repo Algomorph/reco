@@ -64,7 +64,7 @@ calibration_parameters::calibration_parameters(const std::string& file_path){
 	}
 }
 
-int calibration_parameters::num_kinects(){
+int calibration_parameters::get_num_kinects(){
 	if(empty()) return 0;
 	return rig->cameras_.size();
 }

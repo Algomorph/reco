@@ -71,15 +71,11 @@ private:
 	bool pipe_signals_hooked;
 	bool calibration_loaded;
 
-	//calibration parameters
+	//calibration parameters & reconstruction state
 	std::shared_ptr<calibration_parameters> calibration;
-
-	//reconstruction state variables
-	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud;
-	std::vector<uint32_t> cloud_colors;
-
-
-
+	reconstructor::input_buffer_type input_buffer;
+	std::shared_ptr<point_cloud_buffer> output_buffer;
+	std::unique_ptr<reconstructor> reco;
 
 	//data handling functions
 	void hook_pipe_signals();
@@ -94,15 +90,19 @@ private:
 
 private slots:
 
+	void unhook_pipe_signals();
+	void display_feeds();
+
+	//for thread error reporting
 	void report_error(QString string);
+
+	//menu actions
 	void open_kinect_devices();
 	void open_hal_log();
 	void open_image_folder();
 	void open_calibration_file();
 
-	void unhook_pipe_signals();
-
-	void display_feeds();
+	//buttons
 	void on_show_rgb_feed_button_clicked();
 	void on_show_depth_feed_button_clicked();
 

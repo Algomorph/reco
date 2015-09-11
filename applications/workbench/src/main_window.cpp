@@ -54,8 +54,7 @@ main_window::main_window() :
 				buffer(new utils::optimistic_assignment_swap_buffer<
 								std::shared_ptr<hal::ImageArray>>()),
 				pipe(new datapipe::freenect2_pipe(buffer, datapipe::freenect2_pipe::hal_log,
-								DEFAULT_LOG_FILE_PATH)),
-				cloud(new pcl::PointCloud<pcl::PointXYZRGB>)
+								DEFAULT_LOG_FILE_PATH))
 {
 	ui->setupUi(this);
 
@@ -162,16 +161,16 @@ void main_window::open_calibration_file() {
 		const int num_kinects = pipe->get_num_kinects();
 
 		//check against the pipe's number of channels
-		if ((int)calibration->num_kinects() != pipe->get_num_kinects()) {
+		if ((int)calibration->get_num_kinects() != pipe->get_num_kinects()) {
 			err(std::invalid_argument)
 					<< "The number of kinect feeds in the provided calibration file ("
-					<< calibration->num_kinects() / n_channels_per_kinect
+					<< calibration->get_num_kinects() / n_channels_per_kinect
 					<< ") does not correspond to the number of kinect feeds in the provided log file (presumably, "
 					<< num_kinects << ")." << enderr;
 		}
-
-
 		calibration_loaded = true;
+
+		reco.reset(new reconstructor(input_buffer,output_buffer,calibration));
 		toggle_reco_controls();
 	}
 }
@@ -193,12 +192,6 @@ void main_window::hook_pipe_signals() {
 	depth_viewer.configure_for_pipe(pipe->get_num_channels());
 
 	//colors have to be reinitialized per chance the number of kinects has changed
-	cloud_colors.clear();
-	cloud_colors.reserve(pipe->get_num_kinects());
-	for(int i_kinect = 0; i_kinect < pipe->get_num_kinects(); i_kinect++){
-		cloud_colors.push_back(utils::generate_random_color());
-	}
-
 	pipe_signals_hooked = true; //set flag
 }
 
@@ -216,11 +209,13 @@ void main_window::unhook_pipe_signals() {
 		this->rgb_viewer.clear_gui_configuration();
 		this->depth_viewer.clear_gui_configuration();
 		//------
+		toggle_reco_controls();
 		shut_pipe_down();
+		//this will stop the reconstruction and clear reconstruction output
+		reco.reset();
 		//unset flags
 		pipe_signals_hooked = false;
 		calibration_loaded = false;
-		toggle_reco_controls();
 	}
 }
 /**
@@ -228,8 +223,10 @@ void main_window::unhook_pipe_signals() {
  */
 void main_window::shut_pipe_down() {
 	pipe->stop();
-	buffer->clear();		//let one more item onto the queue
+	buffer->clear();
 	pipe->join_thread();
+	std::shared_ptr<hal::ImageArray> dummy;
+	buffer->push_back(dummy);
 }
 
 /**
@@ -237,8 +234,10 @@ void main_window::shut_pipe_down() {
  */
 void main_window::display_feeds() {
 	std::shared_ptr<hal::ImageArray> images = this->buffer->pop_front();
-	this->rgb_viewer.on_frame(images);
-	this->depth_viewer.on_frame(images);
+	if(images){
+		this->rgb_viewer.on_frame(images);
+		this->depth_viewer.on_frame(images);
+	}
 }
 
 /**

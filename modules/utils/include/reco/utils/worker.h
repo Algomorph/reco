@@ -39,12 +39,13 @@ protected:
 	 * @return true if there is more work to do, false otherwise
 	 */
 	virtual bool do_unit_of_work() = 0;
+	virtual void pre_thread_join();
 
 public:
 	//thread run management
-	void run();
+	virtual void run();
 	void pause();
-	void stop();
+	virtual void stop();
 
 	worker();
 	virtual ~worker();

@@ -18,7 +18,7 @@ worker::worker():
 }
 
 worker::~worker(){
-	// TODO Auto-generated destructor stub
+	stop();
 }
 
 void worker::work(){
@@ -48,10 +48,17 @@ void worker::pause(){
 	paused = true;
 }
 
+void worker::pre_thread_join(){
+
+}
+
 void worker::stop(){
 	paused = false;
 	stopped = true;
-	this->thread.join();
+	pre_thread_join();
+	if(this->thread.joinable()){
+		this->thread.join();
+	}
 }
 
 

@@ -29,7 +29,7 @@ public:
 	std::vector<Eigen::Matrix<float, 3, 1>> depth_translations;
 
 	bool empty();
-	int num_kinects();
+	int get_num_kinects();
 
 	calibration_parameters();
 	calibration_parameters(const std::string& file_name);
