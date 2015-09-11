@@ -10,39 +10,29 @@
 #ifndef RECO_WORKBENCH_RECONSTRUCTOR_H_
 #define RECO_WORKBENCH_RECONSTRUCTOR_H_
 
-#include <thread>
-#include <mutex>
-#include <condition_variable>
+//standard
+#include <memory>
 
+//utils
+#include <reco/utils/worker.h>
+
+//local
+#include "point_cloud_buffer.h"
 
 namespace reco {
 namespace workbench {
 /**
- * Responsible for processing the range images and coming up with 3D meshes reconstructed from them
+ * @brief Responsible for processing the range images and coming up with 3D meshes reconstructed from them.
  */
-class reconstructor {
+class reconstructor: public utils::worker {
 private:
+	std::shared_ptr<point_cloud_buffer> result_buffer;
 
-	//locking
-	std::mutex pause_mutex;
-	std::thread thread;
-	std::condition_variable pause_cv;
+protected:
+	virtual bool do_unit_of_work();
 
-	//thread state variables
-	bool paused;
-	bool stopped;
-
-	//data processing
-	void process_data();
 public:
-
-
-	//thread run management
-	void run();
-	void pause();
-	void stop();
-
-	reconstructor();
+	reconstructor(std::shared_ptr<point_cloud_buffer> result_buffer);
 	virtual ~reconstructor();
 };
 
