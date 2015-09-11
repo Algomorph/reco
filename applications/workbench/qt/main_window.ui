@@ -138,7 +138,7 @@
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_2">
              <item>
-              <widget class="QPushButton" name="reco_proc_start_btn">
+              <widget class="QPushButton" name="reco_proc_start_button">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -154,7 +154,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="reco_proc_stop_btn">
+              <widget class="QPushButton" name="reco_proc_stop_button">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -169,13 +169,13 @@
              <item>
               <widget class="QLabel" name="reco_percent_label">
                <property name="toolTip">
-                <string>% frames processed</string>
+                <string>number of frames processed</string>
                </property>
                <property name="frameShape">
                 <enum>QFrame::StyledPanel</enum>
                </property>
                <property name="text">
-                <string>0.00%</string>
+                <string>0</string>
                </property>
                <property name="alignment">
                 <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -306,7 +306,7 @@
   </action>
   <action name="action_open_calibration_file">
    <property name="text">
-    <string>Open &amp;Calibration File</string>
+    <string>Open Calibration &amp;File</string>
    </property>
   </action>
  </widget>

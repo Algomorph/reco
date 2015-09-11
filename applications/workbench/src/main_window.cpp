@@ -51,14 +51,26 @@ namespace workbench {
 main_window::main_window() :
 		ui(new Ui_main_window),
 				rgb_viewer("RGB Feed", NULL),
-				buffer(new utils::optimistic_assignment_swap_buffer<
+				pipe_buffer(new utils::optimistic_assignment_swap_buffer<
 								std::shared_ptr<hal::ImageArray>>()),
-				pipe(new datapipe::freenect2_pipe(buffer, datapipe::freenect2_pipe::hal_log,
-								DEFAULT_LOG_FILE_PATH))
+				pipe(new datapipe::freenect2_pipe(pipe_buffer, datapipe::freenect2_pipe::hal_log,
+								DEFAULT_LOG_FILE_PATH)),
+				reco_input_buffer(new utils::unbounded_queue<std::shared_ptr<hal::ImageArray>>()),
+				reco_output_buffer(new point_cloud_buffer())
 {
 	ui->setupUi(this);
+	set_up_qvtk_window();
+	connect_actions();
+	//start pipe with default file
+	hook_pipe_signals();
+	connect(reco_output_buffer.get(), SIGNAL(size_changed(size_t)), this, SLOT(update_reco_label(size_t)));
+}
 
-	// Set up the QVTK window
+main_window::~main_window() {
+	delete ui;
+}
+
+void main_window::set_up_qvtk_window(){
 	result_viewer.reset(new pcl::visualization::PCLVisualizer("result view", false));
 	result_viewer->setCameraPosition(
 			0.0, 0.0, 0.0,   // camera position
@@ -71,16 +83,8 @@ main_window::main_window() :
 	result_viewer->setupInteractor(ui->qvtk_widget->GetInteractor(),
 			ui->qvtk_widget->GetRenderWindow());
 	ui->qvtk_widget->update();
-
-	connect_actions();
-
-	hook_pipe_signals();//start pipe with default file
 }
 
-main_window::~main_window() {
-	delete ui;
-
-}
 
 /**
  * Connect actions of menus with the corresponding slot functions
@@ -99,7 +103,7 @@ void main_window::connect_actions() {
  */
 void main_window::open_kinect_devices() {
 	unhook_pipe_signals();
-	pipe.reset(new datapipe::freenect2_pipe(buffer, datapipe::freenect2_pipe::kinect2_device));
+	pipe.reset(new datapipe::freenect2_pipe(pipe_buffer, datapipe::freenect2_pipe::kinect2_device));
 	hook_pipe_signals();
 }
 /**
@@ -113,7 +117,7 @@ void main_window::open_hal_log() {
 		unhook_pipe_signals();
 		//TODO: test if QString --> std::string works on windows like this
 		pipe.reset(
-				new datapipe::freenect2_pipe(buffer, datapipe::freenect2_pipe::hal_log,
+				new datapipe::freenect2_pipe(pipe_buffer, datapipe::freenect2_pipe::hal_log,
 						file_name.toStdString()));
 		hook_pipe_signals();
 
@@ -170,7 +174,7 @@ void main_window::open_calibration_file() {
 		}
 		calibration_loaded = true;
 
-		reco.reset(new reconstructor(input_buffer,output_buffer,calibration));
+		reconstruction_worker.reset(new reconstructor(reco_input_buffer,reco_output_buffer,calibration));
 		toggle_reco_controls();
 	}
 }
@@ -212,32 +216,37 @@ void main_window::unhook_pipe_signals() {
 		toggle_reco_controls();
 		shut_pipe_down();
 		//this will stop the reconstruction and clear reconstruction output
-		reco.reset();
+		reconstruction_worker.reset();
 		//unset flags
 		pipe_signals_hooked = false;
 		calibration_loaded = false;
 	}
 }
+
 /**
  * Shut down the RGBD video source pipe permanently
  */
 void main_window::shut_pipe_down() {
 	pipe->stop();
-	buffer->clear();
+	pipe_buffer->clear();
 	pipe->join_thread();
 	std::shared_ptr<hal::ImageArray> dummy;
-	buffer->push_back(dummy);
+	pipe_buffer->push_back(dummy);
 }
 
 /**
  * Displays the current frame from the buffer on the screen
  */
 void main_window::display_feeds() {
-	std::shared_ptr<hal::ImageArray> images = this->buffer->pop_front();
+	std::shared_ptr<hal::ImageArray> images = this->pipe_buffer->pop_front();
 	if(images){
 		this->rgb_viewer.on_frame(images);
 		this->depth_viewer.on_frame(images);
 	}
+}
+
+void main_window::update_reco_label(size_t value){
+	ui->reco_label->setText(QString::number(value));
 }
 
 /**
@@ -260,12 +269,18 @@ void main_window::closeEvent(QCloseEvent* event) {
 		shut_pipe_down();
 	}
 }
-
+//====================================== BUTTON EVENTS==============================================
 void main_window::on_show_rgb_feed_button_clicked() {
 	this->rgb_viewer.setVisible(true);
 }
 void main_window::on_show_depth_feed_button_clicked() {
 	this->depth_viewer.setVisible(true);
+}
+void main_window::on_reco_proc_start_button_clicked(){
+	this->reconstruction_worker->run();
+}
+void main_window::on_reco_proc_stop_button_clicked(){
+	this->reconstruction_worker->pause();
 }
 
 } //end namespace reco

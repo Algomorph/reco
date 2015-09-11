@@ -18,16 +18,18 @@ void point_cloud_buffer::append_point_cloud(const pcl::PointCloud<pcl::PointXYZR
 	compressed_data.seekp(0,ios_base::end);
 	//compress
 	point_cloud_encoder->encodePointCloud(cloud, compressed_data);
-	frame_positions.push_back(compressed_data.tellp());
+	cloud_positions.push_back(compressed_data.tellp());
 	size++;
+	emit size_changed(size);
 }
 
 void point_cloud_buffer::clear(){
 	compressed_data.clear();
-	frame_positions.clear();
+	cloud_positions.clear();
 	playback_counter = 0;
 	compressed_data.seekp(0,ios_base::beg);
 	size = 0;
+	emit size_changed(size);
 }
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_buffer::grab_point_cloud(){
@@ -42,7 +44,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_buffer::grab_point_cloud(){
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_buffer::grab_point_cloud(uint ix_frame){
 	if(ix_frame < size){
-		compressed_data.seekp(frame_positions[ix_frame]);
+		compressed_data.seekp(cloud_positions[ix_frame]);
 		return grab_point_cloud();
 	}else{
 		return NULL;
@@ -51,7 +53,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_buffer::grab_point_cloud(uint
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr point_cloud_buffer::grab_next_point_cloud(){
 	if(playback_counter < size){
-		compressed_data.seekp(frame_positions[playback_counter]);
+		compressed_data.seekp(cloud_positions[playback_counter]);
 		playback_counter++;
 		return grab_point_cloud();
 	}else{
@@ -65,7 +67,7 @@ point_cloud_buffer::point_cloud_buffer():
 	point_cloud_decoder(new pcl::io::OctreePointCloudCompression<pcl::PointXYZRGB> ()),
 	playback_counter(0),
 	size(0){
-	frame_positions.push_back(0);
+	cloud_positions.push_back(0);
 }
 
 point_cloud_buffer::~point_cloud_buffer(){

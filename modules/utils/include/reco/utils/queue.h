@@ -44,7 +44,7 @@ public:
  */
 
 template<typename T>
-class unbounded_queue{
+class unbounded_queue : public queue<T>{
 
 private:
 	std::queue<T> internal_queue;

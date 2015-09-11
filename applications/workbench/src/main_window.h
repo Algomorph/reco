@@ -63,8 +63,8 @@ private:
 	datapipe::multi_kinect_depth_viewer depth_viewer;
 	std::shared_ptr<pcl::visualization::PCLVisualizer> result_viewer;
 
-	//objects for data transfer
-	datapipe::freenect2_pipe::buffer_type buffer;
+	//objects for data transfer from sensors/log file
+	datapipe::freenect2_pipe::buffer_type pipe_buffer;
 	std::shared_ptr<datapipe::freenect2_pipe> pipe;
 
 	//program state variables
@@ -73,9 +73,9 @@ private:
 
 	//calibration parameters & reconstruction state
 	std::shared_ptr<calibration_parameters> calibration;
-	reconstructor::input_buffer_type input_buffer;
-	std::shared_ptr<point_cloud_buffer> output_buffer;
-	std::unique_ptr<reconstructor> reco;
+	reconstructor::input_buffer_type reco_input_buffer;
+	std::shared_ptr<point_cloud_buffer> reco_output_buffer;
+	std::unique_ptr<reconstructor> reconstruction_worker;
 
 	//data handling functions
 	void hook_pipe_signals();
@@ -85,13 +85,14 @@ private:
 	//GUI functions
 	void connect_actions();
 	void toggle_reco_controls();
-
+	void set_up_qvtk_window();//called from constructor
 
 
 private slots:
 
 	void unhook_pipe_signals();
 	void display_feeds();
+	void update_reco_label(size_t value);
 
 	//for thread error reporting
 	void report_error(QString string);
@@ -105,6 +106,9 @@ private slots:
 	//buttons
 	void on_show_rgb_feed_button_clicked();
 	void on_show_depth_feed_button_clicked();
+	void on_reco_proc_start_button_clicked();
+	void on_reco_proc_stop_button_clicked();
+
 
 
 };
