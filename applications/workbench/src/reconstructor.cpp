@@ -11,9 +11,9 @@
 namespace reco {
 namespace workbench {
 
-reconstructor::reconstructor(std::shared_ptr<point_cloud_buffer> result_buffer)
+reconstructor::reconstructor(std::shared_ptr<point_cloud_buffer> output_buffer)
 	:worker(),
-	 result_buffer(result_buffer){
+	 output_buffer(output_buffer){
 
 }
 

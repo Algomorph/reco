@@ -51,11 +51,9 @@ namespace workbench {
 main_window::main_window() :
 		ui(new Ui_main_window),
 				rgb_viewer("RGB Feed", NULL),
-				buffer(
-						new utils::optimistic_assignment_swap_buffer<
+				buffer(new utils::optimistic_assignment_swap_buffer<
 								std::shared_ptr<hal::ImageArray>>()),
-				pipe(
-						new datapipe::freenect2_pipe(buffer, datapipe::freenect2_pipe::hal_log,
+				pipe(new datapipe::freenect2_pipe(buffer, datapipe::freenect2_pipe::hal_log,
 								DEFAULT_LOG_FILE_PATH)),
 				cloud(new pcl::PointCloud<pcl::PointXYZRGB>)
 {
@@ -155,41 +153,24 @@ void main_window::open_calibration_file() {
 
 	if (pipe_signals_hooked && !qfile_path.isEmpty()) {
 		std::string file_path = qfile_path.toStdString();
+
 		//parse intrinsics
-		std::shared_ptr<calibu::Rigd> rig = calibu::ReadXmlRig(file_path);
+		calibration.reset(new calibration_parameters(file_path));
 
 		//to aviod magic numbers
 		const int n_channels_per_kinect = datapipe::kinect_v2_info::channels.size();
 		const int num_kinects = pipe->get_num_kinects();
-		const int depth_offset = datapipe::kinect_v2_info::depth_channel.offset();
 
 		//check against the pipe's number of channels
-		if ((int)rig->cameras_.size() != pipe->get_num_channels()) {
+		if ((int)calibration->num_kinects() != pipe->get_num_kinects()) {
 			err(std::invalid_argument)
 					<< "The number of kinect feeds in the provided calibration file ("
-					<< rig->cameras_.size() / n_channels_per_kinect
+					<< calibration->num_kinects() / n_channels_per_kinect
 					<< ") does not correspond to the number of kinect feeds in the provided log file (presumably, "
 					<< num_kinects << ")." << enderr;
 		}
-		for (int i_kinect = 0; i_kinect < num_kinects; i_kinect++) {
-			//pick out the depth cam matrix
-			Eigen::Matrix3f cam_model = rig->cameras_[depth_offset
-					+ i_kinect * n_channels_per_kinect]->K().cast<float>();
-			//convert to opencv matrix
-			//TODO: possibly get rid of the need to convert to OpenCV
-			cv::Mat K_depth(3, 3, CV_32F);
-			cv::eigen2cv(cam_model, K_depth);
 
-			//store intrinsics for future use
-			depth_intrinsics.push_back(K_depth);
-			depth_rotations.push_back(
-					rig->cameras_[depth_offset + i_kinect * n_channels_per_kinect]->Pose().rotationMatrix().cast<
-							float>());
-			Eigen::Vector3f translation =
-					rig->cameras_[depth_offset + i_kinect * n_channels_per_kinect]->Pose().translation().cast<
-							float>().col(0);
-			depth_translations.push_back(translation);
-		}
+
 		calibration_loaded = true;
 		toggle_reco_controls();
 	}

@@ -36,6 +36,10 @@
 #include <memory>
 #include <vector>
 
+//local
+#include "calibration_parameters.h"
+#include "reconstructor.h"
+
 
 class Ui_main_window;
 
@@ -68,13 +72,12 @@ private:
 	bool calibration_loaded;
 
 	//calibration parameters
-	std::vector<cv::Mat> depth_intrinsics;
-	std::vector<Eigen::Matrix<float, 3, 3>> depth_rotations;
-	std::vector<Eigen::Matrix<float, 3, 1>> depth_translations;
+	std::shared_ptr<calibration_parameters> calibration;
 
 	//reconstruction state variables
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud;
 	std::vector<uint32_t> cloud_colors;
+
 
 
 

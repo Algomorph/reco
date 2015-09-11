@@ -17,31 +17,16 @@
 #include <cstring>
 #include <iostream>
 
+//local
+#include <reco/utils/queue.h>
+
 //#define VERBOSE
 #define SWAP_INT(x) (x = (x + 1) % 2)
 
 namespace reco {
 namespace utils {
 
-/**
- * Abstract  queue
- **/
-template<typename T> class queue {
 
-public:
-	virtual void push_back(const T& item) = 0;
-	virtual T pop_front() = 0;
-	virtual void clear() = 0;
-
-	protected:
-	queue() {
-	}
-	;
-	virtual ~queue() {
-	}
-	;
-
-};
 
 
 /**

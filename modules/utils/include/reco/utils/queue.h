@@ -18,8 +18,33 @@
 namespace reco {
 namespace utils {
 
+/**
+ * Abstract  queue
+ **/
 template<typename T>
-class queue{
+class queue {
+
+public:
+	virtual void push_back(const T& item) = 0;
+	virtual T pop_front() = 0;
+	virtual void clear() = 0;
+
+	protected:
+	queue() {
+	}
+	;
+	virtual ~queue() {
+	}
+	;
+
+};
+
+/**
+ * A thread-safe queue using pessimistic locking
+ */
+
+template<typename T>
+class unbounded_queue{
 
 private:
 	std::queue<T> internal_queue;
@@ -27,7 +52,7 @@ private:
 	std::condition_variable cond;
 
 public:
-	T pop(){
+	T pop_front(){
 		std::unique_lock<std::mutex> mlock(mutex);
 		while (internal_queue.empty()){
 			cond.wait(mlock);
@@ -37,7 +62,7 @@ public:
 		return item;
 	}
 
-	void pop(T& item){
+	void pop_front(T& item){
 		std::unique_lock<std::mutex> mlock(mutex);
 		while (internal_queue.empty()){
 			cond.wait(mlock);
@@ -46,18 +71,30 @@ public:
 		internal_queue.pop();
 	}
 
-	void push(const T& item){
+	void push_back(const T& item){
 		std::unique_lock<std::mutex> mlock(mutex);
 		internal_queue.push(item);
 		mlock.unlock();
 		cond.notify_one();
 	}
 
-	void push(T&& item){
+	void push_back(T&& item){
 		std::unique_lock<std::mutex> mlock(mutex);
 		internal_queue.push(std::move(item));
 		mlock.unlock();
 		cond.notify_one();
+	}
+
+	void clear(){
+		std::unique_lock<std::mutex> mlock(mutex);
+		while(!internal_queue.empty()){
+			internal_queue.pop();
+		}
+		mlock.unlock();
+	}
+
+	size_t size(){
+		return internal_queue.size();
 	}
 
 };
