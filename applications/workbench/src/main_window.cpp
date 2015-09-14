@@ -44,7 +44,7 @@ namespace workbench {
 
 #define CAMERA_PX_WIDTH 1920
 #define CAMERA_PX_HEIGHT 1080
-#define DEFAULT_CALIBRATION_FILE_PATH "media/algomorph/Data/reco/calib/pos_D_2_kinects.xml"
+#define DEFAULT_CALIBRATION_FILE_PATH "/media/algomorph/Data/reco/calib/pos_D_2_kinects.xml"
 #define DEFAULT_LOG_FILE_PATH "/media/algomorph/Data/reco/cap/pos_D_slow_rotating_human_2_kinects_1240_frames.log"
 //#define DEFAULT_LOG_FILE_PATH "/media/algomorph/Data/reco/cap/pos_E_moving_human_4_kinects.log"
 
@@ -63,7 +63,10 @@ main_window::main_window() :
 	connect_actions();
 	//start pipe with default file
 	hook_pipe_signals();
+	//connect signals to update the # of frames processed
 	connect(reco_output_buffer.get(), SIGNAL(size_changed(size_t)), this, SLOT(update_reco_label(size_t)));
+	load_calibration(DEFAULT_CALIBRATION_FILE_PATH);
+
 }
 
 main_window::~main_window() {
@@ -147,8 +150,7 @@ void main_window::open_image_folder() {
 }
 
 /**
- * Load the calibration from file at the given path
- * @param file_path the given path
+ * Load the calibration from file path returned by the FileDialog
  */
 void main_window::open_calibration_file() {
 	QString qfile_path = QFileDialog::getOpenFileName(this, tr("Open Calibration File"),
@@ -157,25 +159,7 @@ void main_window::open_calibration_file() {
 	if (pipe_signals_hooked && !qfile_path.isEmpty()) {
 		std::string file_path = qfile_path.toStdString();
 
-		//parse intrinsics
-		calibration.reset(new calibration_parameters(file_path));
-
-		//to aviod magic numbers
-		const int n_channels_per_kinect = datapipe::kinect_v2_info::channels.size();
-		const int num_kinects = pipe->get_num_kinects();
-
-		//check against the pipe's number of channels
-		if ((int)calibration->get_num_kinects() != pipe->get_num_kinects()) {
-			err(std::invalid_argument)
-					<< "The number of kinect feeds in the provided calibration file ("
-					<< calibration->get_num_kinects() / n_channels_per_kinect
-					<< ") does not correspond to the number of kinect feeds in the provided log file (presumably, "
-					<< num_kinects << ")." << enderr;
-		}
-		calibration_loaded = true;
-
-		reconstruction_worker.reset(new reconstructor(reco_input_buffer,reco_output_buffer,calibration));
-		toggle_reco_controls();
+		load_calibration(file_path);
 	}
 }
 
@@ -269,6 +253,34 @@ void main_window::closeEvent(QCloseEvent* event) {
 		shut_pipe_down();
 	}
 }
+
+/**
+ * Load calibration (Calibu format) from the file at the given path
+ * @param file_path path to the Calibu calibration file
+ */
+void main_window::load_calibration(std::string file_path){
+	//parse intrinsics
+	calibration.reset(new calibration_parameters(file_path));
+
+	//to aviod magic numbers
+	const int num_kinects = pipe->get_num_kinects();
+
+	//check against the pipe's number of channels
+	if ((int)calibration->get_num_kinects() != pipe->get_num_kinects()) {
+		err(std::invalid_argument)
+				<< "The number of kinect feeds in the provided calibration file ("
+				<< calibration->get_num_kinects()
+				<< ") does not correspond to the number of kinect feeds in the provided log file (presumably, "
+				<< num_kinects << ")." << enderr;
+	}
+	calibration_loaded = true;
+
+	reconstruction_worker.reset(new reconstructor(reco_input_buffer,reco_output_buffer,calibration));
+	if(pipe_signals_hooked){
+		toggle_reco_controls();
+	}
+}
+
 //====================================== BUTTON EVENTS==============================================
 void main_window::on_show_rgb_feed_button_clicked() {
 	this->rgb_viewer.setVisible(true);

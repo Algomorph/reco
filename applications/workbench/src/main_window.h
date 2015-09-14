@@ -86,6 +86,8 @@ private:
 	void connect_actions();
 	void toggle_reco_controls();
 	void set_up_qvtk_window();//called from constructor
+	//load calibration file
+	void load_calibration(std::string file_path);
 
 
 private slots:

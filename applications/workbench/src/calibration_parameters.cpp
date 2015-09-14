@@ -66,7 +66,7 @@ calibration_parameters::calibration_parameters(const std::string& file_path){
 
 int calibration_parameters::get_num_kinects(){
 	if(empty()) return 0;
-	return rig->cameras_.size();
+	return rig->cameras_.size() / datapipe::kinect_v2_info::channels.size();
 }
 
 /**
