@@ -10,6 +10,8 @@
 #ifndef RECO_UTILS_DEBUG_UTIL_H_
 #define RECO_UTILS_DEBUG_UTIL_H_
 
+#include <iostream>
+
 #ifndef puts
 
 #ifdef _DEBUG

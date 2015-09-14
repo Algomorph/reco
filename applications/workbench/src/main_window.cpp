@@ -57,6 +57,7 @@ main_window::main_window() :
 								DEFAULT_LOG_FILE_PATH)),
 				pipe_signals_hooked(false),
 				calibration_loaded(false),
+				num_frames_in_reconstruction_queue(0),
 				reco_input_buffer(new utils::unbounded_queue<std::shared_ptr<hal::ImageArray>>()),
 				reco_output_buffer(new point_cloud_buffer())
 {
@@ -66,7 +67,7 @@ main_window::main_window() :
 	//start pipe with default file
 	hook_pipe_signals();
 	//connect signals to update the # of frames processed
-	connect(reco_output_buffer.get(), SIGNAL(size_changed(size_t)), this, SLOT(update_reco_label(size_t)));
+	connect(reco_output_buffer.get(), SIGNAL(size_changed(size_t)), this, SLOT(update_reco_processed_label(size_t)));
 	load_calibration(DEFAULT_CALIBRATION_FILE_PATH);
 
 }
@@ -176,8 +177,7 @@ void main_window::hook_pipe_signals() {
 	connect(ui->pause_button, SIGNAL(released()), pipe.get(), SLOT(pause()));
 	connect(ui->play_button, SIGNAL(released()), pipe.get(), SLOT(play()));
 	//connect the pipe output to viewer
-	connect(pipe.get(), SIGNAL(frame()), this,
-			SLOT(display_feeds()));
+	connect(pipe.get(), SIGNAL(frame()), this, SLOT(on_frame()));
 	rgb_viewer.configure_for_pipe(pipe->get_num_channels());
 	depth_viewer.configure_for_pipe(pipe->get_num_channels());
 
@@ -202,7 +202,8 @@ void main_window::unhook_pipe_signals() {
 		//------
 		toggle_reco_controls();
 		shut_pipe_down();
-		//this will stop the reconstruction and clear reconstruction output
+		//this will stop the reconstruction and clear reconstruction output, as well as
+		//disconnect the old worker's signals
 		reconstruction_worker.reset();
 		//unset flags
 		pipe_signals_hooked = false;
@@ -223,24 +224,27 @@ void main_window::shut_pipe_down() {
 }
 
 /**
- * Displays the current frame from the buffer on the screen
+ * Displays the current frame from the buffer on the screen, queues the current frame
+ * into the reconstruction process
  */
-void main_window::display_feeds() {
+void main_window::on_frame() {
 	std::shared_ptr<hal::ImageArray> images = this->pipe_buffer->pop_front();
-	//shouldn't need this if statement: shut pipe down is always called after this slot is disconnected
-	//if(images){
-		this->rgb_viewer.on_frame(images);
-		this->depth_viewer.on_frame(images);
-	//}
+	//enqueue
+	this->reco_input_buffer->push_back(images);
+	num_frames_in_reconstruction_queue++;
+	this->ui->reco_queued_label->setText(QString::number(num_frames_in_reconstruction_queue));
+	//display
+	this->rgb_viewer.on_frame(images);
+	this->depth_viewer.on_frame(images);
 }
 
-void main_window::update_reco_label(size_t value){
+void main_window::update_reco_processed_label(size_t value){
 	ui->reco_label->setText(QString::number(value));
 }
 
 /**
  * Slot for error reporting (eventually, errors emanating from child threads should print the error
- * to stdout or stderr)
+ * to stdout or stderr
  * @param string - error message
  */
 void main_window::report_error(QString string) {
@@ -279,9 +283,16 @@ void main_window::load_calibration(std::string file_path){
 	calibration_loaded = true;
 
 	reconstruction_worker.reset(new reconstructor(reco_input_buffer,reco_output_buffer,calibration));
+	reconstructor* reco_p = reconstruction_worker.get();
+	connect(reco_p,SIGNAL(frame_consumed()),this,SLOT(decrease_queue_counter()));
 	if(pipe_signals_hooked){
 		toggle_reco_controls();
 	}
+}
+
+void main_window::decrease_queue_counter(){
+	num_frames_in_reconstruction_queue--;
+	this->ui->reco_queued_label->setText(QString::number(num_frames_in_reconstruction_queue));
 }
 
 //====================================== BUTTON EVENTS==============================================

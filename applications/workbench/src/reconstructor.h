@@ -27,37 +27,44 @@
 namespace reco {
 namespace workbench {
 
-
-
 /**
  * @brief Responsible for processing the range images and coming up with 3D meshes reconstructed from them.
  */
-class reconstructor: public utils::worker {
+class reconstructor:
+		public QObject,
+		public utils::worker
+		 {
+Q_OBJECT
+
 public:
 	/**
 	 * Type of the input buffer required by the reconstructor
 	 */
-	typedef std::shared_ptr<utils::queue<std::shared_ptr<hal::ImageArray>>> input_buffer_type;
+	typedef std::shared_ptr<utils::queue<std::shared_ptr<hal::ImageArray>>>input_buffer_type;
 private:
 
 	std::shared_ptr<point_cloud_buffer> output_buffer;
 	std::shared_ptr<calibration_parameters> calibration;
 	input_buffer_type input_buffer;
-	//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud;
+
 	std::vector<uint32_t> cloud_colors;
+
 protected:
 	virtual bool do_unit_of_work();
 	virtual void pre_thread_join();
 
 public:
-
 	reconstructor(input_buffer_type input_buffer,
 			std::shared_ptr<point_cloud_buffer> output_buffer,
 			std::shared_ptr<calibration_parameters> calibration);
 	virtual ~reconstructor();
-};
 
-} /* namespace workbench */
+signals:
+	void frame_consumed();
+	void frame_processed();
+
+};
+}/* namespace workbench */
 } /* namespace reco */
 
 #endif /* RECO_WORKBENCH_RECONSTRUCTOR_H_ */

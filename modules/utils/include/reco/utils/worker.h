@@ -10,6 +10,7 @@
 #ifndef RECO_UTILS_WORKER_H_
 #define RECO_UTILS_WORKER_H_
 
+//standard
 #include <thread>
 #include <mutex>
 #include <condition_variable>
@@ -20,7 +21,8 @@ namespace utils {
 /**
  * Responsible for processing the range images and coming up with 3D meshes reconstructed from them
  */
-class worker {
+class worker  {
+
 private:
 	//locking
 	std::mutex pause_mutex;

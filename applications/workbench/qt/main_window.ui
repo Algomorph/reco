@@ -167,7 +167,23 @@
               </widget>
              </item>
              <item>
-              <widget class="QLabel" name="reco_percent_label">
+              <widget class="QLabel" name="reco_queued_label">
+               <property name="toolTip">
+                <string>number of frames in queue</string>
+               </property>
+               <property name="frameShape">
+                <enum>QFrame::StyledPanel</enum>
+               </property>
+               <property name="text">
+                <string>0</string>
+               </property>
+               <property name="alignment">
+                <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+               </property>
+              </widget>
+             </item>
+             <item>
+              <widget class="QLabel" name="reco_processed_label">
                <property name="toolTip">
                 <string>number of frames processed</string>
                </property>

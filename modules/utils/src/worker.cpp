@@ -7,6 +7,7 @@
  */
 
 #include <reco/utils/worker.h>
+#include <reco/utils/debug_util.h>
 
 namespace reco {
 namespace utils {
@@ -18,7 +19,6 @@ worker::worker():
 }
 
 worker::~worker(){
-	stop();
 }
 
 void worker::work(){
@@ -28,8 +28,12 @@ void worker::work(){
 		//wait if paused
 		pause_cv.wait(lck, [&]{return !paused;});
 		}
-		//if no more work to process, flag off
-		stopped = !do_unit_of_work();
+		bool more_work_to_do = true;
+		while(!stopped && !paused && more_work_to_do){
+			//if no more work to process, flag off
+			more_work_to_do = !do_unit_of_work();
+		}
+		stopped = stopped || !more_work_to_do;
 	}
 }
 
@@ -53,8 +57,12 @@ void worker::pre_thread_join(){
 }
 
 void worker::stop(){
-	paused = false;
 	stopped = true;
+	if(paused){
+		std::unique_lock<std::mutex> lck(pause_mutex);
+		paused = false;
+		pause_cv.notify_one();
+	}
 	pre_thread_join();
 	if(this->thread.joinable()){
 		this->thread.join();

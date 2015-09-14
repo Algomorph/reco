@@ -43,6 +43,7 @@ reconstructor::reconstructor(
 }
 
 reconstructor::~reconstructor(){
+	stop();
 	output_buffer->clear();
 }
 
@@ -91,6 +92,8 @@ static void cvDepth32F2pclCloudColor(const cv::Mat& depth, const cv::Mat& K, Eig
 }
 
 bool reconstructor::do_unit_of_work(){
+	emit frame_consumed();
+
 	const int num_kinects = calibration->get_num_kinects();
 	const int depth_offset = datapipe::kinect_v2_info::depth_channel.offset();
 	const int channels_per_kinect = datapipe::kinect_v2_info::channels.size();
@@ -109,6 +112,8 @@ bool reconstructor::do_unit_of_work(){
 							cloud_colors[i_kinect]);
 
 	}
+
+	emit frame_processed();
 	//frame_im_arr
 	return true;
 }
