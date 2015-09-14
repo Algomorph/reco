@@ -28,8 +28,10 @@ namespace datapipe {
 
 freenect2_pipe::freenect2_pipe(buffer_type buffer,
 		kinect2_data_source source, const std::string& path) :
+				stop_requested(false),
 				buffer(buffer),
 				runner_thread(&freenect2_pipe::run, this)
+
 {
 	switch (source) {
 	case kinect2_data_source::kinect2_device:
@@ -78,9 +80,7 @@ static void check_channel_dimensions(const hal::Camera& rgbd_camera, const std::
 void freenect2_pipe::set_camera(const std::string& cam_uri) {
 	rgbd_camera = hal::Camera(cam_uri);
 	has_camera = true;
-
 	num_channels = (int) rgbd_camera.NumChannels();
-
 	//check that we have appropriate number of channels
 	//the total number of channels must be evenly divisible by the number of channels per feed
 	if (num_channels % kinect_v2_info::channels.size() != 0) {
@@ -90,15 +90,12 @@ void freenect2_pipe::set_camera(const std::string& cam_uri) {
 				<< cam_uri
 				<< enderr;
 	}
-
 	num_kinects = num_channels / kinect_v2_info::channels.size();
-
 	//check that the feed sizes match for RGB & depth, for each kinect
 	for (int ix_channel; ix_channel < num_channels; ix_channel++) {
 		check_channel_dimensions(rgbd_camera, cam_uri, ix_channel,
 				ix_channel % kinect_v2_info::channels.size());
 	}
-
 }
 
 int freenect2_pipe::get_num_kinects() {
@@ -114,7 +111,6 @@ freenect2_pipe::buffer_type freenect2_pipe::get_buffer() {
 }
 
 void freenect2_pipe::run() {
-
 	while (!stop_requested) {
 		{
 			std::unique_lock<std::mutex> lk(this->pause_mtx);
@@ -126,9 +122,9 @@ void freenect2_pipe::run() {
 			return;
 		}
 		std::shared_ptr<hal::ImageArray> images = hal::ImageArray::Create();
+
 		while (!stop_requested && playback_allowed
 				&& rgbd_camera.Capture(*images)) {
-
 			this->buffer->push_back(images);
 
 			emit frame();

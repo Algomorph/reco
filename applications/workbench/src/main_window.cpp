@@ -55,6 +55,8 @@ main_window::main_window() :
 								std::shared_ptr<hal::ImageArray>>()),
 				pipe(new datapipe::freenect2_pipe(pipe_buffer, datapipe::freenect2_pipe::hal_log,
 								DEFAULT_LOG_FILE_PATH)),
+				pipe_signals_hooked(false),
+				calibration_loaded(false),
 				reco_input_buffer(new utils::unbounded_queue<std::shared_ptr<hal::ImageArray>>()),
 				reco_output_buffer(new point_cloud_buffer())
 {
@@ -184,7 +186,8 @@ void main_window::hook_pipe_signals() {
 }
 
 /**
- * Disconnect pipe signals between output/GUI buttons and pipe slots
+ * Disconnect pipe signals between output/GUI buttons and pipe slots,
+ * release all resources assosiated with the pipe and shut the pipe down
  */
 void main_window::unhook_pipe_signals() {
 	if (pipe_signals_hooked) {
@@ -223,10 +226,11 @@ void main_window::shut_pipe_down() {
  */
 void main_window::display_feeds() {
 	std::shared_ptr<hal::ImageArray> images = this->pipe_buffer->pop_front();
-	if(images){
+	//shouldn't need this if statement: shut pipe down is always called after this slot is disconnected
+	//if(images){
 		this->rgb_viewer.on_frame(images);
 		this->depth_viewer.on_frame(images);
-	}
+	//}
 }
 
 void main_window::update_reco_label(size_t value){
@@ -249,9 +253,7 @@ void main_window::report_error(QString string) {
 void main_window::closeEvent(QCloseEvent* event) {
 	rgb_viewer.close();
 	depth_viewer.close();
-	if (pipe_signals_hooked) {
-		shut_pipe_down();
-	}
+	unhook_pipe_signals();
 }
 
 /**
