@@ -215,9 +215,10 @@ void main_window::unhook_pipe_signals() {
  */
 void main_window::shut_pipe_down() {
 	pipe->stop();
-	pipe_buffer->clear();
-	pipe->join_thread();
 	std::shared_ptr<hal::ImageArray> dummy;
+	//clear in case of last frame push success
+	pipe_buffer->clear();
+	//push back dummy in case of trying to get from empty buffer
 	pipe_buffer->push_back(dummy);
 }
 

@@ -122,7 +122,6 @@ void freenect2_pipe::run() {
 			return;
 		}
 		std::shared_ptr<hal::ImageArray> images = hal::ImageArray::Create();
-
 		while (!stop_requested && playback_allowed
 				&& rgbd_camera.Capture(*images)) {
 			this->buffer->push_back(images);
@@ -132,7 +131,6 @@ void freenect2_pipe::run() {
 		}
 	}
 	rgbd_camera.Clear();
-
 }
 
 void freenect2_pipe::pause() {
@@ -147,12 +145,10 @@ void freenect2_pipe::play() {
 
 }
 
-void freenect2_pipe::join_thread() {
-	this->rgbd_camera.Clear();
-	this->runner_thread.join();
-}
 
 void freenect2_pipe::stop() {
+	stop_requested = true;
+	buffer->clear();
 	{
 		std::unique_lock<std::mutex> lk(this->pause_mtx);
 		//if the feed is paused, unpause it
@@ -161,7 +157,7 @@ void freenect2_pipe::stop() {
 			pause_cv.notify_one();
 		}
 	}
-	stop_requested = true;
+	this->runner_thread.join();
 
 }
 
