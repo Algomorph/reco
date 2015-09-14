@@ -111,7 +111,10 @@ private slots:
 	void on_show_rgb_feed_button_clicked();
 	void on_show_depth_feed_button_clicked();
 	void on_reco_proc_start_button_clicked();
-	void on_reco_proc_stop_button_clicked();
+	void on_reco_proc_pause_button_clicked();
+	void on_reco_play_button_clicked();
+	void on_reco_pause_button_clicked();
+	void on_reco_rewind_button_clicked();
 
 
 

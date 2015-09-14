@@ -31,7 +31,7 @@ void worker::work(){
 		bool more_work_to_do = true;
 		while(!stopped && !paused && more_work_to_do){
 			//if no more work to process, flag off
-			more_work_to_do = !do_unit_of_work();
+			more_work_to_do = do_unit_of_work();
 		}
 		stopped = stopped || !more_work_to_do;
 	}

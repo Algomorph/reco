@@ -112,6 +112,7 @@ bool reconstructor::do_unit_of_work(){
 							cloud_colors[i_kinect]);
 
 	}
+	this->output_buffer->append_point_cloud(cloud);
 
 	emit frame_processed();
 	//frame_im_arr

@@ -154,7 +154,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="reco_proc_stop_button">
+              <widget class="QPushButton" name="reco_proc_pause_button">
                <property name="sizePolicy">
                 <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                  <horstretch>0</horstretch>
@@ -162,7 +162,7 @@
                 </sizepolicy>
                </property>
                <property name="text">
-                <string>Stop</string>
+                <string>Pause</string>
                </property>
               </widget>
              </item>

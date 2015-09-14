@@ -239,7 +239,7 @@ void main_window::on_frame() {
 }
 
 void main_window::update_reco_processed_label(size_t value){
-	ui->reco_label->setText(QString::number(value));
+	ui->reco_processed_label->setText(QString::number(value));
 }
 
 /**
@@ -305,8 +305,17 @@ void main_window::on_show_depth_feed_button_clicked() {
 void main_window::on_reco_proc_start_button_clicked(){
 	this->reconstruction_worker->run();
 }
-void main_window::on_reco_proc_stop_button_clicked(){
+void main_window::on_reco_proc_pause_button_clicked(){
 	this->reconstruction_worker->pause();
+}
+void main_window::on_reco_play_button_clicked(){
+
+}
+void main_window::on_reco_pause_button_clicked(){
+
+}
+void main_window::on_reco_rewind_button_clicked(){
+
 }
 
 } //end namespace reco

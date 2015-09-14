@@ -29,8 +29,10 @@ class static_type_registration{
 	static bool registrationDone;
 public:
 	static int initialize(){
+
 		if(!registrationDone){
 			registrationDone = true;
+			qRegisterMetaType<size_t>("size_t");
 			qRegisterMetaType<cv::Mat>("cv::Mat");
 			qRegisterMetaType<std::vector<cv::Mat>>("std::vector<cv::Mat>");
 			qRegisterMetaType<std::shared_ptr<std::vector<cv::Mat>>>("std::shared_ptr<std::vector<cv::Mat>>");
