@@ -37,6 +37,7 @@ public:
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr grab_point_cloud();
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr grab_point_cloud(uint ix_frame);
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr grab_next_point_cloud();
+	bool go_to_frame(uint ix_frame);
 	void clear();
 	point_cloud_buffer();
 	virtual ~point_cloud_buffer();

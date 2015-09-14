@@ -19,13 +19,7 @@
 #include <QFileDialog>
 
 // Point Cloud Library
-#include <pcl/point_cloud.h>
-#include <pcl/point_types.h>
-#include <pcl/visualization/pcl_visualizer.h>
 
-// Visualization Toolkit (VTK)
-#include <vtkRenderWindow.h>
-#include <QVTKWidget.h>
 
 // ARPG includes
 #include <calibu/Calibu.h>
@@ -51,6 +45,7 @@ namespace workbench {
 main_window::main_window() :
 		ui(new Ui_main_window),
 				rgb_viewer("RGB Feed", NULL),
+				depth_viewer("Depth Feed", NULL),
 				pipe_buffer(new utils::optimistic_assignment_swap_buffer<
 								std::shared_ptr<hal::ImageArray>>()),
 				pipe(new datapipe::freenect2_pipe(pipe_buffer, datapipe::freenect2_pipe::hal_log,
@@ -62,33 +57,20 @@ main_window::main_window() :
 				reco_output_buffer(new point_cloud_buffer())
 {
 	ui->setupUi(this);
-	set_up_qvtk_window();
 	connect_actions();
 	//start pipe with default file
 	hook_pipe_signals();
 	//connect signals to update the # of frames processed
 	connect(reco_output_buffer.get(), SIGNAL(size_changed(size_t)), this, SLOT(update_reco_processed_label(size_t)));
 	load_calibration(DEFAULT_CALIBRATION_FILE_PATH);
+	/*TODO: check if this necessarily has to be done AFTER call to ui->setupUi(this).
+	If not, revise down from a pointer to a simple member*/
+	cloud_player.reset(new point_cloud_player(reco_output_buffer,this->ui->qvtk_widget));
 
 }
 
 main_window::~main_window() {
 	delete ui;
-}
-
-void main_window::set_up_qvtk_window(){
-	result_viewer.reset(new pcl::visualization::PCLVisualizer("result view", false));
-	result_viewer->setCameraPosition(
-			0.0, 0.0, 0.0,   // camera position
-			0.0, 0.0, 1.0,   // viewpoint
-			0.0, -1.0, 0.0,  // normal
-			0.0);            // viewport
-
-
-	ui->qvtk_widget->SetRenderWindow(result_viewer->getRenderWindow());
-	result_viewer->setupInteractor(ui->qvtk_widget->GetInteractor(),
-			ui->qvtk_widget->GetRenderWindow());
-	ui->qvtk_widget->update();
 }
 
 
@@ -309,12 +291,13 @@ void main_window::on_reco_proc_pause_button_clicked(){
 	this->reconstruction_worker->pause();
 }
 void main_window::on_reco_play_button_clicked(){
-
+	this->cloud_player->run();
 }
 void main_window::on_reco_pause_button_clicked(){
-
+	this->cloud_player->pause();
 }
 void main_window::on_reco_rewind_button_clicked(){
+	this->reco_output_buffer->go_to_frame(0);
 
 }
 

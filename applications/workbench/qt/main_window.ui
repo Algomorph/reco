@@ -217,7 +217,7 @@
             </property>
             <layout class="QVBoxLayout" name="verticalLayout_3">
              <item>
-              <widget class="QPushButton" name="reco_play_btn">
+              <widget class="QPushButton" name="reco_play_button">
                <property name="toolTip">
                 <string>Play back the reconstruction result</string>
                </property>
@@ -227,7 +227,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="reco_pause_btn">
+              <widget class="QPushButton" name="reco_pause_button">
                <property name="toolTip">
                 <string>Pause reconstruction result playback</string>
                </property>
@@ -237,7 +237,7 @@
               </widget>
              </item>
              <item>
-              <widget class="QPushButton" name="reco_rewind_btn">
+              <widget class="QPushButton" name="reco_rewind_button">
                <property name="toolTip">
                 <string>Rewind reconstruction result to beginning</string>
                </property>

@@ -39,6 +39,7 @@
 //local
 #include "calibration_parameters.h"
 #include "reconstructor.h"
+#include "point_cloud_player.h"
 
 
 class Ui_main_window;
@@ -61,7 +62,8 @@ private:
 	//GUI elements
 	datapipe::multi_kinect_rgb_viewer rgb_viewer;
 	datapipe::multi_kinect_depth_viewer depth_viewer;
-	std::shared_ptr<pcl::visualization::PCLVisualizer> result_viewer;
+	std::unique_ptr<point_cloud_player> cloud_player;
+
 
 	//objects for data transfer from sensors/log file
 	datapipe::freenect2_pipe::buffer_type pipe_buffer;
@@ -86,7 +88,7 @@ private:
 	//GUI functions
 	void connect_actions();
 	void toggle_reco_controls();
-	void set_up_qvtk_window();//called from constructor
+
 	//load calibration file
 	void load_calibration(std::string file_path);
 
