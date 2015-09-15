@@ -8,8 +8,7 @@
 
 #include <src/point_cloud_player.h>
 
-
-
+#include <reco/utils/debug_util.h>
 
 namespace reco {
 namespace workbench {
@@ -18,12 +17,13 @@ point_cloud_player::point_cloud_player(std::shared_ptr<point_cloud_buffer> cloud
 		QVTKWidget* hosting_widget):
 		worker(),
 		cloud_buffer(cloud_buffer),
-		result_viewer(new pcl::visualization::PCLVisualizer("result view", false))
+		visualizer(new pcl::visualization::PCLVisualizer("result view", false)),
+		hosting_widget(hosting_widget)
 		{
-	hosting_widget->SetRenderWindow(result_viewer->getRenderWindow());
-	result_viewer->setupInteractor(hosting_widget->GetInteractor(),
+	hosting_widget->SetRenderWindow(visualizer->getRenderWindow());
+	visualizer->setupInteractor(hosting_widget->GetInteractor(),
 				hosting_widget->GetRenderWindow());
-	result_viewer->setCameraPosition(
+	visualizer->setCameraPosition(
 					0.0, 0.0, 0.0,   // camera position
 					0.0, 0.0, 1.0,   // viewpoint
 					0.0, -1.0, 0.0,  // normal
@@ -31,17 +31,21 @@ point_cloud_player::point_cloud_player(std::shared_ptr<point_cloud_buffer> cloud
 	hosting_widget->update();
 }
 
-point_cloud_player::~point_cloud_player(){}
+point_cloud_player::~point_cloud_player(){
+	//unpause and stop
+	stop();
+}
 
 bool point_cloud_player::do_unit_of_work(){
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = cloud_buffer->grab_next_point_cloud();
 	if(cloud){
-		if (!result_viewer->updatePointCloud(cloud)) {
-			result_viewer->addPointCloud(cloud);
+		if (!visualizer->updatePointCloud(cloud)) {
+			visualizer->addPointCloud(cloud);
 		}
-		result_viewer->spinOnce();
+		//TODO: is this necessary? maybe, try redraw() instead?
+		hosting_widget->update();
+	}else{
 		this->pause();
-		return true;
 	}
 	return true;
 }

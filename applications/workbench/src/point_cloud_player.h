@@ -39,11 +39,12 @@ class point_cloud_player:
 Q_OBJECT
 private:
 	std::shared_ptr<point_cloud_buffer> cloud_buffer;
-	std::shared_ptr<pcl::visualization::PCLVisualizer> result_viewer;
+	std::shared_ptr<pcl::visualization::PCLVisualizer> visualizer;
+	QVTKWidget* hosting_widget;
 protected:
 	virtual bool do_unit_of_work();
 public:
-
+	void spin_viewer();
 	point_cloud_player(std::shared_ptr<point_cloud_buffer> cloud_buffer, QVTKWidget* hosting_widget);
 	virtual ~point_cloud_player();
 };

@@ -267,6 +267,7 @@ void main_window::load_calibration(std::string file_path){
 	reconstruction_worker.reset(new reconstructor(reco_input_buffer,reco_output_buffer,calibration));
 	reconstructor* reco_p = reconstruction_worker.get();
 	connect(reco_p,SIGNAL(frame_consumed()),this,SLOT(decrease_queue_counter()));
+
 	if(pipe_signals_hooked){
 		toggle_reco_controls();
 	}

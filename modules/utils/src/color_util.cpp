@@ -18,7 +18,7 @@ uint32_t generate_random_color(){
 	uint32_t r = distribution(generator);
 	uint32_t g = distribution(generator);
 	uint32_t b = distribution(generator);
-	return ((r << 16) & (g << 8) & b);
+	return ((r << 16) | (g << 8) | b);
 }
 
 }//end namespace utils
