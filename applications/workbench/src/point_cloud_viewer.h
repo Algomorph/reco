@@ -33,7 +33,7 @@
 namespace reco {
 namespace workbench {
 
-class point_cloud_player:
+class point_cloud_viewer:
 		public QObject,
 		public utils::worker {
 Q_OBJECT
@@ -45,8 +45,8 @@ protected:
 	virtual bool do_unit_of_work();
 public:
 	void spin_viewer();
-	point_cloud_player(std::shared_ptr<point_cloud_buffer> cloud_buffer, QVTKWidget* hosting_widget);
-	virtual ~point_cloud_player();
+	point_cloud_viewer(std::shared_ptr<point_cloud_buffer> cloud_buffer, QVTKWidget* hosting_widget);
+	virtual ~point_cloud_viewer();
 };
 
 } /* namespace workbench */

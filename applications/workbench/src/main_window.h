@@ -39,7 +39,7 @@
 //local
 #include "calibration_parameters.h"
 #include "reconstructor.h"
-#include "point_cloud_player.h"
+#include "point_cloud_viewer.h"
 
 
 class Ui_main_window;
@@ -62,7 +62,7 @@ private:
 	//GUI elements
 	datapipe::multi_kinect_rgb_viewer rgb_viewer;
 	datapipe::multi_kinect_depth_viewer depth_viewer;
-	std::unique_ptr<point_cloud_player> cloud_player;
+	std::unique_ptr<point_cloud_viewer> cloud_viewer;
 
 
 	//objects for data transfer from sensors/log file

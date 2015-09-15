@@ -6,14 +6,14 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
-#include <src/point_cloud_player.h>
+#include <src/point_cloud_viewer.h>
 
 #include <reco/utils/debug_util.h>
 
 namespace reco {
 namespace workbench {
 
-point_cloud_player::point_cloud_player(std::shared_ptr<point_cloud_buffer> cloud_buffer,
+point_cloud_viewer::point_cloud_viewer(std::shared_ptr<point_cloud_buffer> cloud_buffer,
 		QVTKWidget* hosting_widget):
 		worker(),
 		cloud_buffer(cloud_buffer),
@@ -31,12 +31,12 @@ point_cloud_player::point_cloud_player(std::shared_ptr<point_cloud_buffer> cloud
 	hosting_widget->update();
 }
 
-point_cloud_player::~point_cloud_player(){
+point_cloud_viewer::~point_cloud_viewer(){
 	//unpause and stop
 	stop();
 }
 
-bool point_cloud_player::do_unit_of_work(){
+bool point_cloud_viewer::do_unit_of_work(){
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = cloud_buffer->grab_next_point_cloud();
 	if(cloud){
 		if (!visualizer->updatePointCloud(cloud)) {

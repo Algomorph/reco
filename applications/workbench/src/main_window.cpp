@@ -65,7 +65,7 @@ main_window::main_window() :
 	load_calibration(DEFAULT_CALIBRATION_FILE_PATH);
 	/*TODO: check if this necessarily has to be done AFTER call to ui->setupUi(this).
 	If not, revise down from a pointer to a simple member*/
-	cloud_player.reset(new point_cloud_player(reco_output_buffer,this->ui->qvtk_widget));
+	cloud_viewer.reset(new point_cloud_viewer(reco_output_buffer,this->ui->qvtk_widget));
 
 }
 
@@ -292,10 +292,10 @@ void main_window::on_reco_proc_pause_button_clicked(){
 	this->reconstruction_worker->pause();
 }
 void main_window::on_reco_play_button_clicked(){
-	this->cloud_player->run();
+	this->cloud_viewer->run();
 }
 void main_window::on_reco_pause_button_clicked(){
-	this->cloud_player->pause();
+	this->cloud_viewer->pause();
 }
 void main_window::on_reco_rewind_button_clicked(){
 	this->reco_output_buffer->go_to_frame(0);
