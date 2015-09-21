@@ -38,8 +38,13 @@ namespace workbench {
 
 #define CAMERA_PX_WIDTH 1920
 #define CAMERA_PX_HEIGHT 1080
-#define DEFAULT_CALIBRATION_FILE_PATH "/media/algomorph/Data/reco/calib/pos_D_2_kinects.xml"
-#define DEFAULT_LOG_FILE_PATH "/media/algomorph/Data/reco/cap/pos_D_slow_rotating_human_2_kinects_1240_frames.log"
+
+#define DEFAULT_RECO_DATA_PATH "/media/algomorph/Data/reco/"
+#define DEFAULT_CAP_PATH DEFAULT_RECO_DATA_PATH "cap/"
+#define DEFAULT_CALIB_PATH DEFAULT_RECO_DATA_PATH "calib/"
+
+#define DEFAULT_CALIBRATION_FILE_PATH DEFAULT_CALIB_PATH "pos_D_2_kinects.xml"
+#define DEFAULT_LOG_FILE_PATH DEFAULT_CAP_PATH "pos_D_slow_rotating_human_2_kinects_1240_frames.log"
 //#define DEFAULT_LOG_FILE_PATH "/media/algomorph/Data/reco/cap/pos_E_moving_human_4_kinects.log"
 
 main_window::main_window() :
@@ -82,8 +87,10 @@ void main_window::connect_actions() {
 	connect(ui->action_open_kinect_devices, SIGNAL(triggered()), this, SLOT(open_kinect_devices()));
 	connect(ui->action_open_hal_log, SIGNAL(triggered()), this, SLOT(open_hal_log()));
 	connect(ui->action_open_image_folder, SIGNAL(triggered()), this, SLOT(open_image_folder()));
+	connect(ui->action_open_video_files, SIGNAL(triggered()), this, SLOT(open_video_files()));
 	connect(ui->action_open_calibration_file, SIGNAL(triggered()),this, SLOT(open_calibration_file()));
 	connect(ui->action_close_stream, SIGNAL(triggered()), this, SLOT(unhook_pipe_signals()));
+
 }
 
 /**
@@ -99,7 +106,7 @@ void main_window::open_kinect_devices() {
  */
 void main_window::open_hal_log() {
 	QString file_name = QFileDialog::getOpenFileName(this, tr("Open Log File"),
-			"/media/algomorph/Data/reco/cap/", tr("HAL Log files (*.log)"));
+			DEFAULT_CAP_PATH, tr("HAL Log files (*.log)"));
 
 	if (!file_name.isEmpty()) {
 		unhook_pipe_signals();
@@ -139,13 +146,24 @@ void main_window::open_image_folder() {
  */
 void main_window::open_calibration_file() {
 	QString qfile_path = QFileDialog::getOpenFileName(this, tr("Open Calibration File"),
-			"/media/algomorph/Data/reco/calib/", tr("Calibu calibration files (*.xml)"));
+			DEFAULT_CALIB_PATH, tr("Calibu calibration files (*.xml)"));
 
 	if (pipe_signals_hooked && !qfile_path.isEmpty()) {
 		std::string file_path = qfile_path.toStdString();
 
 		load_calibration(file_path);
 	}
+}
+
+void main_window::open_video_files(){
+	QFileDialog dialog(this,tr("Open Video Files"), DEFAULT_CAP_PATH, tr("Video files (*.avi, *.mp4, *.mov)"));
+	dialog.setFileMode(QFileDialog::ExistingFiles);
+	QStringList file_names;
+	if(dialog.exec()){
+		file_names = dialog.selectedFiles();
+	}
+	file_names.sort();
+
 }
 
 /**

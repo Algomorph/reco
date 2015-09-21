@@ -54,6 +54,8 @@ void reconstructor::pre_thread_join(){
 	input_buffer->push_back(dummy);
 }
 
+
+
 static void cvDepth32F2pclCloudColor(const cv::Mat& depth, const cv::Mat& K, Eigen::Matrix<float, 3, 3> R,
 		Eigen::Vector3f T, pcl::PointCloud<pcl::PointXYZRGB>& cloud, uint32_t rgb) {
 	// Check input

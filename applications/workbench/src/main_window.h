@@ -109,6 +109,7 @@ private slots:
 	void open_hal_log();
 	void open_image_folder();
 	void open_calibration_file();
+	void open_video_files();
 
 	//buttons
 	void on_show_rgb_feed_button_clicked();

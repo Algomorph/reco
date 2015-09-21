@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1104</width>
-    <height>704</height>
+    <height>726</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -291,7 +291,14 @@
      <addaction name="action_open_hal_log"/>
      <addaction name="action_open_image_folder"/>
     </widget>
+    <widget class="QMenu" name="menu_open_stereo_stream">
+     <property name="title">
+      <string>Open Stereo Stream</string>
+     </property>
+     <addaction name="action_open_video_files"/>
+    </widget>
     <addaction name="menu_open_rgb_stream"/>
+    <addaction name="menu_open_stereo_stream"/>
     <addaction name="action_open_calibration_file"/>
     <addaction name="action_close_stream"/>
    </widget>
@@ -317,12 +324,17 @@
   </action>
   <action name="action_close_stream">
    <property name="text">
-    <string>&amp;Close RGB-D Stream</string>
+    <string>&amp;Close Stream</string>
    </property>
   </action>
   <action name="action_open_calibration_file">
    <property name="text">
-    <string>Open Calibration &amp;File</string>
+    <string>Open Calibration File</string>
+   </property>
+  </action>
+  <action name="action_open_video_files">
+   <property name="text">
+    <string>&amp;Video Files</string>
    </property>
   </action>
  </widget>
@@ -330,7 +342,7 @@
   <customwidget>
    <class>QVTKWidget</class>
    <extends>QWidget</extends>
-   <header location="global">QVTKWidget.h</header>
+   <header>QVTKWidget.h</header>
   </customwidget>
  </customwidgets>
  <resources>

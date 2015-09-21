@@ -34,7 +34,7 @@ namespace datapipe {
 
 
 /**
- * @brief Directs one or more kinect v2 feeds from an ARPG HAL-based source to apps that process and output the data
+ * @brief Directs one or more feeds from an ARPG HAL-based source to apps that process and output the data
  * Object for retrieving kinect data (from "somewhere" in HAL) and pushing it off to various downstream actors,
  * such as display node(s), recording/storing node(s), and/or processing node(s).
  */
