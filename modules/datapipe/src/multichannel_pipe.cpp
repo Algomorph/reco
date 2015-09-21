@@ -39,7 +39,7 @@ void multichannel_pipe::set_camera(const std::string& cam_uri) {
 	//check that we have appropriate number of channels
 	//i.e. for multip feeds, the total number of channels must be evenly divisible
 	//by the number of channels per feed
-	check_channel_number(num_channels);
+	check_channel_number(cam_uri, num_channels);
 
 	//check that the feed sizes match for RGB & depth, for each kinect
 	for (int ix_channel; ix_channel < num_channels; ix_channel++) {

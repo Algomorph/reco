@@ -58,7 +58,7 @@ protected:
 
 	virtual void set_camera(const std::string& cam_uri);
 	//Called during set_camera
-	virtual void check_channel_number(size_t num_channels) = 0;
+	virtual void check_channel_number(const std::string& cam_uri, size_t num_channels) = 0;
 	virtual void check_channel_dimensions(const std::string& cam_uri, int ix_channel) = 0;
 
 	void work();
