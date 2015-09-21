@@ -7,7 +7,7 @@
  */
 
 #pragma once
-#ifndef RECO_DATAPIPE_FREENECT2_PIPE_H_
+#ifndef RECO_DATAPIPE_FREENECT2_PIPE_H
 #define RECO_DATAPIPE_FREENECT2_PIPE_H_
 
 //qt
@@ -34,11 +34,11 @@ namespace datapipe {
 
 
 /**
- * @brief Directs one or more feeds from an ARPG HAL-based source to apps that process and output the data
+ * @brief Directs one or more kinect feeds from an ARPG HAL-based source to apps that process and output the data
  * Object for retrieving kinect data (from "somewhere" in HAL) and pushing it off to various downstream actors,
  * such as display node(s), recording/storing node(s), and/or processing node(s).
  */
-class freenect2_pipe : public QObject {
+class freenect2_pipe_old : public QObject {
 Q_OBJECT
 
 public:
@@ -78,9 +78,9 @@ public:
 	 * @param source type of the input source
 	 * @param path necessary when the source is either an ARPG HAL log (in which case, represents path to the log file) or a file folder (in which case, represents the directory)
 	 */
-	freenect2_pipe(buffer_type buffer,
+	freenect2_pipe_old(buffer_type buffer,
 			kinect2_data_source source = hal_log, const std::string& path = "capture.log");
-	virtual ~freenect2_pipe();
+	virtual ~freenect2_pipe_old();
 	/**
 	 * @return number of source's kinect devices.
 	 */
@@ -90,18 +90,12 @@ public:
 	 * @return number of source's kinect devices.
 	 */
 	int get_num_channels();
-	/**
-	 * @brief For shutting down the thread at the end of the program.
-	 */
-	void join_thread();
+
 
 	/**
 	 * @return a shared pointer to the buffer
 	 */
 	buffer_type get_buffer();
-
-
-
 
 public slots:
 	/**

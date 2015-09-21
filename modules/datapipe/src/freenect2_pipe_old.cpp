@@ -7,7 +7,7 @@
  */
 
 //datapipe
-#include <reco/datapipe/freenect2_pipe.h>
+#include <reco/datapipe/freenect2_pipe_old.h>
 #include <reco/datapipe/kinect_v2_info.h>
 
 //utils
@@ -26,11 +26,11 @@
 namespace reco {
 namespace datapipe {
 
-freenect2_pipe::freenect2_pipe(buffer_type buffer,
+freenect2_pipe_old::freenect2_pipe_old(buffer_type buffer,
 		kinect2_data_source source, const std::string& path) :
 				stop_requested(false),
 				buffer(buffer),
-				runner_thread(&freenect2_pipe::run, this)
+				runner_thread(&freenect2_pipe_old::run, this)
 
 {
 	switch (source) {
@@ -52,7 +52,7 @@ freenect2_pipe::freenect2_pipe(buffer_type buffer,
 	}
 }
 
-freenect2_pipe::~freenect2_pipe() {
+freenect2_pipe_old::~freenect2_pipe_old() {
 }
 
 static void check_channel_dimensions(const hal::Camera& rgbd_camera, const std::string& cam_uri,
@@ -77,7 +77,7 @@ static void check_channel_dimensions(const hal::Camera& rgbd_camera, const std::
 /*
  * Set camera using requested URI
  */
-void freenect2_pipe::set_camera(const std::string& cam_uri) {
+void freenect2_pipe_old::set_camera(const std::string& cam_uri) {
 	rgbd_camera = hal::Camera(cam_uri);
 	has_camera = true;
 	num_channels = (int) rgbd_camera.NumChannels();
@@ -98,19 +98,19 @@ void freenect2_pipe::set_camera(const std::string& cam_uri) {
 	}
 }
 
-int freenect2_pipe::get_num_kinects() {
+int freenect2_pipe_old::get_num_kinects() {
 	return num_kinects;
 }
 
-int freenect2_pipe::get_num_channels() {
+int freenect2_pipe_old::get_num_channels() {
 	return num_channels;
 }
 
-freenect2_pipe::buffer_type freenect2_pipe::get_buffer() {
+freenect2_pipe_old::buffer_type freenect2_pipe_old::get_buffer() {
 	return this->buffer;
 }
 
-void freenect2_pipe::run() {
+void freenect2_pipe_old::run() {
 	while (!stop_requested) {
 		{
 			std::unique_lock<std::mutex> lk(this->pause_mtx);
@@ -133,12 +133,12 @@ void freenect2_pipe::run() {
 	rgbd_camera.Clear();
 }
 
-void freenect2_pipe::pause() {
+void freenect2_pipe_old::pause() {
 	std::unique_lock<std::mutex> lk(this->pause_mtx);
 	playback_allowed = false;
 }
 
-void freenect2_pipe::play() {
+void freenect2_pipe_old::play() {
 	std::unique_lock<std::mutex> lk(this->pause_mtx);
 	playback_allowed = true;
 	pause_cv.notify_one();
@@ -146,7 +146,7 @@ void freenect2_pipe::play() {
 }
 
 
-void freenect2_pipe::stop() {
+void freenect2_pipe_old::stop() {
 	stop_requested = true;
 	buffer->clear();
 	{

@@ -19,7 +19,7 @@
 #include <reco/datapipe/video_widget.h>
 #include <reco/datapipe/webcam_video_source.h>
 #include <reco/datapipe/image_file_video_source.h>
-#include <reco/datapipe/freenect2_pipe.h>
+#include <reco/datapipe/freenect2_pipe_old.h>
 #include <reco/datapipe/multi_kinect_rgb_viewer.h>
 #include <reco/datapipe/multi_kinect_depth_viewer.h>
 
@@ -66,8 +66,8 @@ private:
 
 
 	//objects for data transfer from sensors/log file
-	datapipe::freenect2_pipe::buffer_type pipe_buffer;
-	std::shared_ptr<datapipe::freenect2_pipe> pipe;
+	datapipe::freenect2_pipe_old::buffer_type pipe_buffer;
+	std::shared_ptr<datapipe::freenect2_pipe_old> pipe;
 
 	//program state variables
 	bool pipe_signals_hooked;

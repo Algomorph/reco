@@ -13,7 +13,7 @@
 
 //datapipe
 #include <reco/datapipe/kinect_v2_info.h>
-#include <reco/datapipe/freenect2_pipe.h>
+#include <reco/datapipe/freenect2_pipe_old.h>
 #include <QThread>
 #include <QDebug>
 #include <QFileDialog>
@@ -53,7 +53,7 @@ main_window::main_window() :
 				depth_viewer("Depth Feed", NULL),
 				pipe_buffer(new utils::optimistic_assignment_swap_buffer<
 								std::shared_ptr<hal::ImageArray>>()),
-				pipe(new datapipe::freenect2_pipe(pipe_buffer, datapipe::freenect2_pipe::hal_log,
+				pipe(new datapipe::freenect2_pipe_old(pipe_buffer, datapipe::freenect2_pipe_old::hal_log,
 								DEFAULT_LOG_FILE_PATH)),
 				pipe_signals_hooked(false),
 				calibration_loaded(false),
@@ -98,7 +98,7 @@ void main_window::connect_actions() {
  */
 void main_window::open_kinect_devices() {
 	unhook_pipe_signals();
-	pipe.reset(new datapipe::freenect2_pipe(pipe_buffer, datapipe::freenect2_pipe::kinect2_device));
+	pipe.reset(new datapipe::freenect2_pipe_old(pipe_buffer, datapipe::freenect2_pipe_old::kinect2_device));
 	hook_pipe_signals();
 }
 /**
@@ -112,7 +112,7 @@ void main_window::open_hal_log() {
 		unhook_pipe_signals();
 		//TODO: test if QString --> std::string works on windows like this
 		pipe.reset(
-				new datapipe::freenect2_pipe(pipe_buffer, datapipe::freenect2_pipe::hal_log,
+				new datapipe::freenect2_pipe_old(pipe_buffer, datapipe::freenect2_pipe_old::hal_log,
 						file_name.toStdString()));
 		hook_pipe_signals();
 
