@@ -31,7 +31,7 @@
 #include "point_cloud_buffer.h"
 
 namespace reco {
-namespace workbench {
+namespace rgbd_workbench {
 
 class point_cloud_viewer:
 		public QObject,

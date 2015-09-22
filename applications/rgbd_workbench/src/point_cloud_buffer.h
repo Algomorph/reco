@@ -19,7 +19,7 @@
 #include <QObject>
 
 namespace reco {
-namespace workbench {
+namespace rgbd_workbench {
 
 class point_cloud_buffer : public QObject {
 	Q_OBJECT
@@ -45,7 +45,7 @@ signals:
 	void size_changed(size_t new_size);
 };
 
-} /* namespace workbench */
+} /* namespace rgbd_workbench */
 } /* namespace reco */
 
 #endif /* RECO_WORKBENCH_POINTCLOUDBUFFER_H_ */

@@ -20,7 +20,7 @@
 #include "main_window.h"
 
 int main(int argc, char* argv[]){
-	using namespace reco::workbench;
+	using namespace reco::rgbd_workbench;
 
 	Q_INIT_RESOURCE(application);
 	QApplication app(argc, argv);

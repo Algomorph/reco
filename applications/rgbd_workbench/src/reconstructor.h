@@ -25,7 +25,7 @@
 #include "point_cloud_buffer.h"
 
 namespace reco {
-namespace workbench {
+namespace rgbd_workbench {
 
 /**
  * @brief Responsible for processing the range images and coming up with 3D meshes reconstructed from them.

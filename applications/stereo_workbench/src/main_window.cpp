@@ -29,7 +29,6 @@ main_window::~main_window() {
 /**
  * Connect actions of menus with the corresponding slot functions
  */
-
 void main_window::connect_actions() {
 
 }

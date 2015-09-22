@@ -32,7 +32,7 @@
 #include "../ui_main_window.h"
 
 namespace reco {
-namespace workbench {
+namespace rgbd_workbench {
 
 #define DEFAULT_RECO_DATA_PATH "/media/algomorph/Data/reco/"
 #define DEFAULT_CAP_PATH DEFAULT_RECO_DATA_PATH "cap/"

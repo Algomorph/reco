@@ -23,7 +23,7 @@
 #include "calibration_parameters.h"
 
 namespace reco {
-namespace workbench {
+namespace rgbd_workbench {
 
 /**
  * Default constructor, builds empty calibration parameters object

@@ -22,9 +22,9 @@ namespace reco {
 namespace datapipe {
 class kinect2_pipe;
 } /* namespace datapipe */
-namespace workbench {
+namespace rgbd_workbench {
 class point_cloud_viewer;
-} /* namespace workbench */
+} /* namespace rgbd_workbench */
 } /* namespace reco */
 
 #pragma once
@@ -62,7 +62,7 @@ class point_cloud_viewer;
 class Ui_main_window;
 
 namespace reco{
-namespace workbench{
+namespace rgbd_workbench{
 
 class main_window: public QMainWindow {
 	Q_OBJECT
@@ -138,7 +138,7 @@ private slots:
 
 };
 
-}//end namespace workbench
+}//end namespace rgbd_workbench
 } //end namespace reco
 
 #endif /* HMD_MAIN_WINDOW_H_ */

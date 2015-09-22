@@ -10,7 +10,7 @@
 #include "point_cloud_viewer.h"
 
 namespace reco {
-namespace workbench {
+namespace rgbd_workbench {
 
 point_cloud_viewer::point_cloud_viewer(std::shared_ptr<point_cloud_buffer> cloud_buffer,
 		QVTKWidget* hosting_widget):

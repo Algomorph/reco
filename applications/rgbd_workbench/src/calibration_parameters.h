@@ -16,7 +16,7 @@
 #include <opencv2/core/core.hpp>
 
 namespace reco {
-namespace workbench {
+namespace rgbd_workbench {
 
 
 class calibration_parameters {
@@ -36,7 +36,7 @@ public:
 	virtual ~calibration_parameters();
 };
 
-} /* namespace workbench */
+} /* namespace rgbd_workbench */
 } /* namespace reco */
 
 #endif /* RECO_WORKBENCH_CALIBRATION_PARAMETERS_H_ */

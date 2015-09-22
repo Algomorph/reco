@@ -11,7 +11,7 @@
 #include "point_cloud_buffer.h"
 
 namespace reco {
-namespace workbench {
+namespace rgbd_workbench {
 
 point_cloud_buffer::point_cloud_buffer():
 	compression_profile(pcl::io::HIGH_RES_ONLINE_COMPRESSION_WITH_COLOR),

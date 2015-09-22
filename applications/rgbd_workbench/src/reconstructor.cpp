@@ -14,7 +14,7 @@
 #include "reconstructor.h"
 
 namespace reco {
-namespace workbench {
+namespace rgbd_workbench {
 
 reconstructor::reconstructor(
 		input_buffer_type input_buffer,
