@@ -8,10 +8,6 @@
  */
 
 //local
-#include <src/main_window.h>
-#include "ui_main_window.h"
-
-//datapipe
 #include <reco/datapipe/kinect_v2_info.h>
 #include <reco/datapipe/kinect2_pipe.h>
 #include <QThread>
@@ -32,6 +28,8 @@
 #include <reco/utils/cpp_exception_util.h>
 #include <reco/utils/debug_util.h>
 #include <reco/utils/color_util.h>
+#include "main_window.h"
+#include "../ui_main_window.h"
 
 namespace reco {
 namespace workbench {

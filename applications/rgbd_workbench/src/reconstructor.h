@@ -21,8 +21,8 @@
 #include <HAL/Messages/ImageArray.h>
 
 //local
-#include "point_cloud_buffer.h"
 #include "calibration_parameters.h"
+#include "point_cloud_buffer.h"
 
 namespace reco {
 namespace workbench {

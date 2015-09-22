@@ -6,9 +6,8 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
-#include <src/point_cloud_viewer.h>
-
 #include <reco/utils/debug_util.h>
+#include "point_cloud_viewer.h"
 
 namespace reco {
 namespace workbench {

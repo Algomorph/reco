@@ -6,14 +6,12 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
-#include <src/reconstructor.h>
-
-//utils
 #include <reco/utils/cpp_exception_util.h>
 #include <reco/utils/color_util.h>
 
 //datapipe
 #include <reco/datapipe/kinect_v2_info.h>
+#include "reconstructor.h"
 
 namespace reco {
 namespace workbench {

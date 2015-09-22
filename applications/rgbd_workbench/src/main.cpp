@@ -7,10 +7,6 @@
  *   Copyright: (c) Gregory Kramida 2014
  */
 //local
-#include "main_window.h"
-
-
-//qt
 #include <QApplication>
 //opencv
 #include <opencv2/core/core.hpp>
@@ -21,6 +17,7 @@
 
 //utils
 #include <reco/utils/cpp_exception_util.h>
+#include "main_window.h"
 
 int main(int argc, char* argv[]){
 	using namespace reco::workbench;

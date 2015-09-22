@@ -1,6 +1,6 @@
 #Applications CMakeLists.txt
 #=====================LARGE APPS===================================================================#
-add_subdirectory("workbench")
+add_subdirectory("rgbd_workbench")
 
 #=====================LIGHTWEIGHT APPS=============================================================#
 reco_add_subproject(read_builtins 

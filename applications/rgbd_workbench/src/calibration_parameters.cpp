@@ -7,17 +7,20 @@
  */
 
 //local
-#include <src/calibration_parameters.h>
-
-//datapipe
 #include <reco/datapipe/kinect_v2_info.h>
 
 //utils
 #include <reco/utils/cpp_exception_util.h>
 
+//eigen
+#include <Eigen/Dense>
+
 //opencv
 #include <opencv2/core/core_c.h>
 #include <opencv2/core/eigen.hpp>
+
+//local
+#include "calibration_parameters.h"
 
 namespace reco {
 namespace workbench {

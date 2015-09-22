@@ -7,8 +7,8 @@
  */
 
 
-#include <src/point_cloud_buffer.h>
 #include <pcl/compression/compression_profiles.h>
+#include "point_cloud_buffer.h"
 
 namespace reco {
 namespace workbench {

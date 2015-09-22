@@ -12,7 +12,7 @@
 
 //std
 #include <sstream>
-#include <exception>
+#include <stdexcept>
 
 #define err(exception_class) (reco::utils::error_stream<exception_class>())
 #define enderr (reco::utils::error_end_token::get_instance())
