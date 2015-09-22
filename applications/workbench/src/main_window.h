@@ -19,7 +19,6 @@
 #include <reco/datapipe/video_widget.h>
 #include <reco/datapipe/webcam_video_source.h>
 #include <reco/datapipe/image_file_video_source.h>
-#include <reco/datapipe/freenect2_pipe_old.h>
 #include <reco/datapipe/kinect2_pipe.h>
 #include <reco/datapipe/multi_kinect_rgb_viewer.h>
 #include <reco/datapipe/multi_kinect_depth_viewer.h>

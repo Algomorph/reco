@@ -17,9 +17,10 @@
 
 //datapipe
 #include <reco/datapipe/video_widget.h>
-#include <reco/datapipe/freenect2_pipe_old.h>
 #include <reco/datapipe/kinect_v2_info.h>
 
+//HAL
+#include <HAL/Messages/ImageArray.h>
 
 
 namespace reco {
