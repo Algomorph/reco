@@ -13,7 +13,7 @@
 
 //datapipe
 #include <reco/datapipe/kinect_v2_info.h>
-#include <reco/datapipe/freenect2_pipe_old.h>
+#include <reco/datapipe/kinect2_pipe.h>
 #include <QThread>
 #include <QDebug>
 #include <QFileDialog>
@@ -53,7 +53,7 @@ main_window::main_window() :
 				depth_viewer("Depth Feed", NULL),
 				pipe_buffer(new utils::optimistic_assignment_swap_buffer<
 								std::shared_ptr<hal::ImageArray>>()),
-				pipe(new datapipe::freenect2_pipe_old(pipe_buffer, datapipe::freenect2_pipe_old::hal_log,
+				pipe(new datapipe::kinect2_pipe(pipe_buffer, datapipe::kinect2_pipe::hal_log,
 								DEFAULT_LOG_FILE_PATH)),
 				pipe_signals_hooked(false),
 				calibration_loaded(false),
@@ -98,7 +98,7 @@ void main_window::connect_actions() {
  */
 void main_window::open_kinect_devices() {
 	unhook_pipe_signals();
-	pipe.reset(new datapipe::freenect2_pipe_old(pipe_buffer, datapipe::freenect2_pipe_old::kinect2_device));
+	pipe.reset(new datapipe::kinect2_pipe(pipe_buffer, datapipe::kinect2_pipe::kinect2_device));
 	hook_pipe_signals();
 }
 /**
@@ -112,7 +112,7 @@ void main_window::open_hal_log() {
 		unhook_pipe_signals();
 		//TODO: test if QString --> std::string works on windows like this
 		pipe.reset(
-				new datapipe::freenect2_pipe_old(pipe_buffer, datapipe::freenect2_pipe_old::hal_log,
+				new datapipe::kinect2_pipe(pipe_buffer, datapipe::kinect2_pipe::hal_log,
 						file_name.toStdString()));
 		hook_pipe_signals();
 
@@ -175,7 +175,7 @@ void main_window::hook_pipe_signals() {
 	connect(pipe.get(), SIGNAL(error(QString)), this, SLOT(report_error(QString)));
 	//connect the play and pause buttons
 	connect(ui->pause_button, SIGNAL(released()), pipe.get(), SLOT(pause()));
-	connect(ui->play_button, SIGNAL(released()), pipe.get(), SLOT(play()));
+	connect(ui->play_button, SIGNAL(released()), pipe.get(), SLOT(run()));
 	//connect the pipe output to viewer
 	connect(pipe.get(), SIGNAL(frame()), this, SLOT(on_frame()));
 	rgb_viewer.configure_for_pipe(pipe->get_num_channels());
@@ -273,7 +273,7 @@ void main_window::load_calibration(std::string file_path){
 	const int num_kinects = pipe->get_num_kinects();
 
 	//check against the pipe's number of channels
-	if ((int)calibration->get_num_kinects() != pipe->get_num_kinects()) {
+	if (calibration->get_num_kinects() != pipe->get_num_kinects()) {
 		err(std::invalid_argument)
 				<< "The number of kinect feeds in the provided calibration file ("
 				<< calibration->get_num_kinects()

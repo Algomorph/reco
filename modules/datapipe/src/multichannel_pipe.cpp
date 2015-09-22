@@ -18,7 +18,8 @@ namespace datapipe {
 multichannel_pipe::multichannel_pipe(buffer_type buffer):
 	buffer(buffer),
 	playback_allowed(false),
-	stop_requested(false)
+	stop_requested(false),
+	runner_thread(&multichannel_pipe::work, this)
 	{
 
 }

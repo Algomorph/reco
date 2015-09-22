@@ -61,7 +61,8 @@ protected:
 	virtual void check_channel_number(const std::string& cam_uri, size_t num_channels) = 0;
 	virtual void check_channel_dimensions(const std::string& cam_uri, int ix_channel) = 0;
 
-	void work();
+
+	int num_channels = 0;
 
 private:
 
@@ -69,7 +70,7 @@ private:
 
 	//metainfo
 	bool has_camera = false;
-	int num_channels = 0;
+
 
 	//thread state
 	bool playback_allowed;
@@ -78,7 +79,7 @@ private:
 	std::condition_variable pause_cv;
 	std::mutex pause_mtx;
 
-
+	void work();
 public slots:
 
 	void stop();
