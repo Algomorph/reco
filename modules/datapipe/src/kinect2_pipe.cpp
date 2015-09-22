@@ -31,7 +31,7 @@ kinect2_pipe::kinect2_pipe(multichannel_pipe::buffer_type buffer,kinect2_data_so
 		set_camera("log://" + path);
 		break;
 	case kinect2_data_source::image_folder:
-		//TODO: implementation pending. not sure if "set_camera("file")" is the right way to read image files
+		//TODO: 820 implementation pending. not sure if "set_camera("file")" is the right way to read image files
 		throw reco::utils::not_implemented();
 		break;
 	default:

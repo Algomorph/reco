@@ -18,8 +18,6 @@
 namespace reco {
 namespace datapipe {
 
-
-
 multichannel_viewer::multichannel_viewer(QString window_title, QWidget* parent):
 		QWidget(parent),
 		video_widgets(){
@@ -48,11 +46,9 @@ void multichannel_viewer::configure_for_pipe(int num_channels){
 	if(this->configured_for_pipe){
 		//if already hooked to a pipe, unhook
 		this->clear_gui_configuration();
-	}else{
-		//this->setVisible(false); //TODO: remove if unneeded
 	}
+
 	//get rid of the "no source connected" label
-	//this->layout->removeWidget(this->no_source_connected_label);
 	this->no_source_connected_label->setVisible(false);
 
 	//select channels from feed

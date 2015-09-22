@@ -20,12 +20,12 @@
 #include "main_window.h"
 
 int main(int argc, char* argv[]){
-	using namespace reco::workbench;
+	using namespace reco::stereo_workbench;
 
 	Q_INIT_RESOURCE(application);
 	QApplication app(argc, argv);
 	app.setOrganizationName("Reco");
-	app.setApplicationName("RGBD Workbench");
+	app.setApplicationName("Stereo Workbench");
 	main_window main_window;
 	main_window.show();
 	return app.exec();

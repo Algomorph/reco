@@ -34,9 +34,6 @@
 namespace reco {
 namespace workbench {
 
-#define CAMERA_PX_WIDTH 1920
-#define CAMERA_PX_HEIGHT 1080
-
 #define DEFAULT_RECO_DATA_PATH "/media/algomorph/Data/reco/"
 #define DEFAULT_CAP_PATH DEFAULT_RECO_DATA_PATH "cap/"
 #define DEFAULT_CALIB_PATH DEFAULT_RECO_DATA_PATH "calib/"
@@ -66,7 +63,7 @@ main_window::main_window() :
 	//connect signals to update the # of frames processed
 	connect(reco_output_buffer.get(), SIGNAL(size_changed(size_t)), this, SLOT(update_reco_processed_label(size_t)));
 	load_calibration(DEFAULT_CALIBRATION_FILE_PATH);
-	/*TODO: check if this necessarily has to be done AFTER call to ui->setupUi(this).
+	/*TODO: 601 check if this necessarily has to be done AFTER call to ui->setupUi(this).
 	If not, revise down from a pointer to a simple member*/
 	cloud_viewer.reset(new point_cloud_viewer(reco_output_buffer,this->ui->qvtk_widget));
 
@@ -108,7 +105,7 @@ void main_window::open_hal_log() {
 
 	if (!file_name.isEmpty()) {
 		unhook_pipe_signals();
-		//TODO: test if QString --> std::string works on windows like this
+		//TODO: 900 test if QString --> std::string works on windows like this
 		pipe.reset(
 				new datapipe::kinect2_pipe(pipe_buffer, datapipe::kinect2_pipe::hal_log,
 						file_name.toStdString()));

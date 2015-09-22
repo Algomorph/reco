@@ -28,10 +28,7 @@ image_file_video_source::image_file_video_source(std::string directory, bool loo
 
 }
 
-image_file_video_source::~image_file_video_source() {
-	// TODO Auto-generated destructor stub
-
-}
+image_file_video_source::~image_file_video_source() {}
 /**
  * Set's up retrieval of numbered images from a directory.
  * Image file names must end in decimal frame number and extension, and use one of the common image formats, i.e.

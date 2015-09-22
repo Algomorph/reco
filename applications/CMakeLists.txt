@@ -1,6 +1,7 @@
 #Applications CMakeLists.txt
 #=====================LARGE APPS===================================================================#
 add_subdirectory("rgbd_workbench")
+add_subdirectory("stereo_workbench")
 
 #=====================LIGHTWEIGHT APPS=============================================================#
 reco_add_subproject(read_builtins 
@@ -35,7 +36,6 @@ reco_add_subproject(tester
 #                             ${Boost_LIBRARIES}
 #                             ${OpenCV_LIBS}
 #                                kinfu)
-#TODO: fix Alex's crude hack if necessary
-# Kinfu app
+#TODO:fix Kinfu app
 #add_executable( kinfuapp kinfu_app.cpp )
 #target_link_libraries(kinfuapp  kinfu)

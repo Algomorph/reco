@@ -41,7 +41,6 @@ bool point_cloud_viewer::do_unit_of_work(){
 		if (!visualizer->updatePointCloud(cloud)) {
 			visualizer->addPointCloud(cloud);
 		}
-		//TODO: is this necessary? maybe, try redraw() instead?
 		hosting_widget->update();
 	}else{
 		this->pause();

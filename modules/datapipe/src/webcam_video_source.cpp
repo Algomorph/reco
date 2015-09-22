@@ -37,7 +37,6 @@ bool webcam_video_source::capture_frame(){
 	return this->camera.read(this->frame);
 }
 bool webcam_video_source::setResolution(unsigned int width, unsigned int height){
-	//TODO: OpenCV3 support
 	cv::Mat frame;
 	camera >> frame;
 	bool horizChange = camera.set(CV_CAP_PROP_FRAME_WIDTH, (double)width);

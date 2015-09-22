@@ -10,6 +10,23 @@
 #ifndef RECO_WORKBENCH_MAIN_WINDOW_H_
 #define RECO_WORKBENCH_MAIN_WINDOW_H_
 
+#include <qmainwindow.h>
+#include <qobjectdefs.h>
+#include <qstring.h>
+#include <reco/datapipe/multichannel_pipe.h>
+#include <stddef.h>
+#include <cstdbool>
+#include <string>
+
+namespace reco {
+namespace datapipe {
+class kinect2_pipe;
+} /* namespace datapipe */
+namespace workbench {
+class point_cloud_viewer;
+} /* namespace workbench */
+} /* namespace reco */
+
 #pragma once
 
 //Qt
@@ -63,7 +80,6 @@ private:
 	datapipe::multi_kinect_rgb_viewer rgb_viewer;
 	datapipe::multi_kinect_depth_viewer depth_viewer;
 	std::unique_ptr<point_cloud_viewer> cloud_viewer;
-
 
 	//objects for data transfer from sensors/log file
 	datapipe::multichannel_pipe::buffer_type pipe_buffer;
@@ -119,8 +135,6 @@ private slots:
 	void on_reco_play_button_clicked();
 	void on_reco_pause_button_clicked();
 	void on_reco_rewind_button_clicked();
-
-
 
 };
 
