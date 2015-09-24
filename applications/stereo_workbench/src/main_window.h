@@ -15,6 +15,9 @@
 //Qt
 #include <QMainWindow>
 
+//datapipe
+#include <reco/datapipe/stereo_pipe.h>
+
 class Ui_main_window;
 
 namespace reco{
@@ -33,6 +36,10 @@ protected:
 
 private:
 	Ui_main_window* ui;
+
+	datapipe::multichannel_pipe::buffer_type video_buffer;
+	std::unique_ptr<datapipe::stereo_pipe> pipe;
+
 
 	void connect_actions();
 

@@ -21,14 +21,14 @@ namespace reco {
 namespace stereo_workbench {
 
 main_window::main_window() :
-		ui(new Ui_main_window){
+		ui(new Ui_main_window),
+		video_buffer(new utils::optimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
+		pipe(new datapipe::stereo_pipe(video_buffer,datapipe::stereo_pipe::video_files,{
+				"/media/algomorph/Data/reco/cap/yi/YDXJ0005.mp4",
+				"/media/algomorph/Data/reco/cap/yi/YDXJ0006.mp4"
+		}))
+{
 	ui->setupUi(this);
-	std::vector<std::string> paths = {"/media/algomorph/Data/reco/cap/yi/YDXJ0005.mp4"};
-	std::shared_ptr<utils::optimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>>
-		buffer(new utils::optimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>());
-	datapipe::stereo_pipe test_pipe(buffer,datapipe::stereo_pipe::video_files,paths);
-
-
 }
 
 main_window::~main_window() {

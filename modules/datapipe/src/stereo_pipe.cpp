@@ -25,6 +25,8 @@ stereo_pipe::stereo_pipe(multichannel_pipe::buffer_type buffer,
 
 stereo_pipe::~stereo_pipe(){}
 
+
+//TODO: 90 these methods should not be abstract, they should be private static methods in the kinect2_pipe class
 void stereo_pipe::check_channel_number(const std::string& cam_uri, size_t num_channels){
 }
 
@@ -33,6 +35,12 @@ void stereo_pipe::check_channel_dimensions(const std::string& cam_uri, int ix_ch
 
 std::string stereo_pipe::compile_camera_uri(stereo_source source, std::vector<std::string> paths){
 	std::string uri;
+
+	if(paths.size() < 2){
+		err(std::invalid_argument) << "Expecting at least two paths. Given number of paths: "
+				<< paths.size() << enderr;
+	}
+
 	switch(source){
 	case video_files:
 		{
