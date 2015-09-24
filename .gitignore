@@ -59,6 +59,7 @@ install_manifest.txt
 .settings/
 *.project
 *.cproject
+*.pydevproject
 
 ## Ignore Visual Studio project/solution files
 

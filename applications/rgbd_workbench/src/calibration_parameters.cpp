@@ -51,7 +51,7 @@ calibration_parameters::calibration_parameters(const std::string& file_path){
 		Eigen::Matrix3f cam_model = rig->cameras_[depth_offset
 				+ i_kinect * n_channels_per_kinect]->K().cast<float>();
 		//convert to opencv matrix
-		//TODO: 600 possibly get rid of the need to convert to OpenCV
+		//TODO: 920 possibly get rid of the need to convert to OpenCV
 		cv::Mat K_depth(3, 3, CV_32F);
 		cv::eigen2cv(cam_model, K_depth);
 

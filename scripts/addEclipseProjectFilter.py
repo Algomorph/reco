@@ -5,6 +5,24 @@ import sys
 import xml.etree.ElementTree as ET
 import os
 
+FILTER_ELEMENT_NAME = "filter"
+MATCHER_ELEMENT_NAME = "matcher"
+ARGUMENTS_ELEMENT_NAME = "arguments"
+
+def make_filter(filtered_resources_element,name,arguments,filter_type,filter_id):
+	filter_elem = ET.SubElement(filtered_resources_element,FILTER_ELEMENT_NAME)
+	id_elem = ET.SubElement(filter_elem,"id")
+	id_elem.text = filter_id
+	name_elem = ET.SubElement(filter_elem,"name")
+	name_elem.text = name
+	type_elem = ET.SubElement(filter_elem,"type")
+	type_elem.text = filter_type
+	matcher_elem = ET.SubElement(filter_elem,MATCHER_ELEMENT_NAME)
+	m_id_elem = ET.SubElement(matcher_elem,"id")
+	m_id_elem.text = "org.eclipse.ui.ide.multiFilter"
+	args_elem = ET.SubElement(matcher_elem,ARGUMENTS_ELEMENT_NAME)
+	args_elem.text = arguments
+
 if __name__ == "__main__":
 	parser = argparse.ArgumentParser(description='Add exclude filter on [Subprojects] virtual folder in Eclipse project')
 	parser.add_argument('-p','--project_file', required=True, dest='proj_file')
@@ -15,6 +33,7 @@ if __name__ == "__main__":
 
 	#if project file is not found, do nothing
 	if not os.path.isfile(proj_file):
+		print "Project file not found: " + proj_file
 		sys.exit(1)
 
 	#parse the eclipse project file as XML
@@ -27,34 +46,28 @@ if __name__ == "__main__":
 		fr_elem = ET.SubElement(root,filt_rec_elem_name)
 	#find appropriate filter if one is present
 	subpr_filt = None
-	filt_elem_name = "filter"
+	moc_excldr_filt = None
+	
 	subpr_text = "[Subprojects]"
-	for f_elem in fr_elem.iter(filt_elem_name):
-		nn = f_elem.findall("name")
-		if len(nn) > 0 and nn[0].text == subpr_text:
+	moc_excldr_args = "1.0-name-matches-false-false-moc_*"
+	for f_elem in fr_elem.iter(FILTER_ELEMENT_NAME):
+		nn = f_elem.find("name")
+		if nn.text == subpr_text:
 			subpr_filt = f_elem
-	#filter not found, create and add one
-	#		<filter>
-	#			<id>1441290179575</id>
-	#			<name>[Subprojects]</name>
-	#			<type>30</type>
-	#			<matcher>
-	#				<id>org.eclipse.ui.ide.multiFilter</id>
-	#				<arguments>1.0-name-matches-false-false-*</arguments>
-	#			</matcher>
-	#		</filter>
+		matcher_elem = f_elem.find(MATCHER_ELEMENT_NAME)
+		args_elem = matcher_elem.find(ARGUMENTS_ELEMENT_NAME)
+		if args_elem.text == moc_excldr_args:
+			moc_excldr_filt = f_elem
+	
 	if(subpr_filt is None):
-		subpr_filt = ET.SubElement(fr_elem,filt_elem_name)
-		id_elem = ET.SubElement(subpr_filt,"id")
-		id_elem.text = "1441290179575"
-		name_elem = ET.SubElement(subpr_filt,"name")
-		name_elem.text = subpr_text
-		type_elem = ET.SubElement(subpr_filt,"type")
-		type_elem.text = "30"
-		matcher_elem = ET.SubElement(subpr_filt,"matcher")
-		m_id_elem = ET.SubElement(matcher_elem,"id")
-		m_id_elem.text = "org.eclipse.ui.ide.multiFilter"
-		args_elem = ET.SubElement(matcher_elem,"arguments")
-		args_elem.text = "1.0-name-matches-false-false-*"
+		#subprojects filter not found, create and add one
+		make_filter(fr_elem, subpr_text,"1.0-name-matches-false-false-*", "30","1441290179575")
+		#save the updated tree
+		tree.write(proj_file)
+	
+	if(moc_excldr_filt is None):
+		#subprojects filter not found, create and add one
+		
+		make_filter(fr_elem, "",moc_excldr_args, "22","1443117771675")
 		#save the updated tree
 		tree.write(proj_file)
