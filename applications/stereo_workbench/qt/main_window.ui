@@ -20,7 +20,7 @@
    <string>Reco Workbench</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="application.qrc">
+   <iconset>
     <normaloff>:/assets/icons/ball.ico</normaloff>:/assets/icons/ball.ico</iconset>
   </property>
   <widget class="QWidget" name="central_widget">
@@ -33,6 +33,16 @@
    <layout class="QHBoxLayout" name="horizontalLayout">
     <item>
      <widget class="reco::datapipe::multichannel_viewer" name="stereo_feed_viewer" native="true"/>
+    </item>
+    <item>
+     <widget class="QPushButton" name="capture_button">
+      <property name="toolTip">
+       <string>Start playback &amp; capture of the input video</string>
+      </property>
+      <property name="text">
+       <string>Play / Capture</string>
+      </property>
+     </widget>
     </item>
    </layout>
   </widget>

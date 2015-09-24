@@ -73,6 +73,7 @@ public slots:
 	 * @brief triggered when a new frame becomes available.
 	 * @param images
 	 */
+	//TODO 400 Revise this such that on_frame has no argument, but the class uses a frame buffer instead
 	virtual void on_frame(std::shared_ptr<hal::ImageArray> images);
 
 };

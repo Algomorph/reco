@@ -41,9 +41,12 @@ private:
 	std::unique_ptr<datapipe::stereo_pipe> pipe;
 
 
+	void hook_pipe();
+	void unhook_pipe();
 	void connect_actions();
 
 private slots:
+	void handle_frame();
 };
 
 }//end namespace workbench

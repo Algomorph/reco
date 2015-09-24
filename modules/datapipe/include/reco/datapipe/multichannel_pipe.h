@@ -45,6 +45,8 @@ public:
 /**
  * Type of the buffer object required to use the pipe
  */
+	/*TODO 354 put this typedef into a separate include file within datapipe.
+	 * It seems like everyone and his uncle are using it, no need to redefine it every time.*/
 	typedef std::shared_ptr<utils::queue<std::shared_ptr<hal::ImageArray>>> buffer_type;
 	multichannel_pipe(buffer_type buffer, std::string camera_uri);
 	virtual ~multichannel_pipe();
@@ -89,7 +91,7 @@ signals:
 	 */
 	void error(QString err);
 	/**
-	 * Emitted when a new frame had been processed
+	 * Emitted when a new frame had been processed and pushed onto the buffer
 	 */
 	void frame();
 };

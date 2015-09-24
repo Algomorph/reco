@@ -25,7 +25,7 @@ multichannel_pipe::multichannel_pipe(buffer_type buffer, std::string camera_uri)
 }
 
 multichannel_pipe::~multichannel_pipe() {
-
+	this->stop();
 }
 
 
@@ -35,6 +35,7 @@ multichannel_pipe::~multichannel_pipe() {
  * @param[in] cam_uri the requested camera uri
  */
 void multichannel_pipe::set_camera(const std::string& cam_uri) {
+	puts(cam_uri);
 	camera = hal::Camera(cam_uri);
 	num_channels = (int) camera.NumChannels();
 
@@ -60,7 +61,7 @@ void multichannel_pipe::work() {
 			std::unique_lock<std::mutex> lk(this->pause_mtx);
 			pause_cv.wait(lk, [&] {return playback_allowed;});
 		}
-		if (!camera.Empty()) {
+		if (camera.Empty() && !stop_requested) {
 			err(std::runtime_error)
 			<< "Failed to run pipe because there is no camera connected.";
 			return;
@@ -74,6 +75,7 @@ void multichannel_pipe::work() {
 			images = hal::ImageArray::Create();
 		}
 	}
+
 	camera.Clear();
 }
 
@@ -85,7 +87,6 @@ void multichannel_pipe::run() {
 	std::unique_lock<std::mutex> lk(this->pause_mtx);
 	playback_allowed = true;
 	pause_cv.notify_one();
-
 }
 
 
