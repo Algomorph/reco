@@ -51,7 +51,7 @@ public:
 	 * @param window_title what to set the title of the window is this widget is shown in a separate window
 	 * @param parent the widget's parent widget
 	 */
-	multichannel_viewer(QString window_title = "Feed Viewer", QWidget* parent = NULL);
+	multichannel_viewer(QWidget* parent = NULL, QString window_title = "Feed Viewer");
 
 	virtual ~multichannel_viewer();
 	/**

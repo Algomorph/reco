@@ -15,18 +15,19 @@
 namespace reco {
 namespace datapipe {
 
-multichannel_pipe::multichannel_pipe(buffer_type buffer):
+multichannel_pipe::multichannel_pipe(buffer_type buffer, std::string camera_uri):
 	buffer(buffer),
 	playback_allowed(false),
 	stop_requested(false),
 	runner_thread(&multichannel_pipe::work, this)
 	{
-
+	set_camera(camera_uri);
 }
 
 multichannel_pipe::~multichannel_pipe() {
 
 }
+
 
 
 /**
@@ -35,17 +36,8 @@ multichannel_pipe::~multichannel_pipe() {
  */
 void multichannel_pipe::set_camera(const std::string& cam_uri) {
 	camera = hal::Camera(cam_uri);
-	has_camera = true;
 	num_channels = (int) camera.NumChannels();
-	//check that we have appropriate number of channels
-	//i.e. for multip feeds, the total number of channels must be evenly divisible
-	//by the number of channels per feed
-	check_channel_number(cam_uri, num_channels);
 
-	//check that the feed sizes match for RGB & depth, for each kinect
-	for (int ix_channel; ix_channel < num_channels; ix_channel++) {
-		check_channel_dimensions(cam_uri, ix_channel);
-	}
 }
 
 /**
@@ -68,9 +60,9 @@ void multichannel_pipe::work() {
 			std::unique_lock<std::mutex> lk(this->pause_mtx);
 			pause_cv.wait(lk, [&] {return playback_allowed;});
 		}
-		if (!has_camera) {
+		if (!camera.Empty()) {
 			err(std::runtime_error)
-			<< "freenect2_pipe::run(): failed to run because there is no camera connected.";
+			<< "Failed to run pipe because there is no camera connected.";
 			return;
 		}
 		std::shared_ptr<hal::ImageArray> images = hal::ImageArray::Create();

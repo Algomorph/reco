@@ -20,7 +20,7 @@ class multi_kinect_rgb_viewer: public offset_channel_viewer<kinect_v2_info::chan
 Q_OBJECT
 
 public:
-	multi_kinect_rgb_viewer(QString window_title = "Feed Viewer", QWidget* parent = NULL);
+	multi_kinect_rgb_viewer(QWidget* parent = NULL, QString window_title = "Kinect RGB Viewer");
 	virtual ~multi_kinect_rgb_viewer();
 };
 

@@ -25,7 +25,8 @@ class multifeed_pipe: public multichannel_pipe{
 
 public:
 
-	multifeed_pipe(multichannel_pipe::buffer_type buffer) : multichannel_pipe(buffer){};
+	multifeed_pipe(multichannel_pipe::buffer_type buffer, std::string cam_uri)
+		: multichannel_pipe(buffer, cam_uri){};
 	virtual ~multifeed_pipe(){};
 
 protected:

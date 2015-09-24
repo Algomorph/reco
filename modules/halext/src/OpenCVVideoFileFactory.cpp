@@ -26,15 +26,15 @@ private:
 
     unsigned int nCamId = uri.properties.Get<unsigned int>("id", 0);
 
-    std::string sFilePath = uri.properties.Get<std::string>("file",none);
-    if(sFilePath == none){
+    const std::string path = ExpandTildePath(uri.url);
+    if(path.empty()){
     	std::string sName     = uri.properties.Get<std::string>("name", "OpenCVCam");
     	return std::shared_ptr<CameraDriverInterface>(
     	        new OpenCVVideoFileDriver(nCamId, bGrey));
     }else{
     	std::string sName     = uri.properties.Get<std::string>("name", "OpenCVVideoFile");
     	return std::shared_ptr<CameraDriverInterface>(
-    	    	        new OpenCVVideoFileDriver(sFilePath, bGrey));
+    	    	        new OpenCVVideoFileDriver(path, bGrey));
     }
 
   }

@@ -11,9 +11,9 @@
 namespace reco {
 namespace datapipe {
 
-multi_kinect_rgb_viewer::multi_kinect_rgb_viewer(QString window_title, QWidget* parent) :
+multi_kinect_rgb_viewer::multi_kinect_rgb_viewer(QWidget* parent, QString window_title) :
 				offset_channel_viewer<kinect_v2_info::channels.size(),
-						kinect_v2_info::channel_type::RGB>(window_title,parent) {
+						kinect_v2_info::channel_type::RGB>(parent, window_title) {
 }
 
 multi_kinect_rgb_viewer::~multi_kinect_rgb_viewer() {

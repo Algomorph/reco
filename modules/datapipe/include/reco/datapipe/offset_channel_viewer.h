@@ -22,7 +22,7 @@ namespace datapipe {
 template<std::size_t N, std::size_t X>
 class offset_channel_viewer: public multichannel_viewer {
 public:
-	offset_channel_viewer(QString window_title = "Feed Viewer", QWidget* parent = NULL): multichannel_viewer(window_title,parent){};
+	offset_channel_viewer(QWidget* parent = NULL, QString window_title = "Feed Viewer"): multichannel_viewer(parent, window_title){};
 	virtual ~offset_channel_viewer(){};
 
 protected:

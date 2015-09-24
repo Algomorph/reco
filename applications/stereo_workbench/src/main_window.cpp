@@ -11,12 +11,22 @@
 #include "../ui_main_window.h"
 #include "main_window.h"
 
+//datapipe
+#include <reco/datapipe/stereo_pipe.h>
+
+//utils
+#include <reco/utils/swap_buffer.h>
+
 namespace reco {
 namespace stereo_workbench {
 
 main_window::main_window() :
 		ui(new Ui_main_window){
 	ui->setupUi(this);
+	std::vector<std::string> paths = {"/media/algomorph/Data/reco/cap/yi/YDXJ0005.mp4"};
+	std::shared_ptr<utils::optimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>>
+		buffer(new utils::optimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>());
+	datapipe::stereo_pipe test_pipe(buffer,datapipe::stereo_pipe::video_files,paths);
 
 
 }

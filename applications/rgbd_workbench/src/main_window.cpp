@@ -44,8 +44,8 @@ namespace rgbd_workbench {
 
 main_window::main_window() :
 		ui(new Ui_main_window),
-				rgb_viewer("RGB Feed", NULL),
-				depth_viewer("Depth Feed", NULL),
+				rgb_viewer(NULL, "RGB Feed"),
+				depth_viewer(NULL, "Depth Feed"),
 				pipe_buffer(new utils::optimistic_assignment_swap_buffer<
 								std::shared_ptr<hal::ImageArray>>()),
 				pipe(new datapipe::kinect2_pipe(pipe_buffer, datapipe::kinect2_pipe::hal_log,

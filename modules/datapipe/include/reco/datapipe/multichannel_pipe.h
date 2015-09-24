@@ -46,7 +46,7 @@ public:
  * Type of the buffer object required to use the pipe
  */
 	typedef std::shared_ptr<utils::queue<std::shared_ptr<hal::ImageArray>>> buffer_type;
-	multichannel_pipe(buffer_type buffer);
+	multichannel_pipe(buffer_type buffer, std::string camera_uri);
 	virtual ~multichannel_pipe();
 
 	int get_num_channels();
@@ -56,7 +56,7 @@ protected:
 
 	hal::Camera camera;
 
-	virtual void set_camera(const std::string& cam_uri);
+	void set_camera(const std::string& cam_uri);
 	//Called during set_camera
 	virtual void check_channel_number(const std::string& cam_uri, size_t num_channels) = 0;
 	virtual void check_channel_dimensions(const std::string& cam_uri, int ix_channel) = 0;
@@ -65,12 +65,8 @@ protected:
 	int num_channels = 0;
 
 private:
-
+	void initialize();
 	buffer_type buffer;
-
-	//metainfo
-	bool has_camera = false;
-
 
 	//thread state
 	bool playback_allowed;

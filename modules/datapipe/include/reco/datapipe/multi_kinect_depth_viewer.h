@@ -21,7 +21,7 @@ class multi_kinect_depth_viewer: public offset_channel_viewer<kinect_v2_info::ch
 Q_OBJECT
 
 public:
-	multi_kinect_depth_viewer(QString window_title = "Feed Viewer", QWidget* parent = NULL);
+	multi_kinect_depth_viewer(QWidget* parent = NULL,QString window_title = "Kinect Depth Viewer");
 	virtual ~multi_kinect_depth_viewer();
 
 public slots:

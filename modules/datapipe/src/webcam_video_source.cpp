@@ -6,6 +6,8 @@
  *   Copyright: (c) Gregory Kramida 2015
  */
 
+//TODO: 100 get rid of old pipeline / video-source classes after next master merge
+
 //local
 #include <reco/datapipe/webcam_video_source.h>
 #include <exception>

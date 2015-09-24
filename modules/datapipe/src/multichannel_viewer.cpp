@@ -13,12 +13,10 @@
 //utils
 #include <reco/utils/debug_util.h>
 
-#define channel_is_rgb(channel_ix) (channel_ix % 2 == 0)
-
 namespace reco {
 namespace datapipe {
 
-multichannel_viewer::multichannel_viewer(QString window_title, QWidget* parent):
+multichannel_viewer::multichannel_viewer(QWidget* parent, QString window_title):
 		QWidget(parent),
 		video_widgets(){
 	//UI initial setup
