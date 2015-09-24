@@ -25,7 +25,7 @@ multi_kinect_depth_viewer::~multi_kinect_depth_viewer() {
 }
 
 void multi_kinect_depth_viewer::on_frame(std::shared_ptr<hal::ImageArray> images){
-	for(std::tuple<int,datapipe::video_widget*> vid_widget_tuple : this->video_widgets){
+	for(std::tuple<int,datapipe::image_widget*> vid_widget_tuple : this->video_widgets){
 		int channel_index = std::get<0>(vid_widget_tuple);
 		std::shared_ptr<hal::Image> img = images->at(channel_index);
 		cv::Mat img_mat = static_cast<cv::Mat>(*img) / kinect_v2_info::depth_inv_factor;

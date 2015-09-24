@@ -35,7 +35,7 @@ multichannel_viewer::~multichannel_viewer(){
 
 //add video widget for the specified channel
 void multichannel_viewer::add_video_widget(int ix_channel){
-	datapipe::video_widget* vid_widget = new datapipe::video_widget();
+	datapipe::image_widget* vid_widget = new datapipe::image_widget();
 	layout->addWidget(vid_widget);
 	this->video_widgets.emplace_back(ix_channel,vid_widget);
 }
@@ -73,8 +73,8 @@ void multichannel_viewer::clear_gui_configuration(){
 	if(this->configured_for_pipe){
 		//this->setVisible(false);
 		//remove each video widget from the layout and delete it.
-		for(std::tuple<int,datapipe::video_widget*> vid_widget_tuple : this->video_widgets){
-			datapipe::video_widget* widget = std::get<1>(vid_widget_tuple);
+		for(std::tuple<int,datapipe::image_widget*> vid_widget_tuple : this->video_widgets){
+			datapipe::image_widget* widget = std::get<1>(vid_widget_tuple);
 			this->layout->removeWidget(widget);
 			delete widget;
 		}
@@ -86,7 +86,7 @@ void multichannel_viewer::clear_gui_configuration(){
 }
 
 void multichannel_viewer::on_frame(std::shared_ptr<hal::ImageArray> images){
-	for(std::tuple<int,datapipe::video_widget*> vid_widget_tuple : this->video_widgets){
+	for(std::tuple<int,datapipe::image_widget*> vid_widget_tuple : this->video_widgets){
 		int channel_index = std::get<0>(vid_widget_tuple);
 		std::shared_ptr<hal::Image> img = images->at(channel_index);
 		std::get<1>(vid_widget_tuple)->set_bgr_image_fast(*img);

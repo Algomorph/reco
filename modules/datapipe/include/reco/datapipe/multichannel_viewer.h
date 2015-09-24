@@ -16,7 +16,7 @@
 #include <QVBoxLayout>
 
 //datapipe
-#include <reco/datapipe/video_widget.h>
+#include <reco/datapipe/image_widget.h>
 #include <reco/datapipe/kinect_v2_info.h>
 
 //HAL
@@ -26,6 +26,9 @@
 namespace reco {
 namespace datapipe {
 
+/**
+ * A Qt widget for displaying multiple video channels at once.
+ */
 class multichannel_viewer: public QWidget {
 Q_OBJECT
 	private:
@@ -36,7 +39,7 @@ Q_OBJECT
 	void add_video_widget(int ix_feed);
 
 protected:
-	std::vector<std::tuple<int, datapipe::video_widget*>> video_widgets;
+	std::vector<std::tuple<int, datapipe::image_widget*>> video_widgets;
 	/**
 	 * @brief returns a selection of channels
 	 * @param num_channels total number of channels in the feed

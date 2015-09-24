@@ -33,9 +33,6 @@ class point_cloud_viewer;
 #include <QMainWindow>
 
 //datapipe
-#include <reco/datapipe/video_widget.h>
-#include <reco/datapipe/webcam_video_source.h>
-#include <reco/datapipe/image_file_video_source.h>
 #include <reco/datapipe/kinect2_pipe.h>
 #include <reco/datapipe/multi_kinect_rgb_viewer.h>
 #include <reco/datapipe/multi_kinect_depth_viewer.h>
@@ -107,8 +104,6 @@ private:
 
 	//load calibration file
 	void load_calibration(std::string file_path);
-
-
 
 private slots:
 
