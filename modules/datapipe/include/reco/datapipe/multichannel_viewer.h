@@ -75,6 +75,7 @@ public slots:
 	 * @param images
 	 */
 	virtual void on_frame(std::shared_ptr<hal::ImageArray> images);
+	virtual void on_frame(std::shared_ptr<std::vector<cv::Mat>> images);
 
 };
 

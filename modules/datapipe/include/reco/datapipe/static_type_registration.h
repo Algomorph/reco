@@ -16,6 +16,8 @@
 
 //opencv
 #include <opencv2/core/core.hpp>
+//hal
+#include <HAL/Messages/ImageArray.h>
 
 //std
 #include <vector>
@@ -34,6 +36,7 @@ public:
 			registrationDone = true;
 			qRegisterMetaType<size_t>("size_t");
 			qRegisterMetaType<cv::Mat>("cv::Mat");
+			qRegisterMetaType<std::shared_ptr<hal::ImageArray>>("std::shared_ptr<hal::ImageArray>");
 			qRegisterMetaType<std::vector<cv::Mat>>("std::vector<cv::Mat>");
 			qRegisterMetaType<std::shared_ptr<std::vector<cv::Mat>>>("std::shared_ptr<std::vector<cv::Mat>>");
 		}

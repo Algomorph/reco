@@ -92,7 +92,12 @@ void multichannel_viewer::on_frame(std::shared_ptr<hal::ImageArray> images){
 		std::get<1>(vid_widget_tuple)->set_bgr_image_fast(*img);
 	}
 }
-
+void multichannel_viewer::on_frame(std::shared_ptr<std::vector<cv::Mat>> images){
+	for(std::tuple<int,datapipe::image_widget*> vid_widget_tuple : this->video_widgets){
+		int channel_index = std::get<0>(vid_widget_tuple);
+		std::get<1>(vid_widget_tuple)->set_bgr_image_fast(images->at(channel_index));
+	}
+}
 
 
 } /* namespace datapipe */

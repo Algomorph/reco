@@ -19,6 +19,9 @@
 #include <reco/datapipe/stereo_pipe.h>
 #include <reco/datapipe/typedefs.h>
 
+//local
+#include "stereo_processor.h"
+
 class Ui_main_window;
 
 namespace reco{
@@ -40,6 +43,10 @@ private:
 
 	datapipe::frame_buffer_type video_buffer;
 	std::unique_ptr<datapipe::stereo_pipe> pipe;
+	datapipe::frame_buffer_type stereo_input_buffer;
+	datapipe::frame_buffer_type stereo_output_buffer;
+	stereo_processor stereo_proc;
+
 
 
 	void hook_pipe();

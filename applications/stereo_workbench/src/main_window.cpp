@@ -25,13 +25,21 @@ main_window::main_window() :
 		ui(new Ui_main_window),
 		video_buffer(new utils::optimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 		pipe(new datapipe::stereo_pipe(video_buffer,datapipe::stereo_pipe::video_files,{
-				"/media/algomorph/Data/reco/cap/yi/s05l_edit.mp4",
-				"/media/algomorph/Data/reco/cap/yi/s05r_edit.mp4"
-		}))
+						"/media/algomorph/Data/reco/cap/yi/s05l_edit.mp4",
+						"/media/algomorph/Data/reco/cap/yi/s05r_edit.mp4"
+				})),
+		//stereo_input_buffer(new utils::unbounded_queue<std::shared_ptr<hal::ImageArray>>()),
+		stereo_input_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
+		stereo_output_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
+		stereo_proc(stereo_input_buffer,stereo_output_buffer)
 {
 	ui->setupUi(this);
+	ui->disparity_viewer->configure_for_pipe(1);
 	connect_actions();
 	hook_pipe();
+	stereo_proc.run();
+	connect(&stereo_proc,SIGNAL(frame(std::shared_ptr<std::vector<cv::Mat>>)),
+			ui->disparity_viewer,SLOT(on_frame(std::shared_ptr<std::vector<cv::Mat>>)));
 }
 
 main_window::~main_window() {
@@ -53,18 +61,17 @@ void main_window::hook_pipe(){
 	//in case previously hooked
 	//unhook_pipe();
 	ui->stereo_feed_viewer->configure_for_pipe(pipe->get_num_channels());
-	//TODO: revise this to trigger the event in viewer directly
 	connect(pipe.get(),SIGNAL(frame()), this, SLOT(handle_frame()));
 	connect(ui->capture_button, SIGNAL(released()), pipe.get(), SLOT(run()));
-	puts("pipe hooked");
 }
 
 /**
  * Disconnect existing pipe from everything and destroy it
+ * TODO: 078 is this method needed?
  */
 void main_window::unhook_pipe(){
 	if(pipe){
-		pipe.reset();
+		disconnect(pipe.get(),0,0,0);
 	}
 }
 
@@ -72,7 +79,9 @@ void main_window::unhook_pipe(){
  * Triggered on each frame emergent from the pipe
  */
 void main_window::handle_frame(){
-	ui->stereo_feed_viewer->on_frame(video_buffer->pop_front());
+	std::shared_ptr<hal::ImageArray> images = video_buffer->pop_front();
+	stereo_input_buffer->push_back(images);
+	ui->stereo_feed_viewer->on_frame(images);
 }
 
 /**
@@ -81,6 +90,7 @@ void main_window::handle_frame(){
  */
 void main_window::closeEvent(QCloseEvent* event) {
 	unhook_pipe();
+	this->stereo_proc.stop();
 
 }
 } //end namespace reco

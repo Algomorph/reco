@@ -35,6 +35,9 @@
      <widget class="reco::datapipe::multichannel_viewer" name="stereo_feed_viewer" native="true"/>
     </item>
     <item>
+     <widget class="reco::datapipe::multichannel_viewer" name="disparity_viewer" native="true"/>
+    </item>
+    <item>
      <widget class="QPushButton" name="capture_button">
       <property name="toolTip">
        <string>Start playback &amp; capture of the input video</string>
