@@ -27,6 +27,9 @@
 //utils
 #include <reco/utils/queue.h>
 
+//datapipe
+#include <reco/datapipe/typedefs.h>
+
 namespace reco {
 namespace datapipe {
 
@@ -45,14 +48,11 @@ public:
 /**
  * Type of the buffer object required to use the pipe
  */
-	/*TODO 354 put this typedef into a separate include file within datapipe.
-	 * It seems like everyone and his uncle are using it, no need to redefine it every time.*/
-	typedef std::shared_ptr<utils::queue<std::shared_ptr<hal::ImageArray>>> buffer_type;
-	multichannel_pipe(buffer_type buffer, std::string camera_uri);
+	multichannel_pipe(frame_buffer_type buffer, std::string camera_uri);
 	virtual ~multichannel_pipe();
 
 	int get_num_channels();
-	buffer_type get_buffer();
+	frame_buffer_type get_buffer();
 
 protected:
 
@@ -68,7 +68,7 @@ protected:
 
 private:
 	void initialize();
-	buffer_type buffer;
+	frame_buffer_type buffer;
 
 	//thread state
 	bool playback_allowed;

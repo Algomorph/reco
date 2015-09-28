@@ -79,7 +79,7 @@ private:
 	std::unique_ptr<point_cloud_viewer> cloud_viewer;
 
 	//objects for data transfer from sensors/log file
-	datapipe::multichannel_pipe::buffer_type pipe_buffer;
+	datapipe::frame_buffer_type pipe_buffer;
 	std::shared_ptr<datapipe::kinect2_pipe> pipe;
 
 	//program state variables

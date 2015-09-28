@@ -13,6 +13,7 @@
 //datapipe
 #include <reco/datapipe/data_channel.h>
 #include <reco/datapipe/multichannel_pipe.h>
+#include <reco/datapipe/typedefs.h>
 
 //utils
 #include <reco/utils/cpp_exception_util.h>
@@ -25,7 +26,7 @@ class multifeed_pipe: public multichannel_pipe{
 
 public:
 
-	multifeed_pipe(multichannel_pipe::buffer_type buffer, std::string cam_uri)
+	multifeed_pipe(frame_buffer_type buffer, std::string cam_uri)
 		: multichannel_pipe(buffer, cam_uri){};
 	virtual ~multifeed_pipe(){};
 

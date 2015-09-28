@@ -18,9 +18,11 @@
 //datapipe
 #include <reco/datapipe/image_widget.h>
 #include <reco/datapipe/kinect_v2_info.h>
+#include <reco/datapipe/typedefs.h>
 
 //HAL
 #include <HAL/Messages/ImageArray.h>
+
 
 
 namespace reco {
@@ -35,7 +37,6 @@ Q_OBJECT
 	QLayout* layout = new QVBoxLayout();
 	QLabel* no_source_connected_label = new QLabel();
 	bool configured_for_pipe = false;
-
 	void add_video_widget(int ix_feed);
 
 protected:
@@ -73,7 +74,6 @@ public slots:
 	 * @brief triggered when a new frame becomes available.
 	 * @param images
 	 */
-	//TODO 400 Revise this such that on_frame has no argument, but the class uses a frame buffer instead
 	virtual void on_frame(std::shared_ptr<hal::ImageArray> images);
 
 };

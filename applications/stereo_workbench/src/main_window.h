@@ -17,6 +17,7 @@
 
 //datapipe
 #include <reco/datapipe/stereo_pipe.h>
+#include <reco/datapipe/typedefs.h>
 
 class Ui_main_window;
 
@@ -37,7 +38,7 @@ protected:
 private:
 	Ui_main_window* ui;
 
-	datapipe::multichannel_pipe::buffer_type video_buffer;
+	datapipe::frame_buffer_type video_buffer;
 	std::unique_ptr<datapipe::stereo_pipe> pipe;
 
 

@@ -14,7 +14,7 @@
 namespace reco {
 namespace datapipe {
 
-stereo_pipe::stereo_pipe(multichannel_pipe::buffer_type buffer,
+stereo_pipe::stereo_pipe(frame_buffer_type buffer,
 						stereo_source source,
 						std::vector<std::string> paths):
 		multichannel_pipe(buffer,compile_camera_uri(source,paths)),

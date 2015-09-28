@@ -11,6 +11,7 @@
 #define RECO_DATAPIPE_STEREO_PIPE_H_
 
 #include <reco/datapipe/multichannel_pipe.h>
+#include <reco/datapipe/typedefs.h>
 
 namespace reco {
 namespace datapipe {
@@ -21,7 +22,7 @@ public:
 	enum stereo_source{
 		video_files = 0
 	};
-	stereo_pipe(multichannel_pipe::buffer_type buffer, stereo_source source = video_files, std::vector<std::string> paths = {});
+	stereo_pipe(frame_buffer_type buffer, stereo_source source = video_files, std::vector<std::string> paths = {});
 	virtual ~stereo_pipe();
 
 protected:

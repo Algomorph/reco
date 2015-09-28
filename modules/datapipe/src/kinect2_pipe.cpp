@@ -7,6 +7,7 @@
  */
 
 #include <reco/datapipe/kinect2_pipe.h>
+#include <reco/datapipe/typedefs.h>
 
 namespace reco {
 namespace datapipe {
@@ -17,7 +18,7 @@ namespace datapipe {
  * @param source type of the input source
  * @param path necessary when the source is either an ARPG HAL log (in which case, represents path to the log file) or a file folder (in which case, represents the directory)
  */
-kinect2_pipe::kinect2_pipe(multichannel_pipe::buffer_type buffer,kinect2_data_source source,
+kinect2_pipe::kinect2_pipe(frame_buffer_type buffer,kinect2_data_source source,
 		const std::string& path) :
 		multifeed_pipe(buffer,compile_camera_uri(source,path)),
 		source(source),

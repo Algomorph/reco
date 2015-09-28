@@ -25,8 +25,8 @@ main_window::main_window() :
 		ui(new Ui_main_window),
 		video_buffer(new utils::optimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 		pipe(new datapipe::stereo_pipe(video_buffer,datapipe::stereo_pipe::video_files,{
-				"/media/algomorph/Data/reco/cap/yi/YDXJ0005.mp4",
-				"/media/algomorph/Data/reco/cap/yi/YDXJ0006.mp4"
+				"/media/algomorph/Data/reco/cap/yi/s05l_edit.mp4",
+				"/media/algomorph/Data/reco/cap/yi/s05r_edit.mp4"
 		}))
 {
 	ui->setupUi(this);

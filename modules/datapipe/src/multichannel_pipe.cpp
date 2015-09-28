@@ -15,7 +15,7 @@
 namespace reco {
 namespace datapipe {
 
-multichannel_pipe::multichannel_pipe(buffer_type buffer, std::string camera_uri):
+multichannel_pipe::multichannel_pipe(frame_buffer_type buffer, std::string camera_uri):
 	buffer(buffer),
 	playback_allowed(false),
 	stop_requested(false),
@@ -51,7 +51,7 @@ int multichannel_pipe::get_num_channels() {
 /**
  * @return a shared pointer to the buffer
  */
-multichannel_pipe::buffer_type multichannel_pipe::get_buffer() {
+frame_buffer_type multichannel_pipe::get_buffer() {
 	return this->buffer;
 }
 
