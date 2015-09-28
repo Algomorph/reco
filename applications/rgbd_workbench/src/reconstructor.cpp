@@ -17,7 +17,7 @@ namespace reco {
 namespace rgbd_workbench {
 
 reconstructor::reconstructor(
-		input_buffer_type input_buffer,
+		datapipe::frame_buffer_type input_buffer,
 		std::shared_ptr<point_cloud_buffer> output_buffer,
 		std::shared_ptr<calibration_parameters> calibration
 		)

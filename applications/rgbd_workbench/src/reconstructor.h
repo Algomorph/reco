@@ -24,6 +24,9 @@
 #include "calibration_parameters.h"
 #include "point_cloud_buffer.h"
 
+//datapipe
+#include <reco/datapipe/typedefs.h>
+
 namespace reco {
 namespace rgbd_workbench {
 
@@ -36,16 +39,11 @@ class reconstructor:
 		 {
 Q_OBJECT
 
-public:
-	/**
-	 * Type of the input buffer required by the reconstructor
-	 */
-	typedef std::shared_ptr<utils::queue<std::shared_ptr<hal::ImageArray>>>input_buffer_type;
 private:
 
 	std::shared_ptr<point_cloud_buffer> output_buffer;
 	std::shared_ptr<calibration_parameters> calibration;
-	input_buffer_type input_buffer;
+	datapipe::frame_buffer_type input_buffer;
 
 	std::vector<uint32_t> cloud_colors;
 
@@ -54,7 +52,7 @@ protected:
 	virtual void pre_thread_join();
 
 public:
-	reconstructor(input_buffer_type input_buffer,
+	reconstructor(datapipe::frame_buffer_type input_buffer,
 			std::shared_ptr<point_cloud_buffer> output_buffer,
 			std::shared_ptr<calibration_parameters> calibration);
 	virtual ~reconstructor();

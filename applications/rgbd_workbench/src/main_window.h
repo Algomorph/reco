@@ -89,7 +89,7 @@ private:
 	//calibration parameters & reconstruction state
 	int num_frames_in_reconstruction_queue;
 	std::shared_ptr<calibration_parameters> calibration;
-	reconstructor::input_buffer_type reco_input_buffer;
+	datapipe::frame_buffer_type reco_input_buffer;
 	std::shared_ptr<point_cloud_buffer> reco_output_buffer;
 	std::unique_ptr<reconstructor> reconstruction_worker;
 
