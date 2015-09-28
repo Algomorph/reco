@@ -20,10 +20,10 @@
 #include <opencv2/core/eigen.hpp>
 
 //local
-#include "calibration_parameters.h"
+#include <reco/misc/calibration_parameters.h>
 
 namespace reco {
-namespace rgbd_workbench {
+namespace misc {
 
 /**
  * Default constructor, builds empty calibration parameters object
@@ -82,5 +82,5 @@ bool calibration_parameters::empty(){
 calibration_parameters::~calibration_parameters(){
 }
 
-} /* namespace workbench */
+} /* namespace misc */
 } /* namespace reco */

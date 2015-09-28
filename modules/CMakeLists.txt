@@ -3,3 +3,4 @@
 add_subdirectory("python")
 add_subdirectory("datapipe")
 add_subdirectory("utils")
+add_subdirectory("misc")

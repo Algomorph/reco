@@ -13,19 +13,39 @@
 //std
 #include <memory>
 #include <reco/utils/debug_util.h>
+//calibu
+#include <calibu/Calibu.h>
+#include <calibu/cam/stereo_rectify.h>
+//sophus
+#include <sophus/se3.hpp>
 
 namespace reco {
 namespace stereo_workbench {
 
-stereo_processor::stereo_processor(datapipe::frame_buffer_type input_frame_buffer,
-		datapipe::frame_buffer_type output_frame_buffer)
+stereo_processor::stereo_processor(
+		datapipe::frame_buffer_type input_frame_buffer,
+		datapipe::frame_buffer_type output_frame_buffer,
+		std::shared_ptr<misc::calibration_parameters> calibration)
 :
 		worker(),
 				input_frame_buffer(input_frame_buffer),
 				output_frame_buffer(output_frame_buffer),
-				stereo_matcher(0, 64, 8, 1536, 6144, 0, 0, 0, 0, 0, false)
-				//stereo_matcher(32, 8)
-	{
+#ifdef USE_STEREO_SGBM
+				stereo_matcher(0, 64, 8, 1536, 6144, 0, 0, 0, 0, 0, false),
+#else
+				stereo_matcher(cv::StereoBM::BASIC_PRESET,64,9),
+#endif
+				calibration(calibration)
+//stereo_matcher(32, 8)
+{
+	Sophus::SE3d T_nr_nl;
+
+	calibu::CreateScanlineRectifiedLookupAndCameras(
+			calibration->rig->cameras_[1]->Pose(),
+			calibration->rig->cameras_[0],
+			calibration->rig->cameras_[1],
+			T_nr_nl, left_lut, right_lut
+			);
 }
 
 stereo_processor::~stereo_processor() {
@@ -44,20 +64,32 @@ bool stereo_processor::do_unit_of_work() {
 		//for now, assume stereo pair
 		cv::Mat left = *(array->at(0));
 		cv::Mat right = *(array->at(1));
-		//cv::Mat copyLeft;
-		//cv::Mat copyRight;
-		//left.copyTo(copyLeft);
-		//right.copyTo(copyRight);
+
+
+#ifdef USE_STEREO_SGBM
+		cv::Mat rect_left(left.rows,left.cols,left.type());
+		cv::Mat rect_right(right.rows,right.cols,right.type());
+		calibu::Rectify(left_lut,left.data,rect_left.data, left.cols,left.rows, 3);
+		calibu::Rectify(right_lut,right.data,rect_right.data, right.cols,right.rows, 3);
+#else
+		cv::cvtColor(left,left,CV_BGR2GRAY);
+		cv::cvtColor(right,right,CV_BGR2GRAY);
+		cv::Mat rect_left(left.rows,left.cols,left.type());
+		cv::Mat rect_right(right.rows,right.cols,right.type());
+		calibu::Rectify(left_lut,left.data,rect_left.data, left.cols,left.rows, 1);
+		calibu::Rectify(right_lut,right.data,rect_right.data, right.cols,right.rows, 1);
+#endif
+		//calibration->rig->cameras_[0]->
+
 		cv::Mat disparity;
-		//stereo_matcher(copyLeft, copyRight, disparity);
-		stereo_matcher(left, right, disparity);
+		stereo_matcher(rect_left, rect_right, disparity);
 		double min, max;
-		cv::minMaxLoc(disparity,&min,&max);
+		cv::minMaxLoc(disparity, &min, &max);
 		puts("min " << min << std::endl << "max " << max);
 		cv::Mat res;
-		disparity+=16;
-		cv::convertScaleAbs(disparity,res, 0.25);
-		cv::cvtColor(res,res,CV_GRAY2BGR);
+		disparity += 16;
+		cv::convertScaleAbs(disparity, res, 0.25);
+		cv::cvtColor(res, res, CV_GRAY2BGR);
 		std::shared_ptr<std::vector<cv::Mat>> images(new std::vector<cv::Mat>());
 		images->push_back(res);
 		emit frame(images);

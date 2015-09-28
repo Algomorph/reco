@@ -19,7 +19,7 @@ namespace rgbd_workbench {
 reconstructor::reconstructor(
 		datapipe::frame_buffer_type input_buffer,
 		std::shared_ptr<point_cloud_buffer> output_buffer,
-		std::shared_ptr<calibration_parameters> calibration
+		std::shared_ptr<misc::calibration_parameters> calibration
 		)
 	:worker(),
 	 output_buffer(output_buffer),

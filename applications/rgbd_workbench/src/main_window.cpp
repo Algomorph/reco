@@ -262,7 +262,7 @@ void main_window::closeEvent(QCloseEvent* event) {
  */
 void main_window::load_calibration(std::string file_path){
 	//parse intrinsics
-	calibration.reset(new calibration_parameters(file_path));
+	calibration.reset(new misc::calibration_parameters(file_path));
 
 	//to aviod magic numbers
 	const int num_kinects = pipe->get_num_kinects();

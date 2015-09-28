@@ -50,8 +50,10 @@ class point_cloud_viewer;
 #include <memory>
 #include <vector>
 
+//misc
+#include <reco/misc/calibration_parameters.h>
+
 //local
-#include "calibration_parameters.h"
 #include "reconstructor.h"
 #include "point_cloud_viewer.h"
 
@@ -88,7 +90,7 @@ private:
 
 	//calibration parameters & reconstruction state
 	int num_frames_in_reconstruction_queue;
-	std::shared_ptr<calibration_parameters> calibration;
+	std::shared_ptr<misc::calibration_parameters> calibration;
 	datapipe::frame_buffer_type reco_input_buffer;
 	std::shared_ptr<point_cloud_buffer> reco_output_buffer;
 	std::unique_ptr<reconstructor> reconstruction_worker;

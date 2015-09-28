@@ -19,6 +19,9 @@
 #include <reco/datapipe/stereo_pipe.h>
 #include <reco/datapipe/typedefs.h>
 
+//misc
+#include <reco/misc/calibration_parameters.h>
+
 //local
 #include "stereo_processor.h"
 
@@ -45,7 +48,9 @@ private:
 	std::unique_ptr<datapipe::stereo_pipe> pipe;
 	datapipe::frame_buffer_type stereo_input_buffer;
 	datapipe::frame_buffer_type stereo_output_buffer;
+	std::shared_ptr<misc::calibration_parameters> calibration;
 	stereo_processor stereo_proc;
+
 
 
 

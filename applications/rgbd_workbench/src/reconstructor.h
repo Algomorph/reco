@@ -20,8 +20,10 @@
 //HAL
 #include <HAL/Messages/ImageArray.h>
 
+//misc
+#include <reco/misc/calibration_parameters.h>
+
 //local
-#include "calibration_parameters.h"
 #include "point_cloud_buffer.h"
 
 //datapipe
@@ -42,7 +44,7 @@ Q_OBJECT
 private:
 
 	std::shared_ptr<point_cloud_buffer> output_buffer;
-	std::shared_ptr<calibration_parameters> calibration;
+	std::shared_ptr<misc::calibration_parameters> calibration;
 	datapipe::frame_buffer_type input_buffer;
 
 	std::vector<uint32_t> cloud_colors;
@@ -54,7 +56,7 @@ protected:
 public:
 	reconstructor(datapipe::frame_buffer_type input_buffer,
 			std::shared_ptr<point_cloud_buffer> output_buffer,
-			std::shared_ptr<calibration_parameters> calibration);
+			std::shared_ptr<misc::calibration_parameters> calibration);
 	virtual ~reconstructor();
 
 signals:

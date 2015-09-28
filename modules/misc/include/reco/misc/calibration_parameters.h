@@ -16,17 +16,18 @@
 #include <opencv2/core/core.hpp>
 
 namespace reco {
-namespace rgbd_workbench {
+namespace misc {
 
 
 class calibration_parameters {
 private:
-	std::shared_ptr<calibu::Rigd> rig;
+
 public:
 	//TODO: 708 not good to (1) keep parallel structures and (2) expose vectors
 	std::vector<cv::Mat> depth_intrinsics;
 	std::vector<Eigen::Matrix<float, 3, 3>> depth_rotations;
 	std::vector<Eigen::Matrix<float, 3, 1>> depth_translations;
+	std::shared_ptr<calibu::Rigd> rig;
 
 	bool empty();
 	int get_num_kinects();
@@ -36,7 +37,7 @@ public:
 	virtual ~calibration_parameters();
 };
 
-} /* namespace rgbd_workbench */
+} /* namespace misc */
 } /* namespace reco */
 
 #endif /* RECO_WORKBENCH_CALIBRATION_PARAMETERS_H_ */

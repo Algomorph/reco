@@ -31,7 +31,8 @@ main_window::main_window() :
 		//stereo_input_buffer(new utils::unbounded_queue<std::shared_ptr<hal::ImageArray>>()),
 		stereo_input_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 		stereo_output_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
-		stereo_proc(stereo_input_buffer,stereo_output_buffer)
+		calibration(new misc::calibration_parameters("/media/algomorph/Data/reco/calib/yi/cameras_s05.xml")),
+		stereo_proc(stereo_input_buffer,stereo_output_buffer,calibration)
 {
 	ui->setupUi(this);
 	ui->disparity_viewer->configure_for_pipe(1);
@@ -93,5 +94,9 @@ void main_window::closeEvent(QCloseEvent* event) {
 	this->stereo_proc.stop();
 
 }
+
+
+
+
 } //end namespace reco
 } //end namespace stereo_workbench
