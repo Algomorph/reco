@@ -70,7 +70,6 @@ void multichannel_pipe::work() {
 		while (!stop_requested && playback_allowed
 				&& camera.Capture(*images)) {
 			this->buffer->push_back(images);
-
 			emit frame();
 			images = hal::ImageArray::Create();
 		}
