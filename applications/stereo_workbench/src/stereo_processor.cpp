@@ -32,7 +32,7 @@ stereo_processor::stereo_processor(
 				output_frame_buffer(output_frame_buffer),
 				worker_shutting_down(false),
 #ifdef USE_STEREO_SGBM
-				stereo_matcher(0, 64, 8, 1536, 6144, 0, 0, 0, 0, 0, false),
+				stereo_matcher(0, 64, 3, 800, 1600, 48, 0, 0, 0, 0, false),
 #else
 				stereo_matcher(cv::StereoBM::BASIC_PRESET,64,9),
 #endif
@@ -68,12 +68,14 @@ bool stereo_processor::do_unit_of_work() {
 		cv::Mat left = *(array->at(0));
 		cv::Mat right = *(array->at(1));
 
+
+
+#ifdef INHOUSE_RECTIFICATION
+
+#ifdef USE_STEREO_SGBM
 		cv::Mat copy_left, copy_right;
 		left.copyTo(copy_left);
 		right.copyTo(copy_right);
-
-
-#ifdef USE_STEREO_SGBM
 		cv::Mat rect_left(left.rows,left.cols,left.type());
 		cv::Mat rect_right(right.rows,right.cols,right.type());
 		calibu::Rectify(left_lut,copy_left.data,rect_left.data, left.cols,left.rows, left.channels());
@@ -87,10 +89,11 @@ bool stereo_processor::do_unit_of_work() {
 		calibu::Rectify(left_lut,left.data,rect_left.data, left.cols,left.rows, 1);
 		calibu::Rectify(right_lut,right.data,rect_right.data, right.cols,right.rows, 1);
 #endif
-
+#endif
 
 		cv::Mat disparity;
-		stereo_matcher(rect_left, rect_right, disparity);
+		//stereo_matcher(rect_left, rect_right, disparity);
+		stereo_matcher(left, right, disparity);
 		double min, max;
 		cv::minMaxLoc(disparity, &min, &max);
 		//puts("min " << min << std::endl << "max " << max);

@@ -16,8 +16,9 @@ namespace datapipe {
 
 stereo_pipe::stereo_pipe(frame_buffer_type buffer,
 						stereo_source source,
-						std::vector<std::string> paths):
-		multichannel_pipe(buffer,compile_camera_uri(source,paths)),
+						std::vector<std::string> paths,
+						std::string calibration_file_path):
+		multichannel_pipe(buffer,compile_camera_uri(source,paths, calibration_file_path)),
 		source(source),
 		paths(paths){
 
@@ -33,7 +34,9 @@ void stereo_pipe::check_channel_number(const std::string& cam_uri, size_t num_ch
 void stereo_pipe::check_channel_dimensions(const std::string& cam_uri, int ix_channel){
 }
 
-std::string stereo_pipe::compile_camera_uri(stereo_source source, std::vector<std::string> paths){
+std::string stereo_pipe::compile_camera_uri(stereo_source source,
+		std::vector<std::string> paths,
+		std::string calibration_file_path){
 	std::string uri;
 
 	if(paths.size() < 2){
@@ -60,6 +63,9 @@ std::string stereo_pipe::compile_camera_uri(stereo_source source, std::vector<st
 						<< enderr;
 				break;
 		break;
+	}
+	if(!calibration_file_path.empty()){
+		uri = "undistort:[file=" + calibration_file_path +"]//" + uri;
 	}
 	return uri;
 }

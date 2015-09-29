@@ -22,7 +22,10 @@ public:
 	enum stereo_source{
 		video_files = 0
 	};
-	stereo_pipe(frame_buffer_type buffer, stereo_source source = video_files, std::vector<std::string> paths = {});
+	stereo_pipe(frame_buffer_type buffer,
+			stereo_source source = video_files,
+			std::vector<std::string> video_file_paths = {},
+			std::string calibration_file_path = "");
 	virtual ~stereo_pipe();
 
 protected:
@@ -30,7 +33,9 @@ protected:
 	virtual void check_channel_dimensions(const std::string& cam_uri, int ix_channel);
 
 private:
-	static std::string compile_camera_uri(stereo_source source, std::vector<std::string> paths);
+	static std::string compile_camera_uri(stereo_source source,
+			std::vector<std::string> paths,
+			std::string calibration_file_path);
 	stereo_source source;
 	std::vector<std::string> paths;
 };
