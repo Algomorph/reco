@@ -48,7 +48,7 @@ private:
 	std::unique_ptr<datapipe::stereo_pipe> pipe;
 	datapipe::frame_buffer_type stereo_input_buffer;
 	datapipe::frame_buffer_type stereo_output_buffer;
-	std::shared_ptr<misc::calibration_parameters> calibration;
+	std::shared_ptr<calibu::Rigd> calibration;
 	stereo_processor stereo_proc;
 
 

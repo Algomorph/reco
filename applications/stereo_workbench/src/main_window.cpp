@@ -31,7 +31,7 @@ main_window::main_window() :
 		//stereo_input_buffer(new utils::unbounded_queue<std::shared_ptr<hal::ImageArray>>()),
 		stereo_input_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 		stereo_output_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
-		calibration(new misc::calibration_parameters("/media/algomorph/Data/reco/calib/yi/cameras_s05.xml")),
+		calibration(calibu::ReadXmlRig("/media/algomorph/Data/reco/calib/yi/cameras_s05.xml")),
 		stereo_proc(stereo_input_buffer,stereo_output_buffer,calibration)
 {
 	ui->setupUi(this);
@@ -72,7 +72,9 @@ void main_window::hook_pipe(){
  */
 void main_window::unhook_pipe(){
 	if(pipe){
-		disconnect(pipe.get(),0,0,0);
+		pipe->stop();
+		disconnect(pipe.get(),SIGNAL(frame()), this, SLOT(handle_frame()));
+		disconnect(ui->capture_button,0,0,0);
 	}
 }
 
@@ -80,9 +82,11 @@ void main_window::unhook_pipe(){
  * Triggered on each frame emergent from the pipe
  */
 void main_window::handle_frame(){
-	std::shared_ptr<hal::ImageArray> images = video_buffer->pop_front();
-	stereo_input_buffer->push_back(images);
-	ui->stereo_feed_viewer->on_frame(images);
+	if(this->isActiveWindow()){//hack around Qt trying to handle images after death
+		std::shared_ptr<hal::ImageArray> images = video_buffer->pop_front();
+		stereo_input_buffer->push_back(images);
+		ui->stereo_feed_viewer->on_frame(images);
+	}
 }
 
 /**

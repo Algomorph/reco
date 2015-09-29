@@ -67,6 +67,7 @@ template<typename T> pessimistic_assignment_swap_buffer<T>::~pessimistic_assignm
 }
 
 template<typename T> void pessimistic_assignment_swap_buffer<T>::clear(){
+	empty = true;
 	cv_push.notify_all();
 }
 

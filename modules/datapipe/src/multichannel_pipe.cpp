@@ -113,7 +113,9 @@ void multichannel_pipe::stop() {
 			pause_cv.notify_one();
 		}
 	}
-	this->runner_thread.join();
+	if(this->runner_thread.joinable()){
+		this->runner_thread.join();
+	}
 
 }
 
