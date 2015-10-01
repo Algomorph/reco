@@ -51,9 +51,6 @@ private:
 	std::shared_ptr<calibu::Rigd> calibration;
 	stereo_processor stereo_proc;
 
-
-
-
 	void hook_pipe();
 	void unhook_pipe();
 	void connect_actions();

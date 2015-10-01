@@ -21,7 +21,7 @@ multichannel_viewer::multichannel_viewer(QWidget* parent, QString window_title):
 		video_widgets(){
 	//UI initial setup
 	this->setWindowTitle(window_title);
-	this->setMinimumSize(800,600);
+	this->setMinimumSize(400,300);
 	this->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
 	this->setLayout(this->layout);
 	//re-show this whenever source is closed

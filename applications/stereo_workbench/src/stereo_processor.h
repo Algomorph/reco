@@ -34,6 +34,11 @@ public:
 			datapipe::frame_buffer_type output_frame_buffer,
 			std::shared_ptr<calibu::Rigd>  calibration);
 	virtual ~stereo_processor();
+#ifdef USE_STEREO_SGBM
+	cv::StereoSGBM stereo_matcher;
+#else
+	cv::StereoBM stereo_matcher;
+#endif
 protected:
 	virtual bool do_unit_of_work();
 	virtual void pre_thread_join();
@@ -41,16 +46,19 @@ private:
 	datapipe::frame_buffer_type input_frame_buffer;
 	datapipe::frame_buffer_type output_frame_buffer;
 	bool worker_shutting_down;
-#ifdef USE_STEREO_SGBM
-	cv::StereoSGBM stereo_matcher;
-#else
-	cv::StereoBM stereo_matcher;
-#endif
+
 
 	std::shared_ptr<calibu::Rigd> calibration;
 
 	calibu::LookupTable left_lut;
 	calibu::LookupTable right_lut;
+public slots:
+	void set_minimum_disparity(int value);
+	void set_num_disparities(int value);
+	void set_window_size(int value);
+	void set_p1(int value);
+	void set_p2(int value);
+	void set_pre_filter_cap(int value);
 
 signals:
 	void frame(std::shared_ptr<std::vector<cv::Mat>> images);

@@ -28,14 +28,15 @@ stereo_processor::stereo_processor(
 		std::shared_ptr<calibu::Rigd> calibration)
 :
 		worker(),
-				input_frame_buffer(input_frame_buffer),
-				output_frame_buffer(output_frame_buffer),
-				worker_shutting_down(false),
 #ifdef USE_STEREO_SGBM
-				stereo_matcher(0, 64, 3, 800, 1600, 48, 0, 0, 0, 0, false),
+				stereo_matcher(0, 64, 3, 216, 864, 48, 0, 0, 0, 0, false),
 #else
 				stereo_matcher(cv::StereoBM::BASIC_PRESET,64,9),
 #endif
+				input_frame_buffer(input_frame_buffer),
+				output_frame_buffer(output_frame_buffer),
+				worker_shutting_down(false),
+
 				calibration(calibration)
 //stereo_matcher(32, 8)
 {
@@ -89,25 +90,50 @@ bool stereo_processor::do_unit_of_work() {
 		calibu::Rectify(left_lut,left.data,rect_left.data, left.cols,left.rows, 1);
 		calibu::Rectify(right_lut,right.data,rect_right.data, right.cols,right.rows, 1);
 #endif
+#else
+
 #endif
 
 		cv::Mat disparity;
-		//stereo_matcher(rect_left, rect_right, disparity);
 		stereo_matcher(left, right, disparity);
-		double min, max;
-		cv::minMaxLoc(disparity, &min, &max);
-		//puts("min " << min << std::endl << "max " << max);
-		cv::Mat res;
-		disparity += 16;
-		cv::convertScaleAbs(disparity, res, 0.25);
-		cv::cvtColor(res, res, CV_GRAY2BGR);
+
+		cv::Mat disparity_normalized;
+		cv::Mat disparity_morphed;
+
+
+		cv::normalize(disparity,disparity_normalized,0,255,CV_MINMAX, CV_8U);
+		//stereo_matcher(rect_left, rect_right, disparity);
+		cv::Mat kernel = cv::getStructuringElement(cv::MORPH_CROSS,cv::Size(3,3));
+		cv::morphologyEx(disparity_normalized,disparity_morphed,cv::MORPH_CLOSE,kernel);
+		cv::cvtColor(disparity_morphed,disparity_morphed,CV_GRAY2BGR);
+		cv::cvtColor(disparity_normalized,disparity_normalized,CV_GRAY2BGR);
+
 		std::shared_ptr<std::vector<cv::Mat>> images(new std::vector<cv::Mat>());
-		images->push_back(res);
+		images->push_back(disparity_normalized);
 		emit frame(images);
 		return true;
 	}
 	worker_shutting_down = true;
 	return false;
+}
+
+void stereo_processor::set_minimum_disparity(int value){
+	stereo_matcher.minDisparity = value;
+}
+void stereo_processor::set_num_disparities(int value){
+	stereo_matcher.numberOfDisparities = value - (value % 16);
+}
+void stereo_processor::set_window_size(int value){
+	stereo_matcher.SADWindowSize = value + ((value + 1) % 2);
+}
+void stereo_processor::set_p1(int value){
+	stereo_matcher.P1 = value;
+}
+void stereo_processor::set_p2(int value){
+	stereo_matcher.P2 = value;
+}
+void stereo_processor::set_pre_filter_cap(int value){
+	stereo_matcher.preFilterCap = value;
 }
 
 } /* namespace stereo_workbench */
