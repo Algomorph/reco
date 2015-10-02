@@ -25,8 +25,8 @@ main_window::main_window() :
 		ui(new Ui_main_window),
 		video_buffer(new utils::optimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 		pipe(new datapipe::stereo_pipe(video_buffer,datapipe::stereo_pipe::video_files,{
-						"/media/algomorph/Data/reco/cap/yi/s09l_edit.mp4",
-						"/media/algomorph/Data/reco/cap/yi/s09r_edit.mp4"
+						"/media/algomorph/Data/reco/cap/yi/s10l_edit.mp4",
+						"/media/algomorph/Data/reco/cap/yi/s10r_edit.mp4"
 				},"/media/algomorph/Data/reco/calib/yi/cameras_s05.xml")),
 		//stereo_input_buffer(new utils::unbounded_queue<std::shared_ptr<hal::ImageArray>>()),
 		stereo_input_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
@@ -60,6 +60,9 @@ void main_window::connect_actions() {
 	ui->p1_slider->setValue(stereo_proc.stereo_matcher.P1);
 	ui->p2_slider->setValue(stereo_proc.stereo_matcher.P2);
 	ui->pre_filter_cap_slider->setValue(stereo_proc.stereo_matcher.preFilterCap);
+	ui->uniqueness_ratio_slider->setValue(stereo_proc.stereo_matcher.uniquenessRatio);
+	ui->speckle_window_size_slider->setValue(stereo_proc.stereo_matcher.speckleWindowSize);
+	ui->speckle_range_slider->setValue(stereo_proc.stereo_matcher.speckleRange);
 
 	ui->minimum_disparity_spin_box->setValue(stereo_proc.stereo_matcher.minDisparity);
 	ui->number_of_disparities_spin_box->setValue(stereo_proc.stereo_matcher.numberOfDisparities);
@@ -67,19 +70,38 @@ void main_window::connect_actions() {
 	ui->p1_spin_box->setValue(stereo_proc.stereo_matcher.P1);
 	ui->p2_spin_box->setValue(stereo_proc.stereo_matcher.P2);
 	ui->pre_filter_cap_spin_box->setValue(stereo_proc.stereo_matcher.preFilterCap);
+	ui->uniqueness_ratio_spin_box->setValue(stereo_proc.stereo_matcher.uniquenessRatio);
+	ui->speckle_window_size_spin_box->setValue(stereo_proc.stereo_matcher.speckleWindowSize);
+	ui->speckle_range_spin_box->setValue(stereo_proc.stereo_matcher.speckleRange);
 
 	connect(ui->minimum_disparity_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_minimum_disparity(int)));
 	connect(ui->minimum_disparity_slider, SIGNAL(valueChanged(int)), ui->minimum_disparity_spin_box, SLOT(setValue(int)));
+	connect(ui->minimum_disparity_spin_box, SIGNAL(valueChanged(int)), ui->minimum_disparity_slider, SLOT(setValue(int)));
 	connect(ui->number_of_disparities_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_num_disparities(int)));
 	connect(ui->number_of_disparities_slider, SIGNAL(valueChanged(int)), ui->number_of_disparities_spin_box, SLOT(setValue(int)));
+	connect(ui->number_of_disparities_spin_box, SIGNAL(valueChanged(int)), ui->number_of_disparities_slider, SLOT(setValue(int)));
 	connect(ui->window_size_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_window_size(int)));
 	connect(ui->window_size_slider, SIGNAL(valueChanged(int)), ui->window_size_spin_box, SLOT(setValue(int)));
+	connect(ui->window_size_spin_box, SIGNAL(valueChanged(int)), ui->window_size_slider, SLOT(setValue(int)));
 	connect(ui->p1_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_p1(int)));
 	connect(ui->p1_slider, SIGNAL(valueChanged(int)), ui->p1_spin_box, SLOT(setValue(int)));
+	connect(ui->p1_spin_box, SIGNAL(valueChanged(int)), ui->p1_slider, SLOT(setValue(int)));
 	connect(ui->p2_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_p2(int)));
 	connect(ui->p2_slider, SIGNAL(valueChanged(int)), ui->p2_spin_box, SLOT(setValue(int)));
+	connect(ui->p2_spin_box, SIGNAL(valueChanged(int)), ui->p2_slider, SLOT(setValue(int)));
 	connect(ui->pre_filter_cap_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_pre_filter_cap(int)));
 	connect(ui->pre_filter_cap_slider, SIGNAL(valueChanged(int)), ui->pre_filter_cap_spin_box, SLOT(setValue(int)));
+	connect(ui->pre_filter_cap_spin_box, SIGNAL(valueChanged(int)), ui->pre_filter_cap_slider, SLOT(setValue(int)));
+	connect(ui->uniqueness_ratio_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_uniqueness_ratio(int)));
+	connect(ui->uniqueness_ratio_slider, SIGNAL(valueChanged(int)), ui->uniqueness_ratio_spin_box, SLOT(setValue(int)));
+	connect(ui->uniqueness_ratio_spin_box, SIGNAL(valueChanged(int)), ui->uniqueness_ratio_slider, SLOT(setValue(int)));
+	connect(ui->speckle_window_size_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_speckle_window_size(int)));
+	connect(ui->speckle_window_size_slider, SIGNAL(valueChanged(int)), ui->speckle_window_size_spin_box, SLOT(setValue(int)));
+	connect(ui->speckle_window_size_spin_box, SIGNAL(valueChanged(int)), ui->speckle_window_size_slider, SLOT(setValue(int)));
+	connect(ui->speckle_range_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_speckle_range(int)));
+	connect(ui->speckle_range_slider, SIGNAL(valueChanged(int)), ui->speckle_range_spin_box, SLOT(setValue(int)));
+	connect(ui->speckle_range_spin_box, SIGNAL(valueChanged(int)), ui->speckle_range_slider, SLOT(setValue(int)));
+
 }
 
 /**
@@ -91,6 +113,7 @@ void main_window::hook_pipe(){
 	ui->stereo_feed_viewer->configure_for_pipe(pipe->get_num_channels());
 	connect(pipe.get(),SIGNAL(frame()), this, SLOT(handle_frame()));
 	connect(ui->capture_button, SIGNAL(released()), pipe.get(), SLOT(run()));
+	connect(ui->pause_button, SIGNAL(released()), pipe.get(), SLOT(pause()));
 }
 
 /**
@@ -99,9 +122,8 @@ void main_window::hook_pipe(){
  */
 void main_window::unhook_pipe(){
 	if(pipe){
-		pipe->stop();
-		disconnect(pipe.get(),SIGNAL(frame()), this, SLOT(handle_frame()));
 		disconnect(ui->capture_button,0,0,0);
+		disconnect(ui->pause_button,0,0,0);
 	}
 }
 
@@ -126,7 +148,7 @@ void main_window::handle_frame(){
  * @param event window close event
  */
 void main_window::closeEvent(QCloseEvent* event) {
-	unhook_pipe();
+	pipe->stop();
 	//halt frame consumption
 	std::shared_ptr<hal::ImageArray> dummy;
 	video_buffer->clear();

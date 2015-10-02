@@ -47,6 +47,11 @@ private:
 	datapipe::frame_buffer_type output_frame_buffer;
 	bool worker_shutting_down;
 
+	cv::Mat last_left;
+	cv::Mat last_right;
+
+	void compute_disparity(cv::Mat left, cv::Mat right);
+
 
 	std::shared_ptr<calibu::Rigd> calibration;
 
@@ -59,6 +64,10 @@ public slots:
 	void set_p1(int value);
 	void set_p2(int value);
 	void set_pre_filter_cap(int value);
+	void set_uniqueness_ratio(int value);
+	void set_speckle_window_size(int value);
+	void set_speckle_range(int value);
+
 
 signals:
 	void frame(std::shared_ptr<std::vector<cv::Mat>> images);
