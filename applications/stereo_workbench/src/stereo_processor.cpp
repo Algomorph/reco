@@ -56,6 +56,7 @@ stereo_processor::stereo_processor(
 //stereo_matcher(32, 8)
 {
 	Sophus::SE3d T_nr_nl;
+	puts(calibration->cameras_[1]->Pose().translation());
 	calibu::CreateScanlineRectifiedLookupAndCameras(
 			calibration->cameras_[1]->Pose(),
 			calibration->cameras_[0],
