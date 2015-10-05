@@ -126,6 +126,10 @@ void stereo_processor::compute_disparity(cv::Mat left, cv::Mat right){
 	emit frame(images);
 }
 
+void stereo_processor::compute_disparity_daisy(cv::Mat left, cv::Mat right){
+
+}
+
 void stereo_processor::set_minimum_disparity(int value){
 	stereo_matcher.minDisparity = value;
 	compute_disparity(last_left,last_right);

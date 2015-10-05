@@ -16,6 +16,8 @@
 #include <reco/utils/worker.h>
 //opencv
 #include <opencv2/calib3d/calib3d.hpp>
+//#include <opencv2/xfeatures2d/xfeatures2d.hpp>
+
 //misc
 #include <reco/misc/calibration_parameters.h>
 //calibu
@@ -51,6 +53,7 @@ private:
 	cv::Mat last_right;
 
 	void compute_disparity(cv::Mat left, cv::Mat right);
+	void compute_disparity_daisy(cv::Mat left, cv::Mat right);
 
 
 	std::shared_ptr<calibu::Rigd> calibration;
