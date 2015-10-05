@@ -21,17 +21,25 @@
 namespace reco {
 namespace stereo_workbench {
 
+#define VIDEO_LEFT "s14l.mp4"
+#define VIDEO_RIGHT "s14r.mp4"
+#define CALIB_FILE "s12_calib.xml"
+
 main_window::main_window() :
 		ui(new Ui_main_window),
 		video_buffer(new utils::optimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 		pipe(new datapipe::stereo_pipe(video_buffer,datapipe::stereo_pipe::video_files,{
-						"/media/algomorph/Data/reco/cap/yi/s10l_edit.mp4",
-						"/media/algomorph/Data/reco/cap/yi/s10r_edit.mp4"
-				},"/media/algomorph/Data/reco/calib/yi/cameras_s05.xml")),
+						"/media/algomorph/Data/reco/cap/yi/" VIDEO_LEFT,
+						"/media/algomorph/Data/reco/cap/yi/" VIDEO_RIGHT
+				}
+#ifndef INHOUSE_RECTIFICATION
+		,"/media/algomorph/Data/reco/calib/yi/" CALIB_FILE
+#endif
+		)),
 		//stereo_input_buffer(new utils::unbounded_queue<std::shared_ptr<hal::ImageArray>>()),
 		stereo_input_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 		stereo_output_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
-		calibration(calibu::ReadXmlRig("/media/algomorph/Data/reco/calib/yi/cameras_s05.xml")),
+		calibration(calibu::ReadXmlRig("/media/algomorph/Data/reco/calib/yi/" CALIB_FILE)),
 		stereo_proc(stereo_input_buffer,stereo_output_buffer,calibration)
 {
 	ui->setupUi(this);
@@ -54,6 +62,7 @@ main_window::~main_window() {
  */
 void main_window::connect_actions() {
 
+#if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
 	ui->minimum_disparity_slider->setValue(stereo_proc.stereo_matcher.minDisparity);
 	ui->number_of_disparities_slider->setValue(stereo_proc.stereo_matcher.numberOfDisparities);
 	ui->window_size_slider->setValue(stereo_proc.stereo_matcher.SADWindowSize);
@@ -73,7 +82,29 @@ void main_window::connect_actions() {
 	ui->uniqueness_ratio_spin_box->setValue(stereo_proc.stereo_matcher.uniquenessRatio);
 	ui->speckle_window_size_spin_box->setValue(stereo_proc.stereo_matcher.speckleWindowSize);
 	ui->speckle_range_spin_box->setValue(stereo_proc.stereo_matcher.speckleRange);
+#elif CV_VERSION_MAJOR == 3
+	ui->minimum_disparity_slider->      setValue(stereo_proc.stereo_matcher->getMinDisparity());
+	ui->number_of_disparities_slider->  setValue(stereo_proc.stereo_matcher->getNumDisparities());
+	ui->window_size_slider->            setValue(stereo_proc.stereo_matcher->getBlockSize());
+	ui->p1_slider->                     setValue(stereo_proc.stereo_matcher->getP1());
+	ui->p2_slider->                     setValue(stereo_proc.stereo_matcher->getP2());
+	ui->pre_filter_cap_slider->         setValue(stereo_proc.stereo_matcher->getPreFilterCap());
+	ui->uniqueness_ratio_slider->       setValue(stereo_proc.stereo_matcher->getUniquenessRatio());
+	ui->speckle_window_size_slider->    setValue(stereo_proc.stereo_matcher->getSpeckleWindowSize());
+	ui->speckle_range_slider->          setValue(stereo_proc.stereo_matcher->getSpeckleRange());
+	ui->v_offset_slider->               setValue(stereo_proc.get_v_offset());
 
+	ui->minimum_disparity_spin_box->    setValue(stereo_proc.stereo_matcher->getMinDisparity());
+	ui->number_of_disparities_spin_box->setValue(stereo_proc.stereo_matcher->getNumDisparities());
+	ui->window_size_spin_box->          setValue(stereo_proc.stereo_matcher->getBlockSize());
+	ui->p1_spin_box->                   setValue(stereo_proc.stereo_matcher->getP1());
+	ui->p2_spin_box->                   setValue(stereo_proc.stereo_matcher->getP2());
+	ui->pre_filter_cap_spin_box->       setValue(stereo_proc.stereo_matcher->getPreFilterCap());
+	ui->uniqueness_ratio_spin_box->     setValue(stereo_proc.stereo_matcher->getUniquenessRatio());
+	ui->speckle_window_size_spin_box->  setValue(stereo_proc.stereo_matcher->getSpeckleWindowSize());
+	ui->speckle_range_spin_box->        setValue(stereo_proc.stereo_matcher->getSpeckleRange());
+	ui->v_offset_spin_box->             setValue(stereo_proc.get_v_offset());
+#endif
 	connect(ui->minimum_disparity_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_minimum_disparity(int)));
 	connect(ui->minimum_disparity_slider, SIGNAL(valueChanged(int)), ui->minimum_disparity_spin_box, SLOT(setValue(int)));
 	connect(ui->minimum_disparity_spin_box, SIGNAL(valueChanged(int)), ui->minimum_disparity_slider, SLOT(setValue(int)));
@@ -101,6 +132,9 @@ void main_window::connect_actions() {
 	connect(ui->speckle_range_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_speckle_range(int)));
 	connect(ui->speckle_range_slider, SIGNAL(valueChanged(int)), ui->speckle_range_spin_box, SLOT(setValue(int)));
 	connect(ui->speckle_range_spin_box, SIGNAL(valueChanged(int)), ui->speckle_range_slider, SLOT(setValue(int)));
+	connect(ui->v_offset_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_v_offset(int)));
+	connect(ui->v_offset_slider, SIGNAL(valueChanged(int)), ui->v_offset_spin_box, SLOT(setValue(int)));
+	connect(ui->v_offset_spin_box, SIGNAL(valueChanged(int)), ui->v_offset_slider, SLOT(setValue(int)));
 
 }
 
@@ -157,6 +191,12 @@ void main_window::closeEvent(QCloseEvent* event) {
 
 }
 
+void main_window::on_save_current_button_clicked(){
+	stereo_proc.save_current();
+}
+
+
 
 } //end namespace reco
 } //end namespace stereo_workbench
+

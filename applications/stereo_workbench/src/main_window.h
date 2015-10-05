@@ -56,6 +56,9 @@ private:
 	void connect_actions();
 
 private slots:
+
+	void on_save_current_button_clicked();
+
 	void handle_frame();
 };
 

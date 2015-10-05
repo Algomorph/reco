@@ -15,6 +15,7 @@
 //utils
 #include <reco/utils/worker.h>
 //opencv
+#include <opencv2/core/core_c.h>
 #include <opencv2/calib3d/calib3d.hpp>
 //#include <opencv2/xfeatures2d/xfeatures2d.hpp>
 
@@ -22,8 +23,14 @@
 #include <reco/misc/calibration_parameters.h>
 //calibu
 #include <calibu/Calibu.h>
+//std
+#include <mutex>
 
+#define INHOUSE_RECTIFICATION
 #define USE_STEREO_SGBM
+//#define USE_STEREO_BM
+//#define USE_STEREO_BP
+//#define USE_STEREO_CSBP
 
 namespace reco {
 namespace stereo_workbench {
@@ -36,11 +43,25 @@ public:
 			datapipe::frame_buffer_type output_frame_buffer,
 			std::shared_ptr<calibu::Rigd>  calibration);
 	virtual ~stereo_processor();
+
+#if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
 #ifdef USE_STEREO_SGBM
 	cv::StereoSGBM stereo_matcher;
-#else
+#elif USE_STEREO_BM
 	cv::StereoBM stereo_matcher;
 #endif
+#elif CV_VERSION_MAJOR == 3
+#ifdef USE_STEREO_SGBM
+	cv::Ptr<cv::StereoSGBM> stereo_matcher;
+#elif USE_STEREO_BM
+	cv::Ptr<cv::StereoBM> stereo_matcher;
+#elif USE_STEREO_BP
+	//cv::Ptr<cv::StereoBM> stereo_matcher;
+#endif
+#endif
+
+	int get_v_offset();
+
 protected:
 	virtual bool do_unit_of_work();
 	virtual void pre_thread_join();
@@ -48,13 +69,17 @@ private:
 	datapipe::frame_buffer_type input_frame_buffer;
 	datapipe::frame_buffer_type output_frame_buffer;
 	bool worker_shutting_down;
+	int right_v_offset = 0;
 
 	cv::Mat last_left;
 	cv::Mat last_right;
 
 	void compute_disparity(cv::Mat left, cv::Mat right);
-	void compute_disparity_daisy(cv::Mat left, cv::Mat right);
 
+
+#if CV_VERSION_MAJOR == 3
+	void compute_disparity_daisy(cv::Mat left, cv::Mat right);
+#endif
 
 	std::shared_ptr<calibu::Rigd> calibration;
 
@@ -70,6 +95,8 @@ public slots:
 	void set_uniqueness_ratio(int value);
 	void set_speckle_window_size(int value);
 	void set_speckle_range(int value);
+	void set_v_offset(int value);
+	void save_current();
 
 
 signals:

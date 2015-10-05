@@ -17,12 +17,14 @@ namespace datapipe {
 stereo_pipe::stereo_pipe(frame_buffer_type buffer,
 						stereo_source source,
 						std::vector<std::string> paths,
-						std::string calibration_file_path):
-		multichannel_pipe(buffer,compile_camera_uri(source,paths, calibration_file_path)),
-		source(source),
-		paths(paths){
-
-}
+						std::string calibration_file_path,
+						bool use_stereo_rectification):
+						multichannel_pipe(buffer,
+								compile_camera_uri(source,paths,
+										calibration_file_path,
+										use_stereo_rectification)),
+						source(source),
+						paths(paths){}
 
 stereo_pipe::~stereo_pipe(){}
 
@@ -36,7 +38,8 @@ void stereo_pipe::check_channel_dimensions(const std::string& cam_uri, int ix_ch
 
 std::string stereo_pipe::compile_camera_uri(stereo_source source,
 		std::vector<std::string> paths,
-		std::string calibration_file_path){
+		std::string calibration_file_path,
+		bool use_stereo_rectification){
 	std::string uri;
 
 	if(paths.size() < 2){

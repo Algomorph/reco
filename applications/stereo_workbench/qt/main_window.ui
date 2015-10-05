@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1104</width>
-    <height>726</height>
+    <height>735</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -198,10 +198,10 @@
         <item>
          <widget class="QSpinBox" name="p1_spin_box">
           <property name="minimum">
-           <number>72</number>
+           <number>0</number>
           </property>
           <property name="maximum">
-           <number>3267</number>
+           <number>2904</number>
           </property>
           <property name="singleStep">
            <number>12</number>
@@ -219,10 +219,10 @@
          </sizepolicy>
         </property>
         <property name="minimum">
-         <number>72</number>
+         <number>0</number>
         </property>
         <property name="maximum">
-         <number>3267</number>
+         <number>2904</number>
         </property>
         <property name="singleStep">
          <number>24</number>
@@ -250,10 +250,10 @@
         <item>
          <widget class="QSpinBox" name="p2_spin_box">
           <property name="minimum">
-           <number>288</number>
+           <number>0</number>
           </property>
           <property name="maximum">
-           <number>13068</number>
+           <number>11616</number>
           </property>
           <property name="singleStep">
            <number>12</number>
@@ -271,10 +271,10 @@
          </sizepolicy>
         </property>
         <property name="minimum">
-         <number>288</number>
+         <number>0</number>
         </property>
         <property name="maximum">
-         <number>13068</number>
+         <number>11616</number>
         </property>
         <property name="singleStep">
          <number>24</number>
@@ -446,6 +446,60 @@
          <enum>Qt::Horizontal</enum>
         </property>
        </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_11">
+        <item>
+         <widget class="QLabel" name="v_offset_label">
+          <property name="text">
+           <string>vertical offset</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="v_offset_spin_box">
+          <property name="minimum">
+           <number>-128</number>
+          </property>
+          <property name="maximum">
+           <number>128</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QSlider" name="v_offset_slider">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimum">
+         <number>-128</number>
+        </property>
+        <property name="maximum">
+         <number>128</number>
+        </property>
+        <property name="tracking">
+         <bool>false</bool>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_12">
+        <item>
+         <widget class="QPushButton" name="save_current_button">
+          <property name="text">
+           <string>Save current image pair</string>
+          </property>
+         </widget>
+        </item>
+       </layout>
       </item>
       <item>
        <widget class="QPushButton" name="capture_button">

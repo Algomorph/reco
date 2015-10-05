@@ -25,7 +25,8 @@ public:
 	stereo_pipe(frame_buffer_type buffer,
 			stereo_source source = video_files,
 			std::vector<std::string> video_file_paths = {},
-			std::string calibration_file_path = "");
+			std::string calibration_file_path = "",
+			bool use_stereo_rectification = true);
 	virtual ~stereo_pipe();
 
 protected:
@@ -35,7 +36,8 @@ protected:
 private:
 	static std::string compile_camera_uri(stereo_source source,
 			std::vector<std::string> paths,
-			std::string calibration_file_path);
+			std::string calibration_file_path,
+			bool use_stereo_rectification);
 	stereo_source source;
 	std::vector<std::string> paths;
 };
