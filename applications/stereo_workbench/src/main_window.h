@@ -61,7 +61,7 @@ private slots:
 	void open_calibration_file();
 
 	void on_save_current_button_clicked();
-
+	void on_rectify_checkbox_clicked();
 	void handle_frame();
 };
 

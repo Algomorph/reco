@@ -46,14 +46,16 @@ public:
 	cv::Ptr<cv::StereoSGBM> stereo_matcher;
 #endif
 
-	bool rectification_enabled;
+
 	int get_v_offset();
 	void set_calibration(std::shared_ptr<calibu::Rigd> calibration);
+	void toggle_rectification();
 
 protected:
 	virtual bool do_unit_of_work();
 	virtual void pre_thread_join();
 private:
+	bool rectification_enabled;
 	datapipe::frame_buffer_type input_frame_buffer;
 	datapipe::frame_buffer_type output_frame_buffer;
 	bool worker_shutting_down;
@@ -61,9 +63,12 @@ private:
 
 	cv::Mat last_left;
 	cv::Mat last_right;
+	cv::Mat last_left_rectified;
+	cv::Mat last_right_rectified;
 
+	void recompute_disparity();
 	void compute_disparity(cv::Mat left, cv::Mat right);
-
+	void rectify(cv::Mat left, cv::Mat right);
 
 #if CV_VERSION_MAJOR == 3
 	void compute_disparity_daisy(cv::Mat left, cv::Mat right);

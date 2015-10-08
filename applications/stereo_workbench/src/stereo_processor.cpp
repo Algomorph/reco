@@ -69,7 +69,16 @@ void stereo_processor::set_calibration(std::shared_ptr<calibu::Rigd> calibration
 			//T_nr_nl, left_lut, right_lut
 			T_nr_nl, right_lut, left_lut
 			);
+	puts("Original translation vector:");
+	puts(calibration->cameras_[1]->Pose().translation());
+	puts("Final translation vector:");
+	puts(T_nr_nl.translation());
+	if(!last_left.empty()){
+		rectify(last_left,last_right);
+		recompute_disparity();
+	}
 }
+
 
 void stereo_processor::pre_thread_join() {
 
@@ -80,6 +89,12 @@ void stereo_processor::pre_thread_join() {
 	input_frame_buffer->push_back(dummy);
 }
 
+static void report_int_mismatch(int expected, int received, const std::string& name){
+	if(expected != received){
+		puts("Expected " + name + ": " << expected + ". Got: " << received);
+	}
+}
+
 bool stereo_processor::do_unit_of_work() {
 	std::shared_ptr<hal::ImageArray> array = input_frame_buffer->pop_front();
 	if (array) {
@@ -87,38 +102,14 @@ bool stereo_processor::do_unit_of_work() {
 		cv::Mat left = *(array->at(0));
 		cv::Mat right = *(array->at(1));
 
-		cv::Mat copy_left(left.rows, left.cols, left.type());
-		cv::Mat copy_right(right.rows, right.cols, right.type());
-		left.copyTo(copy_left);
-		right.copyTo(copy_right);
+
+		left.copyTo(last_left);
+		right.copyTo(last_right);
 
 		if (rectification_enabled) {
-			bool sizes_match = left_lut.Width() != copy_left.cols
-					|| left_lut.Height() != copy_left.rows
-					|| right_lut.Width() != copy_right.cols
-					|| right_lut.Height() != copy_right.rows;
-
-			if (!sizes_match) {
-				puts("Lookup table sizes don't match image sizes. Skipping rectification.");
-				last_left = copy_left;
-				last_right = copy_right;
-			} else {
-				cv::Mat rect_left(left.rows, left.cols, left.type());
-				cv::Mat rect_right(right.rows, right.cols, right.type());
-				calibu::Rectify(left_lut, copy_left.data, rect_left.data, copy_left.cols,
-						copy_left.rows, copy_left.channels());
-				calibu::Rectify(right_lut, copy_right.data, rect_right.data, copy_right.cols,
-						copy_right.rows, copy_right.channels());
-
-				last_left = rect_left;
-				last_right = rect_right;
-			}
-		} else {
-			last_left = copy_left;
-			last_right = copy_right;
+			rectify(last_left,last_right);
 		}
-
-		compute_disparity(last_left, last_right);
+		recompute_disparity();
 
 		return true;
 	}
@@ -129,6 +120,40 @@ bool stereo_processor::do_unit_of_work() {
 void stereo_processor::save_current() {
 	cv::imwrite("left.png", last_left);
 	cv::imwrite("right.png", last_right);
+}
+
+void stereo_processor::rectify(cv::Mat left, cv::Mat right){
+	bool sizes_match = (int)left_lut.Width() == left.cols
+			&& (int)left_lut.Height() == left.rows
+			&& (int)right_lut.Width() == right.cols
+			&& (int)right_lut.Height() == right.rows;
+	if (!sizes_match) {
+		puts("Lookup table sizes don't match image sizes. Skipping rectification.");
+		report_int_mismatch(left_lut.Width(),left.cols, "left width");
+		report_int_mismatch(left_lut.Height(),left.rows, "left height");
+		report_int_mismatch(right_lut.Width(),right.cols, "right width");
+		report_int_mismatch(right_lut.Height(),right.rows, "right height");
+		last_left_rectified = left;
+		last_right_rectified = right;
+	} else {
+		cv::Mat rect_left(left.rows, left.cols, left.type());
+		cv::Mat rect_right(right.rows, right.cols, right.type());
+		calibu::Rectify(left_lut, left.data, rect_left.data, left.cols,
+				left.rows, left.channels());
+		calibu::Rectify(right_lut, right.data, rect_right.data, right.cols,
+				right.rows, right.channels());
+
+		last_left_rectified = rect_left;
+		last_right_rectified = rect_right;
+	}
+}
+
+void stereo_processor::recompute_disparity(){
+	if(rectification_enabled){
+		compute_disparity(last_left_rectified,last_right_rectified);
+	}else{
+		compute_disparity(last_left,last_right);
+	}
 }
 
 /**
@@ -185,89 +210,96 @@ int stereo_processor::get_v_offset() {
 #if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
 void stereo_processor::set_minimum_disparity(int value) {
 	stereo_matcher.minDisparity = value;
-	compute_disparity(last_left,last_right);
+	recompute_disparity();
 }
 void stereo_processor::set_num_disparities(int value) {
 	stereo_matcher.numberOfDisparities = value - (value % 16);
-	compute_disparity(last_left,last_right);
+	recompute_disparity();
 }
 void stereo_processor::set_window_size(int value) {
 	stereo_matcher.SADWindowSize = value + ((value + 1) % 2);
-	compute_disparity(last_left,last_right);
+	recompute_disparity();
 }
 void stereo_processor::set_p1(int value) {
 	if(value < stereo_matcher.P2) {
 		stereo_matcher.P1 = value;
-		compute_disparity(last_left,last_right);
+		recompute_disparity();
 	}
 }
 void stereo_processor::set_p2(int value) {
 	if(value > stereo_matcher.P1) {
 		stereo_matcher.P2 = value;
-		compute_disparity(last_left,last_right);
+		recompute_disparity();
 	}
 }
 void stereo_processor::set_pre_filter_cap(int value) {
 	stereo_matcher.preFilterCap = value;
-	compute_disparity(last_left,last_right);
+	recompute_disparity();
 }
 void stereo_processor::set_uniqueness_ratio(int value) {
 	stereo_matcher.uniquenessRatio = value;
-	compute_disparity(last_left,last_right);
+	recompute_disparity();
 }
 void stereo_processor::set_speckle_window_size(int value) {
 	stereo_matcher.speckleRange = value;
-	compute_disparity(last_left,last_right);
+	recompute_disparity();
 }
 void stereo_processor::set_speckle_range(int value) {
 	stereo_matcher.speckleRange = value;
-	compute_disparity(last_left,last_right);
+	recompute_disparity();
 }
 #elif CV_VERSION_MAJOR == 3
 void stereo_processor::set_minimum_disparity(int value) {
 	stereo_matcher->setMinDisparity(value);
-	compute_disparity(last_left, last_right);
+	recompute_disparity();
 }
 void stereo_processor::set_num_disparities(int value) {
 	stereo_matcher->setNumDisparities(value - (value % 16));
-	compute_disparity(last_left, last_right);
+	recompute_disparity();
 }
 void stereo_processor::set_window_size(int value) {
 	int new_window_size = value + ((value + 1) % 2);
 	stereo_matcher->setBlockSize(new_window_size);
-	compute_disparity(last_left, last_right);
+	recompute_disparity();
 }
 void stereo_processor::set_p1(int value) {
 	if (value < stereo_matcher->getP2()) {
 		stereo_matcher->setP1(value);
-		compute_disparity(last_left, last_right);
+		recompute_disparity();
 	}
 }
 void stereo_processor::set_p2(int value) {
 	if (value > stereo_matcher->getP1()) {
 		stereo_matcher->setP2(value);
-		compute_disparity(last_left, last_right);
+		recompute_disparity();
 	}
 }
 void stereo_processor::set_pre_filter_cap(int value) {
 	stereo_matcher->setPreFilterCap(value);
-	compute_disparity(last_left, last_right);
+	recompute_disparity();
 }
 void stereo_processor::set_uniqueness_ratio(int value) {
 	stereo_matcher->setUniquenessRatio(value);
-	compute_disparity(last_left, last_right);
+	recompute_disparity();
 }
 void stereo_processor::set_speckle_window_size(int value) {
 	stereo_matcher->setSpeckleWindowSize(value);
-	compute_disparity(last_left, last_right);
+	recompute_disparity();
 }
 void stereo_processor::set_speckle_range(int value) {
 	stereo_matcher->setSpeckleRange(value);
-	compute_disparity(last_left, last_right);
+	recompute_disparity();
 }
 void stereo_processor::set_v_offset(int value) {
 	right_v_offset = value;
-	compute_disparity(last_left, last_right);
+	recompute_disparity();
+}
+void stereo_processor::toggle_rectification(){
+	rectification_enabled = !rectification_enabled;
+	if(rectification_enabled){
+		rectify(last_left,last_right);
+	}
+	recompute_disparity();
 }
 
 #endif

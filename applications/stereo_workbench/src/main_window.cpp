@@ -32,7 +32,7 @@ namespace stereo_workbench {
 
 #define VIDEO_LEFT "s16l_edit.mp4"
 #define VIDEO_RIGHT "s16r_edit.mp4"
-#define CALIB_FILE "s15_calib.xml"
+#define CALIB_FILE "s15_calib_recentered.xml"
 
 main_window::main_window() :
 		ui(new Ui_main_window),
@@ -234,6 +234,9 @@ void main_window::open_image_pair(){
 
 }
 
+/**
+ * Loads calibration file from XML to enable rectification
+ */
 void main_window::open_calibration_file(){
 	QString qfile_path = QFileDialog::getOpenFileName(this, tr("Open Calibration File"),
 			DEFAULT_CALIB_PATH, tr("Calibu calibration files (*.xml)"));
@@ -250,6 +253,13 @@ void main_window::open_calibration_file(){
  */
 void main_window::on_save_current_button_clicked(){
 	stereo_proc.save_current();
+}
+
+/**
+ * Enables or disables stereo rectification
+ */
+void main_window::on_rectify_checkbox_clicked(){
+	stereo_proc.toggle_rectification();
 }
 
 
