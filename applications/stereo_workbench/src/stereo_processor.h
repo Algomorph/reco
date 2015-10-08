@@ -27,10 +27,6 @@
 #include <mutex>
 
 #define INHOUSE_RECTIFICATION
-#define USE_STEREO_SGBM
-//#define USE_STEREO_BM
-//#define USE_STEREO_BP
-//#define USE_STEREO_CSBP
 
 namespace reco {
 namespace stereo_workbench {
@@ -45,22 +41,14 @@ public:
 	virtual ~stereo_processor();
 
 #if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
-#ifdef USE_STEREO_SGBM
 	cv::StereoSGBM stereo_matcher;
-#elif USE_STEREO_BM
-	cv::StereoBM stereo_matcher;
-#endif
 #elif CV_VERSION_MAJOR == 3
-#ifdef USE_STEREO_SGBM
 	cv::Ptr<cv::StereoSGBM> stereo_matcher;
-#elif USE_STEREO_BM
-	cv::Ptr<cv::StereoBM> stereo_matcher;
-#elif USE_STEREO_BP
-	//cv::Ptr<cv::StereoBM> stereo_matcher;
-#endif
 #endif
 
+	bool rectification_enabled;
 	int get_v_offset();
+	void set_calibration(std::shared_ptr<calibu::Rigd> calibration);
 
 protected:
 	virtual bool do_unit_of_work();

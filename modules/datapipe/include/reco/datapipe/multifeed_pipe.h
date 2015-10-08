@@ -12,7 +12,7 @@
 
 //datapipe
 #include <reco/datapipe/data_channel.h>
-#include <reco/datapipe/multichannel_pipe.h>
+#include <reco/datapipe/hal_pipe.h>
 #include <reco/datapipe/typedefs.h>
 
 //utils
@@ -22,12 +22,12 @@ namespace reco{
 namespace datapipe{
 
 template<int N, const std::array<const data_channel*,N>& CH_INFO>
-class multifeed_pipe: public multichannel_pipe{
+class multifeed_pipe: public hal_pipe{
 
 public:
 
 	multifeed_pipe(frame_buffer_type buffer, std::string cam_uri)
-		: multichannel_pipe(buffer, cam_uri){};
+		: hal_pipe(buffer, cam_uri){};
 	virtual ~multifeed_pipe(){};
 
 protected:

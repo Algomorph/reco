@@ -82,7 +82,6 @@ void main_window::connect_actions() {
 	connect(ui->action_open_kinect_devices, SIGNAL(triggered()), this, SLOT(open_kinect_devices()));
 	connect(ui->action_open_hal_log, SIGNAL(triggered()), this, SLOT(open_hal_log()));
 	connect(ui->action_open_image_folder, SIGNAL(triggered()), this, SLOT(open_image_folder()));
-	connect(ui->action_open_video_files, SIGNAL(triggered()), this, SLOT(open_video_files()));
 	connect(ui->action_open_calibration_file, SIGNAL(triggered()),this, SLOT(open_calibration_file()));
 	connect(ui->action_close_stream, SIGNAL(triggered()), this, SLOT(unhook_pipe_signals()));
 
@@ -149,18 +148,6 @@ void main_window::open_calibration_file() {
 		load_calibration(file_path);
 	}
 }
-
-void main_window::open_video_files(){
-	QFileDialog dialog(this,tr("Open Video Files"), DEFAULT_CAP_PATH, tr("Video files (*.avi, *.mp4, *.mov)"));
-	dialog.setFileMode(QFileDialog::ExistingFiles);
-	QStringList file_names;
-	if(dialog.exec()){
-		file_names = dialog.selectedFiles();
-	}
-	file_names.sort();
-
-}
-
 /**
  * Connect pipe signals from output and GUI buttons to pipe slots
  */

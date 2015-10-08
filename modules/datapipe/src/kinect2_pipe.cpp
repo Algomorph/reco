@@ -25,15 +25,13 @@ kinect2_pipe::kinect2_pipe(frame_buffer_type buffer,kinect2_data_source source,
 		path(path)
 		 {
 
-	std::string cam_uri = compile_camera_uri(source,path);
 	//check that we have appropriate number of channels
 	//i.e. for multip feeds, the total number of channels must be evenly divisible
 	//by the number of channels per feed
-	check_channel_number(cam_uri, num_channels);
-
+	multifeed_pipe<kinect_v2_info::channels.size(),kinect_v2_info::channels>::check_channel_number(camera_uri, num_channels);
 	//check that the feed sizes match for RGB & depth, for each kinect
 	for (int ix_channel; ix_channel < num_channels; ix_channel++) {
-		check_channel_dimensions(cam_uri, ix_channel);
+		multifeed_pipe<kinect_v2_info::channels.size(),kinect_v2_info::channels>::check_channel_dimensions(camera_uri, ix_channel);
 	}
 }
 
@@ -63,6 +61,8 @@ std::string kinect2_pipe::compile_camera_uri(kinect2_data_source source, std::st
 				<< enderr;
 		break;
 	}
+
+
 	return uri;
 }
 

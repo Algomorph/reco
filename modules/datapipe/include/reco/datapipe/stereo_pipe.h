@@ -10,14 +10,14 @@
 #ifndef RECO_DATAPIPE_STEREO_PIPE_H_
 #define RECO_DATAPIPE_STEREO_PIPE_H_
 
-#include <reco/datapipe/multichannel_pipe.h>
+#include <reco/datapipe/hal_pipe.h>
 #include <reco/datapipe/typedefs.h>
 
 namespace reco {
 namespace datapipe {
 
 class stereo_pipe:
-		public multichannel_pipe {
+		public hal_pipe {
 public:
 	enum stereo_source{
 		video_files = 0
@@ -28,10 +28,6 @@ public:
 			std::string calibration_file_path = "",
 			bool use_stereo_rectification = true);
 	virtual ~stereo_pipe();
-
-protected:
-	virtual void check_channel_number(const std::string& cam_uri, size_t num_channels);
-	virtual void check_channel_dimensions(const std::string& cam_uri, int ix_channel);
 
 private:
 	static std::string compile_camera_uri(stereo_source source,

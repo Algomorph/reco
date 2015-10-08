@@ -13,24 +13,33 @@
 
 //datapipe
 #include <reco/datapipe/stereo_pipe.h>
+#include <reco/datapipe/hal_interop.h>
 
 //utils
 #include <reco/utils/swap_buffer.h>
 #include <reco/utils/debug_util.h>
 
+//qt
+#include <QMessageBox>
+#include <QFileDialog>
+
 namespace reco {
 namespace stereo_workbench {
 
-#define VIDEO_LEFT "s14l.mp4"
-#define VIDEO_RIGHT "s14r.mp4"
-#define CALIB_FILE "s12_calib.xml"
+#define DEFAULT_RECO_DATA_PATH "/media/algomorph/Data/reco/"
+#define DEFAULT_CAP_PATH DEFAULT_RECO_DATA_PATH "cap/yi/"
+#define DEFAULT_CALIB_PATH DEFAULT_RECO_DATA_PATH "calib/yi/"
+
+#define VIDEO_LEFT "s16l_edit.mp4"
+#define VIDEO_RIGHT "s16r_edit.mp4"
+#define CALIB_FILE "s15_calib.xml"
 
 main_window::main_window() :
 		ui(new Ui_main_window),
 		video_buffer(new utils::optimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 		pipe(new datapipe::stereo_pipe(video_buffer,datapipe::stereo_pipe::video_files,{
-						"/media/algomorph/Data/reco/cap/yi/" VIDEO_LEFT,
-						"/media/algomorph/Data/reco/cap/yi/" VIDEO_RIGHT
+					DEFAULT_CAP_PATH VIDEO_LEFT,
+					DEFAULT_CAP_PATH VIDEO_RIGHT
 				}
 #ifndef INHOUSE_RECTIFICATION
 		,"/media/algomorph/Data/reco/calib/yi/" CALIB_FILE
@@ -39,7 +48,7 @@ main_window::main_window() :
 		//stereo_input_buffer(new utils::unbounded_queue<std::shared_ptr<hal::ImageArray>>()),
 		stereo_input_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 		stereo_output_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
-		calibration(calibu::ReadXmlRig("/media/algomorph/Data/reco/calib/yi/" CALIB_FILE)),
+		calibration(calibu::ReadXmlRig(DEFAULT_CALIB_PATH CALIB_FILE)),
 		stereo_proc(stereo_input_buffer,stereo_output_buffer,calibration)
 {
 	ui->setupUi(this);
@@ -61,6 +70,11 @@ main_window::~main_window() {
  * Connect actions of menus & signals of controls with the corresponding slot functions
  */
 void main_window::connect_actions() {
+
+//====================== ACTIONS ===================================================================
+	connect(ui->action_open_calibration_file,SIGNAL(triggered()),this,SLOT(open_calibration_file()));
+	connect(ui->action_open_image_pair,SIGNAL(triggered()),this,SLOT(open_image_pair()));
+//====================== SLIDER CONTROLS ===========================================================
 
 #if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
 	ui->minimum_disparity_slider->setValue(stereo_proc.stereo_matcher.minDisparity);
@@ -191,6 +205,49 @@ void main_window::closeEvent(QCloseEvent* event) {
 
 }
 
+void main_window::open_image_pair(){
+	QFileDialog dialog(this,tr("Open Image Files"), DEFAULT_CAP_PATH, tr("Image files (*.jpg *.png *.bmp)"));
+	dialog.setFileMode(QFileDialog::ExistingFiles);
+	QStringList file_names;
+	if(dialog.exec()){
+		file_names = dialog.selectedFiles();
+	}
+	file_names.sort();
+	if(file_names.empty())
+		return;
+
+	if(file_names.size() != 2){
+		QMessageBox msg_box;
+		msg_box.setText("Expecting exactly two files, a right-left image pair. Got: " + QString::number(file_names.size()));
+		msg_box.exec();
+		return;
+	}
+
+	cv::Mat left = cv::imread(file_names[0].toStdString());
+	cv::Mat right = cv::imread(file_names[1].toStdString());
+
+	std::vector<cv::Mat> matrices = {left,right};
+	std::shared_ptr<hal::ImageArray> images = datapipe::hal_array_from_cv(matrices);
+	pipe->pause();//pause to avoid conflicts
+	ui->stereo_feed_viewer->on_frame(images);
+	stereo_input_buffer->push_back(images);
+
+}
+
+void main_window::open_calibration_file(){
+	QString qfile_path = QFileDialog::getOpenFileName(this, tr("Open Calibration File"),
+			DEFAULT_CALIB_PATH, tr("Calibu calibration files (*.xml)"));
+
+	if (!qfile_path.isEmpty()) {
+		std::string file_path = qfile_path.toStdString();
+		stereo_proc.set_calibration(calibu::ReadXmlRig(file_path));
+
+	}
+}
+
+/**
+ * Saves the currently processed stereo image pair as "left.png" and "right.png"
+ */
 void main_window::on_save_current_button_clicked(){
 	stereo_proc.save_current();
 }

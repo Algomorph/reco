@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1104</width>
-    <height>735</height>
+    <height>840</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -149,7 +149,7 @@
            <number>1</number>
           </property>
           <property name="maximum">
-           <number>33</number>
+           <number>65</number>
           </property>
           <property name="singleStep">
            <number>2</number>
@@ -170,7 +170,7 @@
          <number>1</number>
         </property>
         <property name="maximum">
-         <number>33</number>
+         <number>65</number>
         </property>
         <property name="singleStep">
          <number>2</number>
@@ -491,6 +491,20 @@
        </widget>
       </item>
       <item>
+       <layout class="QHBoxLayout" name="horizontalLayout_13">
+        <item>
+         <widget class="QCheckBox" name="rectify_checkbox">
+          <property name="text">
+           <string>Rectify</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
        <layout class="QHBoxLayout" name="horizontalLayout_12">
         <item>
          <widget class="QPushButton" name="save_current_button">
@@ -543,6 +557,8 @@
      <addaction name="action_wifi_camera"/>
     </widget>
     <addaction name="menuOpen_Stereo_Stream"/>
+    <addaction name="action_open_image_pair"/>
+    <addaction name="action_open_calibration_file"/>
    </widget>
    <addaction name="menuFile"/>
   </widget>
@@ -554,6 +570,16 @@
   <action name="action_wifi_camera">
    <property name="text">
     <string>&amp;Wifi Cameras</string>
+   </property>
+  </action>
+  <action name="action_open_image_pair">
+   <property name="text">
+    <string>Open &amp;Image Pair</string>
+   </property>
+  </action>
+  <action name="action_open_calibration_file">
+   <property name="text">
+    <string>Open &amp;Calibration File</string>
    </property>
   </action>
  </widget>

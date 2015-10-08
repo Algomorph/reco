@@ -29,6 +29,7 @@
 
 //datapipe
 #include <reco/datapipe/typedefs.h>
+#include <reco/datapipe/pipe.h>
 
 namespace reco {
 namespace datapipe {
@@ -39,8 +40,8 @@ namespace datapipe {
  * Object for retrieving video data (from "somewhere" in HAL) and pushing it off to various downstream actors,
  * such as display node(s), recording/storing node(s), and/or processing node(s).
  */
-class multichannel_pipe:
-		public QObject{
+class hal_pipe:
+		public pipe{
 
 Q_OBJECT
 
@@ -48,27 +49,14 @@ public:
 /**
  * Type of the buffer object required to use the pipe
  */
-	multichannel_pipe(frame_buffer_type buffer, std::string camera_uri);
-	virtual ~multichannel_pipe();
-
-	int get_num_channels();
-	frame_buffer_type get_buffer();
+	hal_pipe(frame_buffer_type buffer, std::string camera_uri);
+	virtual ~hal_pipe();
 
 protected:
-
+	std::string camera_uri;
 	hal::Camera camera;
-
-	void set_camera(const std::string& cam_uri);
-	//Called during set_camera
-	virtual void check_channel_number(const std::string& cam_uri, size_t num_channels) = 0;
-	virtual void check_channel_dimensions(const std::string& cam_uri, int ix_channel) = 0;
-
-
-	int num_channels = 0;
-
 private:
 	void initialize();
-	frame_buffer_type buffer;
 
 	//thread state
 	bool playback_allowed;
@@ -78,22 +66,12 @@ private:
 	std::mutex pause_mtx;
 
 	void work();
+
 public slots:
 
 	void stop();
 	void pause();
 	void run();
-
-signals:
-	/**
-	 * Emitted on error
-	 * @param error
-	 */
-	void error(QString err);
-	/**
-	 * Emitted when a new frame had been processed and pushed onto the buffer
-	 */
-	void frame();
 };
 
 } /* namespace datapipe */
