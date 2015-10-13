@@ -29,7 +29,7 @@ namespace stereo_workbench {
 stereo_processor::stereo_processor(
 		datapipe::frame_buffer_type input_frame_buffer,
 		datapipe::frame_buffer_type output_frame_buffer,
-		std::shared_ptr<calibu::Rigd> calibration = std::shared_ptr<calibu::Rigd>())
+		std::shared_ptr<rectifier>  rectifier)
 :
 		worker(),
 
@@ -48,12 +48,9 @@ stereo_processor::stereo_processor(
 				worker_shutting_down(false),
 				right_v_offset(0),
 
-				calibration(calibration)
-//stereo_matcher(32, 8)
+				_rectifier(rectifier)
+
 {
-	if (calibration) {
-		set_calibration(calibration);
-	}
 }
 
 stereo_processor::~stereo_processor() {
@@ -61,24 +58,12 @@ stereo_processor::~stereo_processor() {
 }
 
 void stereo_processor::set_calibration(std::shared_ptr<calibu::Rigd> calibration) {
-	Sophus::SE3d T_nr_nl;
-	calibu::CreateScanlineRectifiedLookupAndCameras(
-			calibration->cameras_[1]->Pose(),
-			calibration->cameras_[0],
-			calibration->cameras_[1],
-			//T_nr_nl, left_lut, right_lut
-			T_nr_nl, right_lut, left_lut
-			);
-	puts("Original translation vector:");
-	puts(calibration->cameras_[1]->Pose().translation());
-	puts("Final translation vector:");
-	puts(T_nr_nl.translation());
+	_rectifier->set_calibration(calibration);
 	if(!last_left.empty()){
-		rectify(last_left,last_right);
+		_rectifier->rectify(last_left,last_right,last_left_rectified,last_right_rectified);
 		recompute_disparity();
 	}
 }
-
 
 void stereo_processor::pre_thread_join() {
 
@@ -107,7 +92,7 @@ bool stereo_processor::do_unit_of_work() {
 		right.copyTo(last_right);
 
 		if (rectification_enabled) {
-			rectify(last_left,last_right);
+			_rectifier->rectify(last_left,last_right,last_left_rectified,last_right_rectified);
 		}
 		recompute_disparity();
 
@@ -118,35 +103,15 @@ bool stereo_processor::do_unit_of_work() {
 }
 
 void stereo_processor::save_current() {
-	cv::imwrite("left.png", last_left);
-	cv::imwrite("right.png", last_right);
-}
-
-void stereo_processor::rectify(cv::Mat left, cv::Mat right){
-	bool sizes_match = (int)left_lut.Width() == left.cols
-			&& (int)left_lut.Height() == left.rows
-			&& (int)right_lut.Width() == right.cols
-			&& (int)right_lut.Height() == right.rows;
-	if (!sizes_match) {
-		puts("Lookup table sizes don't match image sizes. Skipping rectification.");
-		report_int_mismatch(left_lut.Width(),left.cols, "left width");
-		report_int_mismatch(left_lut.Height(),left.rows, "left height");
-		report_int_mismatch(right_lut.Width(),right.cols, "right width");
-		report_int_mismatch(right_lut.Height(),right.rows, "right height");
-		last_left_rectified = left;
-		last_right_rectified = right;
-	} else {
-		cv::Mat rect_left(left.rows, left.cols, left.type());
-		cv::Mat rect_right(right.rows, right.cols, right.type());
-		calibu::Rectify(left_lut, left.data, rect_left.data, left.cols,
-				left.rows, left.channels());
-		calibu::Rectify(right_lut, right.data, rect_right.data, right.cols,
-				right.rows, right.channels());
-
-		last_left_rectified = rect_left;
-		last_right_rectified = rect_right;
+	if(rectification_enabled){
+		cv::imwrite("left.png", last_left_rectified);
+		cv::imwrite("right.png", last_right_rectified);
+	}else{
+		cv::imwrite("left.png", last_left);
+		cv::imwrite("right.png", last_right);
 	}
 }
+
 
 void stereo_processor::recompute_disparity(){
 	if(rectification_enabled){
@@ -297,7 +262,7 @@ void stereo_processor::set_v_offset(int value) {
 void stereo_processor::toggle_rectification(){
 	rectification_enabled = !rectification_enabled;
 	if(rectification_enabled){
-		rectify(last_left,last_right);
+		_rectifier->rectify(last_left,last_right,last_left_rectified,last_right_rectified);
 	}
 	recompute_disparity();
 }

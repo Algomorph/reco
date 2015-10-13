@@ -19,12 +19,11 @@
 #include <opencv2/calib3d/calib3d.hpp>
 //#include <opencv2/xfeatures2d/xfeatures2d.hpp>
 
-//misc
-#include <reco/misc/calibration_parameters.h>
 //calibu
 #include <calibu/Calibu.h>
 //std
 #include <mutex>
+#include "rectifier.h"
 
 #define INHOUSE_RECTIFICATION
 
@@ -37,7 +36,7 @@ Q_OBJECT
 public:
 	stereo_processor(datapipe::frame_buffer_type input_frame_buffer,
 			datapipe::frame_buffer_type output_frame_buffer,
-			std::shared_ptr<calibu::Rigd>  calibration);
+			std::shared_ptr<rectifier>  rectifier);
 	virtual ~stereo_processor();
 
 #if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
@@ -65,19 +64,16 @@ private:
 	cv::Mat last_right;
 	cv::Mat last_left_rectified;
 	cv::Mat last_right_rectified;
+	std::shared_ptr<rectifier> _rectifier;
 
 	void recompute_disparity();
 	void compute_disparity(cv::Mat left, cv::Mat right);
-	void rectify(cv::Mat left, cv::Mat right);
 
 #if CV_VERSION_MAJOR == 3
+	//TODO 203
 	void compute_disparity_daisy(cv::Mat left, cv::Mat right);
 #endif
 
-	std::shared_ptr<calibu::Rigd> calibration;
-
-	calibu::LookupTable left_lut;
-	calibu::LookupTable right_lut;
 public slots:
 	void set_minimum_disparity(int value);
 	void set_num_disparities(int value);

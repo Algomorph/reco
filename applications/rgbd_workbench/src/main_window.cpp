@@ -36,7 +36,7 @@ namespace rgbd_workbench {
 
 #define DEFAULT_RECO_DATA_PATH "/media/algomorph/Data/reco/"
 #define DEFAULT_CAP_PATH DEFAULT_RECO_DATA_PATH "cap/"
-#define DEFAULT_CALIB_PATH DEFAULT_RECO_DATA_PATH "calib/"
+#define DEFAULT_CALIB_PATH "/home/algomorph/Dropbox/calib/"
 
 #define DEFAULT_CALIBRATION_FILE_PATH DEFAULT_CALIB_PATH "pos_D_2_kinects.xml"
 #define DEFAULT_LOG_FILE_PATH DEFAULT_CAP_PATH "pos_D_slow_rotating_human_2_kinects_1240_frames.log"

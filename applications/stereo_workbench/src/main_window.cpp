@@ -10,6 +10,8 @@
 //local
 #include "../ui_main_window.h"
 #include "main_window.h"
+#include "calibu_rectifier.h"
+#include "opencv_rectifier.h"
 
 //datapipe
 #include <reco/datapipe/stereo_pipe.h>
@@ -28,11 +30,12 @@ namespace stereo_workbench {
 
 #define DEFAULT_RECO_DATA_PATH "/media/algomorph/Data/reco/"
 #define DEFAULT_CAP_PATH DEFAULT_RECO_DATA_PATH "cap/yi/"
-#define DEFAULT_CALIB_PATH DEFAULT_RECO_DATA_PATH "calib/yi/"
+#define DEFAULT_CALIB_PATH "/home/algomorph/Dropbox/calib/yi/"
 
-#define VIDEO_LEFT "s16l_edit.mp4"
-#define VIDEO_RIGHT "s16r_edit.mp4"
-#define CALIB_FILE "s15_calib_recentered.xml"
+#define VIDEO_LEFT "s19l_edit.mp4"
+#define VIDEO_RIGHT "s19r_edit.mp4"
+#define CALIB_FILE "s22.xml"
+#define CV_CALIB_FILE "s23cv1.xml"
 
 main_window::main_window() :
 		ui(new Ui_main_window),
@@ -41,7 +44,7 @@ main_window::main_window() :
 					DEFAULT_CAP_PATH VIDEO_LEFT,
 					DEFAULT_CAP_PATH VIDEO_RIGHT
 				}
-#ifndef INHOUSE_RECTIFICATION
+#ifdef UNDISTORT_ON_CAPTURE
 		,"/media/algomorph/Data/reco/calib/yi/" CALIB_FILE
 #endif
 		)),
@@ -49,7 +52,9 @@ main_window::main_window() :
 		stereo_input_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 		stereo_output_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 		calibration(calibu::ReadXmlRig(DEFAULT_CALIB_PATH CALIB_FILE)),
-		stereo_proc(stereo_input_buffer,stereo_output_buffer,calibration)
+		stereo_proc(stereo_input_buffer,stereo_output_buffer,
+				//std::shared_ptr<rectifier>(new calibu_rectifier(calibration)))
+				std::shared_ptr<rectifier>(new opencv_rectifier(DEFAULT_CALIB_PATH CV_CALIB_FILE)))
 {
 	ui->setupUi(this);
 	ui->disparity_viewer->configure_for_pipe(1);
