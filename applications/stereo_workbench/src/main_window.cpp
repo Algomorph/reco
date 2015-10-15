@@ -35,7 +35,7 @@ namespace stereo_workbench {
 #define VIDEO_LEFT "s19l_edit.mp4"
 #define VIDEO_RIGHT "s19r_edit.mp4"
 #define CALIB_FILE "s22.xml"
-#define CV_CALIB_FILE "s23cv1.xml"
+#define CV_CALIB_FILE "s23cv4.xml"
 
 main_window::main_window() :
 		ui(new Ui_main_window),
@@ -55,6 +55,7 @@ main_window::main_window() :
 		stereo_proc(stereo_input_buffer,stereo_output_buffer,
 				//std::shared_ptr<rectifier>(new calibu_rectifier(calibration)))
 				std::shared_ptr<rectifier>(new opencv_rectifier(DEFAULT_CALIB_PATH CV_CALIB_FILE)))
+				//std::shared_ptr<rectifier>(new opencv_rectifier(calibration)))
 {
 	ui->setupUi(this);
 	ui->disparity_viewer->configure_for_pipe(1);

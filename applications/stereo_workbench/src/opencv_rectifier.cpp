@@ -55,20 +55,14 @@ void opencv_rectifier::set_calibration(std::shared_ptr<calibu::Rigd> calibration
 void opencv_rectifier::set_calibration_opencv(const std::string& path){
 	cv::FileStorage fs(path, cv::FileStorage::READ);
 	cv::Mat T, R, K1, K2, d1, d2;
-	puts("k1");
 	fs["K1"] >> K1;
-	puts("k2");
 	fs["K2"] >> K2;
-	puts("d1");
 	fs["d1"] >> d1;
-	puts("d2");
 	fs["d2"] >> d2;
-	puts("R");
 	fs["R"] >> R;
 	fs["T"] >> T;
-	puts("im_size");
-	cv::Size im_size((int)fs["width"], (int)fs["height"]);
-	puts("release");
+	cv::Size im_size((int)fs["width"],(int)fs["height"]);
+
 	fs.release();
 	compute_maps(T,R,K1,d1,K2,d2,im_size);
 }
@@ -78,6 +72,10 @@ void opencv_rectifier::compute_maps(const cv::Mat& T, const cv::Mat& R,
 		const cv::Mat& K2, const cv::Mat& d2,
 		const cv::Size im_size){
 	cv::Mat R1,R2,P1,P2,Q;
+	//cv::Size new_size(2880,1620);
+//	cv::stereoRectify(K1, d1, K2, d2, im_size, R, T, R1, R2, P1, P2, Q, cv::CALIB_ZERO_DISPARITY,-1.0,new_size);
+//	cv::initUndistortRectifyMap(K1, d1, R1, P1, new_size, CV_32FC1, map1x, map1y);
+//	cv::initUndistortRectifyMap(K2, d2, R2, P2, new_size, CV_32FC1, map2x, map2y);
 	cv::stereoRectify(K1, d1, K2, d2, im_size, R, T, R1, R2, P1, P2, Q);
 	cv::initUndistortRectifyMap(K1, d1, R1, P1, im_size, CV_32FC1, map1x, map1y);
 	cv::initUndistortRectifyMap(K2, d2, R2, P2, im_size, CV_32FC1, map2x, map2y);
@@ -91,11 +89,12 @@ static void report_int_mismatch(int expected, int received, const std::string& n
 
 void opencv_rectifier::rectify(const cv::Mat& left, const cv::Mat& right, cv::Mat& left_rect,
 		cv::Mat& right_rect){
+	bool check_sizes = false;
 	bool sizes_match = map1x.cols == left.cols
 				&& map1x.rows == left.rows
 				&& map2x.cols == right.cols
 				&& map2x.rows == right.rows;
-	if (!sizes_match) {
+	if (check_sizes && !sizes_match) {
 		puts("Lookup table sizes don't match image sizes. Skipping rectification.");
 		report_int_mismatch( map1x.cols,left.cols, "left width");
 		report_int_mismatch( map1x.rows,left.rows, "left height");
