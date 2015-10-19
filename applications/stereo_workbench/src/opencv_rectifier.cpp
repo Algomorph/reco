@@ -72,13 +72,13 @@ void opencv_rectifier::compute_maps(const cv::Mat& T, const cv::Mat& R,
 		const cv::Mat& K2, const cv::Mat& d2,
 		const cv::Size im_size){
 	cv::Mat R1,R2,P1,P2,Q;
-	//cv::Size new_size(2880,1620);
-//	cv::stereoRectify(K1, d1, K2, d2, im_size, R, T, R1, R2, P1, P2, Q, cv::CALIB_ZERO_DISPARITY,-1.0,new_size);
-//	cv::initUndistortRectifyMap(K1, d1, R1, P1, new_size, CV_32FC1, map1x, map1y);
-//	cv::initUndistortRectifyMap(K2, d2, R2, P2, new_size, CV_32FC1, map2x, map2y);
-	cv::stereoRectify(K1, d1, K2, d2, im_size, R, T, R1, R2, P1, P2, Q);
-	cv::initUndistortRectifyMap(K1, d1, R1, P1, im_size, CV_32FC1, map1x, map1y);
-	cv::initUndistortRectifyMap(K2, d2, R2, P2, im_size, CV_32FC1, map2x, map2y);
+	cv::Size new_size(2880,1620);
+	cv::stereoRectify(K1, d1, K2, d2, im_size, R, T, R1, R2, P1, P2, Q, cv::CALIB_ZERO_DISPARITY,-1.0,new_size);
+	cv::initUndistortRectifyMap(K1, d1, R1, P1, new_size, CV_32FC1, map1x, map1y);
+	cv::initUndistortRectifyMap(K2, d2, R2, P2, new_size, CV_32FC1, map2x, map2y);
+//	cv::stereoRectify(K1, d1, K2, d2, im_size, R, T, R1, R2, P1, P2, Q);
+//	cv::initUndistortRectifyMap(K1, d1, R1, P1, im_size, CV_32FC1, map1x, map1y);
+//	cv::initUndistortRectifyMap(K2, d2, R2, P2, im_size, CV_32FC1, map2x, map2y);
 }
 
 static void report_int_mismatch(int expected, int received, const std::string& name){

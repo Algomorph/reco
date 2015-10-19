@@ -40,9 +40,11 @@ parser.add_argument("-sp", "--skip_printing_output", action='store_true', requir
 parser.add_argument("-ss", "--skip_saving_output", action='store_true', required = False, default= False)
 parser.add_argument("-o", "--output", help="output file to store calibration results", 
                     required = False, default="cvcalib.xml")
-parser.add_argument("-of", "--filtered_frame_folder", help="If specified, filtered frames"+
+parser.add_argument("-ff", "--filtered_frame_folder", help="filtered frames"+
                     " will be saved into this folder (relative to work folder specified by --folder)", 
-                    required = False, default=None)
+                    required = False, default="frames")
+parser.add_argument("-sf", "--save_frames", action='store_true', required = False, default= False)
+parser.add_argument("-lf", "--load_frames", action='store_true', required = False, default= False)
 parser.add_argument("-m", "--manual_filter", help="pick which (pre-filtered)frames to use manually"+
                     " one-by-one (use 'a' key to approve)", required = False, action='store_true', 
                     default=False)
@@ -99,7 +101,12 @@ def save_output_opencv(error, K1, d1, K2, d2, R, T, dims, file_path):
     error_element.text = str(error)
     et = etree.ElementTree(root)
     with open(file_path,'w') as f:
-        et.write(f,encoding='utf-8',xml_declaration=True, pretty_print=True)
+        et.write(f,encoding="utf-8",xml_declaration=True, pretty_print=True)
+    s=open(file_path).read()
+    s.replace("'","\"")
+    with open(file_path,'w') as f:
+        f.write(s)
+        f.flush()
     
     
 if __name__ == "__main__":
@@ -107,16 +114,17 @@ if __name__ == "__main__":
     left_vid = args.folder + os.path.sep + args.videos[0]
     right_vid = args.folder + os.path.sep +  args.videos[1]
     
-    print "Capturing frames from files: "
+    print "Calibrating based on files: "
     print(left_vid)
     print(right_vid)
     
-    if args.filtered_frame_folder:
+    if args.save_frames or args.load_frames:
         full_frame_folder_path = args.folder + os.path.sep + args.filtered_frame_folder
+        print full_frame_folder_path
         #if filtered frame folder is specified but doesn't exist, create it
         if not os.path.exists(full_frame_folder_path):
             os.makedirs(full_frame_folder_path)
-    
+
     left_cap = cv2.VideoCapture(left_vid)
     right_cap = cv2.VideoCapture(right_vid)
     
@@ -135,28 +143,51 @@ if __name__ == "__main__":
     rret, rframe = right_cap.read()
     frame_dims = lframe.shape[:-1]
     
+    usable_frame_ct = 0
+    i_frame = 0
+    criteria_subpix = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     
     if(args.load_corners):
         path = args.folder + os.path.sep + args.corners_file
+        print "Loading corners from " + path 
         npzfile = np.load(path)
         limgpoints = npzfile['limgpoints']
         rimgpoints = npzfile['rimgpoints']
         usable_frame_ct = len(limgpoints)
         for i_frame in xrange(usable_frame_ct):
             objpoints.append(objp)
+    elif(args.load_frames):
+        files = [f for f in os.listdir(full_frame_folder_path) if osp.isfile(osp.join(full_frame_folder_path,f)) and f.endswith(".png")]
+        files.sort()
+        #assume matching numbers in corresponding left & right files
+        rfiles = [f for f in files if "r_" in f]
+        lfiles = [f for f in files if "l_" in f]
+        #assume all are usable
+        for ix_pair in xrange(min(len(lfiles),len(rfiles))):
+            lframe = cv2.imread(osp.join(full_frame_folder_path,lfiles[ix_pair]))
+            rframe = cv2.imread(osp.join(full_frame_folder_path,rfiles[ix_pair]))
+            lfound,lcorners = cv2.findChessboardCorners(lframe,board_dims)
+            rfound,rcorners = cv2.findChessboardCorners(rframe,board_dims)
+            lgrey = cv2.cvtColor(lframe,cv2.COLOR_BGR2GRAY)
+            rgrey = cv2.cvtColor(rframe,cv2.COLOR_BGR2GRAY)
+            cv2.cornerSubPix(lgrey, lcorners, (11,11),(-1,-1),criteria_subpix)
+            cv2.cornerSubPix(rgrey, rcorners, (11,11),(-1,-1),criteria_subpix)
+            limgpoints.append(lcorners)
+            rimgpoints.append(rcorners)
+            objpoints.append(objp)
+            usable_frame_ct+=1
+            i_frame+=1
     else:
         #init capture
         cont_cap = lret and rret
         lframe_prev = np.zeros(lframe.shape, lframe.dtype)
         rframe_prev = np.zeros(rframe.shape, rframe.dtype)
         diff_div = lframe.shape[0] * lframe.shape[1] * 3 * 256.0
-        usable_frame_ct = 0
         report_interval = 10
-        i_frame = 0
         #for keeping track of the difference between frames
         diff = 0 
         
-        criteria_subpix = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
+        
         while(cont_cap):
             sharpness = min(cv2.Laplacian(lframe, cv2.CV_64F).var(), cv2.Laplacian(rframe, cv2.CV_64F).var())
             #compare left frame to the previous left **filtered** one
@@ -186,10 +217,10 @@ if __name__ == "__main__":
                         cv2.cornerSubPix(rgrey, rcorners, (11,11),(-1,-1),criteria_subpix)
                         
                         #save frames if filtered frame folder was specified
-                        if(args.filtered_frame_folder):
-                            cv2.imwrite(full_frame_folder_path + os.path.sep + left_vid[:-4] 
-                                        + "{0:04d}".format(i_frame) + ".png", lframe)
-                            cv2.imwrite(full_frame_folder_path + os.path.sep + right_vid[:-4] 
+                        if(args.save_frames):
+                            lfname =full_frame_folder_path + os.path.sep + args.videos[0][:-4] + "{0:04d}".format(i_frame) + ".png"
+                            cv2.imwrite(lfname, lframe)
+                            cv2.imwrite(full_frame_folder_path + os.path.sep + args.videos[1][:-4] 
                                         + "{0:04d}".format(i_frame) + ".png", rframe)
                             
                         limgpoints.append(lcorners)
@@ -220,7 +251,8 @@ if __name__ == "__main__":
     
     print "Total usable frames: " + str(usable_frame_ct) + " (" + str(usable_frame_ct * 100.0/(i_frame+1.0)) + " %)"
     print "Calibrating for max. " +str(args.max_iterations) + " iterations...."
-    identity = np.eye(3,3,np.float32)
+    identity = np.eye(3,3,np.float64)
+    identity2 = np.eye(3,3,np.float64)
     
     criteria = (cv2.TERM_CRITERIA_MAX_ITER + cv2.TERM_CRITERIA_EPS, args.max_iterations, 2.2204460492503131e-16)
     flags = 0
@@ -229,15 +261,29 @@ if __name__ == "__main__":
         #objpoints_np = np.array(objpoints)
         #print objpoints_np.shape
         #print np.transpose(objpoints_np, (0,2,1)).shape
-        blank = np.zeros(4,np.float32)
+        blank = np.zeros(4,np.float64)
+        blank2 = np.zeros(4,np.float64)
+        print objpoints[0].shape
+        obp2 = []
+        for set in objpoints:
+            obp2.append(np.transpose(set,(1,0,2)))
+        print obp2[0].shape
+        lpts2 = []
+        for set in limgpoints:
+            lpts2.append(np.transpose(set,(1,0,2)))
+        print lpts2[0].shape
+        err, K1, d1, tvecs, rvecs = cv2.fisheye.calibrate(objectPoints = obp2, imagePoints = lpts2, 
+                                                          image_size = frame_dims, K=identity, D=blank2)
+        
         error, K1, d1, K2, d2, R, T \
             = cv2.fisheye.stereoCalibrate(objpoints, limgpoints, rimgpoints, 
-                                          identity, blank, identity, blank, 
+                                          identity, blank, identity2, blank2, 
                                           imageSize=frame_dims,
                                           flags=flags,
                                           criteria=criteria)
     else:
-        blank = np.zeros(8,np.float32)
+        blank = np.zeros(8,np.float64)
+        blank2 = np.zeros(8,np.float64)
         if not args.use_tangential_distortion_coefficients:
             flags += cv2.CALIB_ZERO_TANGENT_DIST
         if args.use_8_distortion_coefficients:
@@ -253,7 +299,7 @@ if __name__ == "__main__":
             print "solo 1 err:"
             print err1
             err2, K2, d2, rvecs, tvecs = cv2.calibrateCamera(objpoints, rimgpoints, 
-                                                       frame_dims, identity, blank, flags=flags,criteria = criteria)
+                                                       frame_dims, identity2, blank2, flags=flags,criteria = criteria)
             print "K2 solo:"
             print K2
             print "d2 solo:"
@@ -262,21 +308,34 @@ if __name__ == "__main__":
             print err2
             flags += cv2.CALIB_FIX_INTRINSIC
             #flags += cv2.CALIB_USE_INTRINSIC_GUESS
-            print "Flags:"
-            print flags
-            error, K1_2, d1, K2_2, d2, R, T, E, F \
+            if(int(cv2.__version__ [0]) == 2):
+                error, K1_2, d1, K2_2, d2, R, T, E, F \
+                    = cv2.stereoCalibrate(objpoints,limgpoints,rimgpoints,  
+                                          imageSize = frame_dims,
+                                          cameraMatrix1 = K1, distCoeffs1 = d1, cameraMatrix2 = K2, distCoeffs2 = d2,
+                                          flags = flags,
+                                          criteria = criteria)
+            else:
+                error, K1, d1, K2, d2, R, T, E, F \
+                        = cv2.stereoCalibrate(objpoints,limgpoints,rimgpoints, 
+                                              cameraMatrix1 = K1, distCoeffs1 = d1, cameraMatrix2 = K2, distCoeffs2 =  d2,
+                                              imageSize = frame_dims,
+                                              flags = flags,
+                                              criteria = criteria)
+        else:
+            if(int(cv2.__version__ [0]) == 2):
+                error, K1, d1, K2, d2, R, T, E, F \
+                      = cv2.stereoCalibrate(objpoints,limgpoints,rimgpoints, 
+                                            imageSize = frame_dims,
+                                            flags = flags,
+                                            criteria = criteria)
+            else:  
+                error, K1, d1, K2, d2, R, T, E, F \
                     = cv2.stereoCalibrate(objpoints,limgpoints,rimgpoints, 
-                                          K1, d1, K2, d2, 
+                                          identity, blank, identity2, blank2, 
                                           imageSize = frame_dims,
                                           flags = flags,
                                           criteria = criteria)
-        else:
-            error, K1, d1, K2, d2, R, T, E, F \
-                = cv2.stereoCalibrate(objpoints,limgpoints,rimgpoints, 
-                                      identity, blank, identity2, blank, 
-                                      imageSize = frame_dims,
-                                      flags = flags,
-                                      criteria = criteria)
             
     if not args.skip_printing_output:
         print_output(error, K1, d1, K2, d2, R, T)

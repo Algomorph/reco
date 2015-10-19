@@ -14,17 +14,21 @@ if __name__ == "__main__":
     args = parser.parse_args()
     files = [f for f in os.listdir(args.folder) if osp.isfile(osp.join(args.folder,f)) and f.endswith(".png")]
     files.sort()
-    rfiles = [f for f in files if "r" in f]
-    lfiles = [f for f in files if "l" in f]
+    
+    rfiles = [f for f in files if "r_" in f]
+    lfiles = [f for f in files if "l_" in f]
     num_pattern = re.compile("\d+")
     rnums = [int(re.findall(num_pattern,f)[0]) for f in rfiles]
     lnums = [int(re.findall(num_pattern,f)[0]) for f in lfiles]
     
     ix_left = 0
+    count_removed = 0
     for ix_right in xrange(len(rnums)):
         rfile = rfiles[ix_right]
         rnum = rnums[ix_right]
         if ix_left >= len(lfiles) or lnums[ix_left] != rnum:
+            count_removed +=1
             os.remove(args.folder + osp.sep + rfile)
         else:
             ix_left += 1
+    print "removed {0:d} files".format(count_removed)
