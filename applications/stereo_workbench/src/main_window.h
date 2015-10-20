@@ -23,7 +23,7 @@
 #include <reco/misc/calibration_parameters.h>
 
 //local
-#include "stereo_processor.h"
+#include <src/stereo_tuner.h>
 
 class Ui_main_window;
 
@@ -49,7 +49,7 @@ private:
 	datapipe::frame_buffer_type stereo_input_buffer;
 	datapipe::frame_buffer_type stereo_output_buffer;
 	std::shared_ptr<calibu::Rigd> calibration;
-	stereo_processor stereo_proc;
+	stereo_tuner stereo_proc;
 
 	void hook_pipe();
 	void unhook_pipe();

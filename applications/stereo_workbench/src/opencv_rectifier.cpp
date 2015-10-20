@@ -83,7 +83,7 @@ void opencv_rectifier::compute_maps(const cv::Mat& T, const cv::Mat& R,
 
 static void report_int_mismatch(int expected, int received, const std::string& name){
 	if(expected != received){
-		puts("Expected " + name + ": " << expected + ". Got: " << received);
+		dpt("Expected " + name + ": " << expected + ". Got: " << received);
 	}
 }
 
@@ -95,7 +95,7 @@ void opencv_rectifier::rectify(const cv::Mat& left, const cv::Mat& right, cv::Ma
 				&& map2x.cols == right.cols
 				&& map2x.rows == right.rows;
 	if (check_sizes && !sizes_match) {
-		puts("Lookup table sizes don't match image sizes. Skipping rectification.");
+		dpt("Lookup table sizes don't match image sizes. Skipping rectification.");
 		report_int_mismatch( map1x.cols,left.cols, "left width");
 		report_int_mismatch( map1x.rows,left.rows, "left height");
 		report_int_mismatch( map2x.cols,right.cols, "right width");

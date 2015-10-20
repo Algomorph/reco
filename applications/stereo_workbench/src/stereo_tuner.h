@@ -30,14 +30,14 @@
 namespace reco {
 namespace stereo_workbench {
 
-class stereo_processor: public QObject, public utils::worker {
+class stereo_tuner: public QObject, public utils::worker {
 
 Q_OBJECT
 public:
-	stereo_processor(datapipe::frame_buffer_type input_frame_buffer,
+	stereo_tuner(datapipe::frame_buffer_type input_frame_buffer,
 			datapipe::frame_buffer_type output_frame_buffer,
 			std::shared_ptr<rectifier>  rectifier);
-	virtual ~stereo_processor();
+	virtual ~stereo_tuner();
 
 #if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
 	cv::StereoSGBM stereo_matcher;

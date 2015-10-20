@@ -30,15 +30,15 @@ void calibu_rectifier::set_calibration(std::shared_ptr<calibu::Rigd> calibration
 			//T_nr_nl, left_lut, right_lut
 			T_nr_nl, right_lut, left_lut
 			);
-	puts("Original translation vector:");
-	puts(calibration->cameras_[1]->Pose().translation());
-	puts("Final translation vector:");
-	puts(T_nr_nl.translation());
+	dpt("Original translation vector:");
+	dpt(calibration->cameras_[1]->Pose().translation());
+	dpt("Final translation vector:");
+	dpt(T_nr_nl.translation());
 }
 
 static void report_int_mismatch(int expected, int received, const std::string& name){
 	if(expected != received){
-		puts("Expected " + name + ": " << expected + ". Got: " << received);
+		dpt("Expected " + name + ": " << expected + ". Got: " << received);
 	}
 }
 

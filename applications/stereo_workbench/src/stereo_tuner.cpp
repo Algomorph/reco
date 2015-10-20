@@ -7,8 +7,6 @@
  */
 
 //local
-#include <src/stereo_processor.h>
-//utils
 #include <reco/utils/queue.h>
 //std
 #include <memory>
@@ -22,11 +20,12 @@
 #include <Eigen/Eigen>
 //opencv
 #include <opencv2/highgui/highgui.hpp>
+#include "stereo_tuner.h"
 
 namespace reco {
 namespace stereo_workbench {
 
-stereo_processor::stereo_processor(
+stereo_tuner::stereo_tuner(
 		datapipe::frame_buffer_type input_frame_buffer,
 		datapipe::frame_buffer_type output_frame_buffer,
 		std::shared_ptr<rectifier>  rectifier)
@@ -53,11 +52,11 @@ stereo_processor::stereo_processor(
 {
 }
 
-stereo_processor::~stereo_processor() {
+stereo_tuner::~stereo_tuner() {
 
 }
 
-void stereo_processor::set_calibration(std::shared_ptr<calibu::Rigd> calibration) {
+void stereo_tuner::set_calibration(std::shared_ptr<calibu::Rigd> calibration) {
 	_rectifier->set_calibration(calibration);
 	if(!last_left.empty()){
 		_rectifier->rectify(last_left,last_right,last_left_rectified,last_right_rectified);
@@ -65,7 +64,7 @@ void stereo_processor::set_calibration(std::shared_ptr<calibu::Rigd> calibration
 	}
 }
 
-void stereo_processor::pre_thread_join() {
+void stereo_tuner::pre_thread_join() {
 
 	std::shared_ptr<hal::ImageArray> dummy;
 	//run through a "fake" frame to queue to ensure thread doesn't get
@@ -74,13 +73,7 @@ void stereo_processor::pre_thread_join() {
 	input_frame_buffer->push_back(dummy);
 }
 
-static void report_int_mismatch(int expected, int received, const std::string& name){
-	if(expected != received){
-		puts("Expected " + name + ": " << expected + ". Got: " << received);
-	}
-}
-
-bool stereo_processor::do_unit_of_work() {
+bool stereo_tuner::do_unit_of_work() {
 	std::shared_ptr<hal::ImageArray> array = input_frame_buffer->pop_front();
 	if (array) {
 		//for now, assume stereo pair
@@ -102,7 +95,7 @@ bool stereo_processor::do_unit_of_work() {
 	return false;
 }
 
-void stereo_processor::save_current() {
+void stereo_tuner::save_current() {
 	if(rectification_enabled){
 		cv::imwrite("left.png", last_left_rectified);
 		cv::imwrite("right.png", last_right_rectified);
@@ -113,7 +106,7 @@ void stereo_processor::save_current() {
 }
 
 
-void stereo_processor::recompute_disparity(){
+void stereo_tuner::recompute_disparity(){
 	if(rectification_enabled){
 		compute_disparity(last_left_rectified,last_right_rectified);
 	}else{
@@ -126,7 +119,7 @@ void stereo_processor::recompute_disparity(){
  * @param left
  * @param right
  */
-void stereo_processor::compute_disparity(cv::Mat left, cv::Mat right) {
+void stereo_tuner::compute_disparity(cv::Mat left, cv::Mat right) {
 	cv::Mat disparity;
 
 	int offset = this->right_v_offset;
@@ -163,103 +156,103 @@ void stereo_processor::compute_disparity(cv::Mat left, cv::Mat right) {
 }
 
 #if CV_VERSION_MAJOR == 3
-void stereo_processor::compute_disparity_daisy(cv::Mat left, cv::Mat right) {
+void stereo_tuner::compute_disparity_daisy(cv::Mat left, cv::Mat right) {
 
 }
 #endif
 
-int stereo_processor::get_v_offset() {
+int stereo_tuner::get_v_offset() {
 	return this->right_v_offset;
 }
 
 #if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
-void stereo_processor::set_minimum_disparity(int value) {
+void stereo_tuner::set_minimum_disparity(int value) {
 	stereo_matcher.minDisparity = value;
 	recompute_disparity();
 }
-void stereo_processor::set_num_disparities(int value) {
+void stereo_tuner::set_num_disparities(int value) {
 	stereo_matcher.numberOfDisparities = value - (value % 16);
 	recompute_disparity();
 }
-void stereo_processor::set_window_size(int value) {
+void stereo_tuner::set_window_size(int value) {
 	stereo_matcher.SADWindowSize = value + ((value + 1) % 2);
 	recompute_disparity();
 }
-void stereo_processor::set_p1(int value) {
+void stereo_tuner::set_p1(int value) {
 	if(value < stereo_matcher.P2) {
 		stereo_matcher.P1 = value;
 		recompute_disparity();
 	}
 }
-void stereo_processor::set_p2(int value) {
+void stereo_tuner::set_p2(int value) {
 	if(value > stereo_matcher.P1) {
 		stereo_matcher.P2 = value;
 		recompute_disparity();
 	}
 }
-void stereo_processor::set_pre_filter_cap(int value) {
+void stereo_tuner::set_pre_filter_cap(int value) {
 	stereo_matcher.preFilterCap = value;
 	recompute_disparity();
 }
-void stereo_processor::set_uniqueness_ratio(int value) {
+void stereo_tuner::set_uniqueness_ratio(int value) {
 	stereo_matcher.uniquenessRatio = value;
 	recompute_disparity();
 }
-void stereo_processor::set_speckle_window_size(int value) {
+void stereo_tuner::set_speckle_window_size(int value) {
 	stereo_matcher.speckleRange = value;
 	recompute_disparity();
 }
-void stereo_processor::set_speckle_range(int value) {
+void stereo_tuner::set_speckle_range(int value) {
 	stereo_matcher.speckleRange = value;
 	recompute_disparity();
 }
 #elif CV_VERSION_MAJOR == 3
-void stereo_processor::set_minimum_disparity(int value) {
+void stereo_tuner::set_minimum_disparity(int value) {
 	stereo_matcher->setMinDisparity(value);
 	recompute_disparity();
 }
-void stereo_processor::set_num_disparities(int value) {
+void stereo_tuner::set_num_disparities(int value) {
 	stereo_matcher->setNumDisparities(value - (value % 16));
 	recompute_disparity();
 }
-void stereo_processor::set_window_size(int value) {
+void stereo_tuner::set_window_size(int value) {
 	int new_window_size = value + ((value + 1) % 2);
 	stereo_matcher->setBlockSize(new_window_size);
 	recompute_disparity();
 }
-void stereo_processor::set_p1(int value) {
+void stereo_tuner::set_p1(int value) {
 	if (value < stereo_matcher->getP2()) {
 		stereo_matcher->setP1(value);
 		recompute_disparity();
 	}
 }
-void stereo_processor::set_p2(int value) {
+void stereo_tuner::set_p2(int value) {
 	if (value > stereo_matcher->getP1()) {
 		stereo_matcher->setP2(value);
 		recompute_disparity();
 	}
 }
-void stereo_processor::set_pre_filter_cap(int value) {
+void stereo_tuner::set_pre_filter_cap(int value) {
 	stereo_matcher->setPreFilterCap(value);
 	recompute_disparity();
 }
-void stereo_processor::set_uniqueness_ratio(int value) {
+void stereo_tuner::set_uniqueness_ratio(int value) {
 	stereo_matcher->setUniquenessRatio(value);
 	recompute_disparity();
 }
-void stereo_processor::set_speckle_window_size(int value) {
+void stereo_tuner::set_speckle_window_size(int value) {
 	stereo_matcher->setSpeckleWindowSize(value);
 	recompute_disparity();
 }
-void stereo_processor::set_speckle_range(int value) {
+void stereo_tuner::set_speckle_range(int value) {
 	stereo_matcher->setSpeckleRange(value);
 	recompute_disparity();
 }
-void stereo_processor::set_v_offset(int value) {
+void stereo_tuner::set_v_offset(int value) {
 	right_v_offset = value;
 	recompute_disparity();
 }
-void stereo_processor::toggle_rectification(){
+void stereo_tuner::toggle_rectification(){
 	rectification_enabled = !rectification_enabled;
 	if(rectification_enabled){
 		_rectifier->rectify(last_left,last_right,last_left_rectified,last_right_rectified);

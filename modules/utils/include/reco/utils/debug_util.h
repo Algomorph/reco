@@ -12,12 +12,12 @@
 
 #include <iostream>
 
-#ifndef puts
+#ifndef dpt
 
 #ifdef _DEBUG
-#define puts(x) std::cout << x << std::endl;
+#define dpt(x) std::cout << x << std::endl;
 #else
-#define puts(x)
+#define dpt(x)
 #endif
 
 #endif
