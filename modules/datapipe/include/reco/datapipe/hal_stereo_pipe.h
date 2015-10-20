@@ -16,18 +16,18 @@
 namespace reco {
 namespace datapipe {
 
-class stereo_pipe:
+class hal_stereo_pipe:
 		public hal_pipe {
 public:
 	enum stereo_source{
 		video_files = 0
 	};
-	stereo_pipe(frame_buffer_type buffer,
+	hal_stereo_pipe(frame_buffer_type buffer,
 			stereo_source source = video_files,
 			std::vector<std::string> video_file_paths = {},
 			std::string calibration_file_path = "",
 			bool use_stereo_rectification = true);
-	virtual ~stereo_pipe();
+	virtual ~hal_stereo_pipe();
 
 private:
 	static std::string compile_camera_uri(stereo_source source,

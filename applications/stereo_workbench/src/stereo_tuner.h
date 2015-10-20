@@ -25,8 +25,6 @@
 #include <mutex>
 #include "rectifier.h"
 
-#define INHOUSE_RECTIFICATION
-
 namespace reco {
 namespace stereo_workbench {
 
@@ -36,7 +34,7 @@ Q_OBJECT
 public:
 	stereo_tuner(datapipe::frame_buffer_type input_frame_buffer,
 			datapipe::frame_buffer_type output_frame_buffer,
-			std::shared_ptr<rectifier>  rectifier);
+			std::shared_ptr<rectifier>  rectifier_instance = std::shared_ptr<rectifier>());
 	virtual ~stereo_tuner();
 
 #if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
@@ -47,13 +45,15 @@ public:
 
 
 	int get_v_offset();
-	void set_calibration(std::shared_ptr<calibu::Rigd> calibration);
+
+	void set_rectifier(std::shared_ptr<rectifier> _rectifier);
 	void toggle_rectification();
 
 protected:
 	virtual bool do_unit_of_work();
 	virtual void pre_thread_join();
 private:
+	std::mutex rectify_guard;
 	bool rectification_enabled;
 	datapipe::frame_buffer_type input_frame_buffer;
 	datapipe::frame_buffer_type output_frame_buffer;
@@ -66,6 +66,7 @@ private:
 	cv::Mat last_right_rectified;
 	std::shared_ptr<rectifier> _rectifier;
 
+	void recompute_disparity_if_paused();
 	void recompute_disparity();
 	void compute_disparity(cv::Mat left, cv::Mat right);
 

@@ -41,7 +41,7 @@ stereo_tuner::stereo_tuner(
 								cv::StereoSGBM::MODE_SGBM)),
 
 #endif
-				rectification_enabled(true),
+				rectification_enabled((bool)rectifier),
 				input_frame_buffer(input_frame_buffer),
 				output_frame_buffer(output_frame_buffer),
 				worker_shutting_down(false),
@@ -56,10 +56,17 @@ stereo_tuner::~stereo_tuner() {
 
 }
 
-void stereo_tuner::set_calibration(std::shared_ptr<calibu::Rigd> calibration) {
-	_rectifier->set_calibration(calibration);
-	if(!last_left.empty()){
-		_rectifier->rectify(last_left,last_right,last_left_rectified,last_right_rectified);
+void stereo_tuner::set_rectifier(std::shared_ptr<rectifier> _rectifier) {
+	std::unique_lock<std::mutex> lckr(this->rectify_guard);
+	this->_rectifier = _rectifier;
+	if(!_rectifier){
+		rectification_enabled = false;
+	}
+	std::unique_lock<std::mutex> lckp(this->pause_mutex);
+	if(!last_left.empty() && this->is_paused()){
+		if(rectification_enabled){
+			_rectifier->rectify(last_left,last_right,last_left_rectified,last_right_rectified);
+		}
 		recompute_disparity();
 	}
 }
@@ -84,8 +91,12 @@ bool stereo_tuner::do_unit_of_work() {
 		left.copyTo(last_left);
 		right.copyTo(last_right);
 
-		if (rectification_enabled) {
-			_rectifier->rectify(last_left,last_right,last_left_rectified,last_right_rectified);
+		{
+			//protect _rectifier from write access during rectification
+			std::unique_lock<std::mutex> lck(this->rectify_guard);
+			if (rectification_enabled) {
+				_rectifier->rectify(last_left,last_right,last_left_rectified,last_right_rectified);
+			}
 		}
 		recompute_disparity();
 
@@ -111,6 +122,15 @@ void stereo_tuner::recompute_disparity(){
 		compute_disparity(last_left_rectified,last_right_rectified);
 	}else{
 		compute_disparity(last_left,last_right);
+	}
+}
+
+void stereo_tuner::recompute_disparity_if_paused(){
+	//protect the paused variable from being written during recompute
+
+	std::unique_lock<std::mutex> lck(this->pause_mutex);
+	if(this->is_paused()){
+		recompute_disparity();
 	}
 }
 
@@ -168,96 +188,101 @@ int stereo_tuner::get_v_offset() {
 #if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
 void stereo_tuner::set_minimum_disparity(int value) {
 	stereo_matcher.minDisparity = value;
-	recompute_disparity();
+	recompute_disparity_if_paused();
 }
 void stereo_tuner::set_num_disparities(int value) {
 	stereo_matcher.numberOfDisparities = value - (value % 16);
-	recompute_disparity();
+	recompute_disparity_if_paused();
 }
 void stereo_tuner::set_window_size(int value) {
 	stereo_matcher.SADWindowSize = value + ((value + 1) % 2);
-	recompute_disparity();
+	recompute_disparity_if_paused();
 }
 void stereo_tuner::set_p1(int value) {
 	if(value < stereo_matcher.P2) {
 		stereo_matcher.P1 = value;
-		recompute_disparity();
+		recompute_disparity_if_paused();
 	}
 }
 void stereo_tuner::set_p2(int value) {
 	if(value > stereo_matcher.P1) {
 		stereo_matcher.P2 = value;
-		recompute_disparity();
+		recompute_disparity_if_paused();
 	}
 }
 void stereo_tuner::set_pre_filter_cap(int value) {
 	stereo_matcher.preFilterCap = value;
-	recompute_disparity();
+	recompute_disparity_if_paused();
 }
 void stereo_tuner::set_uniqueness_ratio(int value) {
 	stereo_matcher.uniquenessRatio = value;
-	recompute_disparity();
+	recompute_disparity_if_paused();
 }
 void stereo_tuner::set_speckle_window_size(int value) {
 	stereo_matcher.speckleRange = value;
-	recompute_disparity();
+	recompute_disparity_if_paused();
 }
 void stereo_tuner::set_speckle_range(int value) {
 	stereo_matcher.speckleRange = value;
-	recompute_disparity();
+	recompute_disparity_if_paused();
 }
 #elif CV_VERSION_MAJOR == 3
 void stereo_tuner::set_minimum_disparity(int value) {
 	stereo_matcher->setMinDisparity(value);
-	recompute_disparity();
+	recompute_disparity_if_paused();
 }
 void stereo_tuner::set_num_disparities(int value) {
 	stereo_matcher->setNumDisparities(value - (value % 16));
-	recompute_disparity();
+	recompute_disparity_if_paused();
 }
 void stereo_tuner::set_window_size(int value) {
 	int new_window_size = value + ((value + 1) % 2);
 	stereo_matcher->setBlockSize(new_window_size);
-	recompute_disparity();
+	recompute_disparity_if_paused();
 }
 void stereo_tuner::set_p1(int value) {
 	if (value < stereo_matcher->getP2()) {
 		stereo_matcher->setP1(value);
-		recompute_disparity();
+		recompute_disparity_if_paused();
 	}
 }
 void stereo_tuner::set_p2(int value) {
 	if (value > stereo_matcher->getP1()) {
 		stereo_matcher->setP2(value);
-		recompute_disparity();
+		recompute_disparity_if_paused();
 	}
 }
 void stereo_tuner::set_pre_filter_cap(int value) {
 	stereo_matcher->setPreFilterCap(value);
-	recompute_disparity();
+	recompute_disparity_if_paused();
 }
 void stereo_tuner::set_uniqueness_ratio(int value) {
 	stereo_matcher->setUniquenessRatio(value);
-	recompute_disparity();
+	recompute_disparity_if_paused();
 }
 void stereo_tuner::set_speckle_window_size(int value) {
 	stereo_matcher->setSpeckleWindowSize(value);
-	recompute_disparity();
+	recompute_disparity_if_paused();
 }
 void stereo_tuner::set_speckle_range(int value) {
 	stereo_matcher->setSpeckleRange(value);
-	recompute_disparity();
+	recompute_disparity_if_paused();
 }
 void stereo_tuner::set_v_offset(int value) {
 	right_v_offset = value;
-	recompute_disparity();
+	recompute_disparity_if_paused();
 }
 void stereo_tuner::toggle_rectification(){
-	rectification_enabled = !rectification_enabled;
-	if(rectification_enabled){
-		_rectifier->rectify(last_left,last_right,last_left_rectified,last_right_rectified);
+	if(this->_rectifier){
+		rectification_enabled = !rectification_enabled;
+		std::unique_lock<std::mutex> lck(pause_mutex);
+		if(this->is_paused()){
+			if(rectification_enabled){
+				_rectifier->rectify(last_left,last_right,last_left_rectified,last_right_rectified);
+			}
+			recompute_disparity();
+		}
 	}
-	recompute_disparity();
 }
 
 #endif

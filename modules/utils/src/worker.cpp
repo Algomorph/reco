@@ -52,6 +52,10 @@ void worker::pause(){
 	paused = true;
 }
 
+bool worker::is_paused(){
+	return paused;
+}
+
 void worker::pre_thread_join(){
 
 }

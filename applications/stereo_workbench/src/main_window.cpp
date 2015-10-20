@@ -14,7 +14,7 @@
 #include "opencv_rectifier.h"
 
 //datapipe
-#include <reco/datapipe/stereo_pipe.h>
+#include <reco/datapipe/hal_stereo_pipe.h>
 #include <reco/datapipe/hal_interop.h>
 
 //utils
@@ -25,6 +25,9 @@
 #include <QMessageBox>
 #include <QFileDialog>
 
+#include <boost/filesystem/path.hpp>
+#include <boost/filesystem/operations.hpp>
+
 namespace reco {
 namespace stereo_workbench {
 
@@ -32,38 +35,49 @@ namespace stereo_workbench {
 #define DEFAULT_CAP_PATH DEFAULT_RECO_DATA_PATH "cap/yi/"
 #define DEFAULT_CALIB_PATH "/home/algomorph/Dropbox/calib/yi/"
 
-#define VIDEO_LEFT "s19l_edit.mp4"
-#define VIDEO_RIGHT "s19r_edit.mp4"
-#define CALIB_FILE "s22.xml"
-#define CV_CALIB_FILE "s25cv12_BEST.xml"
+#define VIDEO_LEFT "s24l_edit.mp4"
+#define VIDEO_RIGHT "s24r_edit.mp4"
+#define CALIB_FILE "s25cv12_BEST.xml"
+
+//#define VIDEO_LEFT "x"
+//#define VIDEO_RIGHT "y"
 
 main_window::main_window() :
 		ui(new Ui_main_window),
 		video_buffer(new utils::optimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
-		pipe(new datapipe::stereo_pipe(video_buffer,datapipe::stereo_pipe::video_files,{
-					DEFAULT_CAP_PATH VIDEO_LEFT,
-					DEFAULT_CAP_PATH VIDEO_RIGHT
-				}
-#ifdef UNDISTORT_ON_CAPTURE
-		,"/media/algomorph/Data/reco/calib/yi/" CALIB_FILE
-#endif
-		)),
+		pipe(),
 		//stereo_input_buffer(new utils::unbounded_queue<std::shared_ptr<hal::ImageArray>>()),
 		stereo_input_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 		stereo_output_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
-		calibration(calibu::ReadXmlRig(DEFAULT_CALIB_PATH CALIB_FILE)),
-		stereo_proc(stereo_input_buffer,stereo_output_buffer,
-				//std::shared_ptr<rectifier>(new calibu_rectifier(calibration)))
-				std::shared_ptr<rectifier>(new opencv_rectifier(DEFAULT_CALIB_PATH CV_CALIB_FILE)))
-				//std::shared_ptr<rectifier>(new opencv_rectifier(calibration)))
+		tuner(stereo_input_buffer,stereo_output_buffer)
 {
+	using namespace boost::filesystem;
 	ui->setupUi(this);
 	ui->disparity_viewer->configure_for_pipe(1);
+
+	//check default files
+	path calib_path(DEFAULT_CALIB_PATH CALIB_FILE);
+	if(is_regular_file(calib_path)){
+		tuner.set_rectifier(std::shared_ptr<rectifier>(new opencv_rectifier(calib_path.c_str())));
+	}
+
+	if(is_regular_file(path(DEFAULT_CAP_PATH VIDEO_LEFT)) && is_regular_file(path(DEFAULT_CAP_PATH VIDEO_RIGHT))){
+		pipe.reset(
+		new datapipe::hal_stereo_pipe(video_buffer,datapipe::hal_stereo_pipe::video_files,{
+							DEFAULT_CAP_PATH VIDEO_LEFT,
+							DEFAULT_CAP_PATH VIDEO_RIGHT
+						}
+		#ifdef UNDISTORT_ON_CAPTURE
+				,"/media/algomorph/Data/reco/calib/yi/" CALIB_FILE
+		#endif
+				));
+	}
+
 	connect_actions();
 
 	hook_pipe();
-	stereo_proc.run();
-	connect(&stereo_proc,SIGNAL(frame(std::shared_ptr<std::vector<cv::Mat>>)),
+	tuner.run();
+	connect(&tuner,SIGNAL(frame(std::shared_ptr<std::vector<cv::Mat>>)),
 			ui->disparity_viewer,SLOT(on_frame(std::shared_ptr<std::vector<cv::Mat>>)));
 }
 
@@ -83,76 +97,76 @@ void main_window::connect_actions() {
 //====================== SLIDER CONTROLS ===========================================================
 
 #if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
-	ui->minimum_disparity_slider->setValue(stereo_proc.stereo_matcher.minDisparity);
-	ui->number_of_disparities_slider->setValue(stereo_proc.stereo_matcher.numberOfDisparities);
-	ui->window_size_slider->setValue(stereo_proc.stereo_matcher.SADWindowSize);
-	ui->p1_slider->setValue(stereo_proc.stereo_matcher.P1);
-	ui->p2_slider->setValue(stereo_proc.stereo_matcher.P2);
-	ui->pre_filter_cap_slider->setValue(stereo_proc.stereo_matcher.preFilterCap);
-	ui->uniqueness_ratio_slider->setValue(stereo_proc.stereo_matcher.uniquenessRatio);
-	ui->speckle_window_size_slider->setValue(stereo_proc.stereo_matcher.speckleWindowSize);
-	ui->speckle_range_slider->setValue(stereo_proc.stereo_matcher.speckleRange);
+	ui->minimum_disparity_slider->setValue(tuner.stereo_matcher.minDisparity);
+	ui->number_of_disparities_slider->setValue(tuner.stereo_matcher.numberOfDisparities);
+	ui->window_size_slider->setValue(tuner.stereo_matcher.SADWindowSize);
+	ui->p1_slider->setValue(tuner.stereo_matcher.P1);
+	ui->p2_slider->setValue(tuner.stereo_matcher.P2);
+	ui->pre_filter_cap_slider->setValue(tuner.stereo_matcher.preFilterCap);
+	ui->uniqueness_ratio_slider->setValue(tuner.stereo_matcher.uniquenessRatio);
+	ui->speckle_window_size_slider->setValue(tuner.stereo_matcher.speckleWindowSize);
+	ui->speckle_range_slider->setValue(tuner.stereo_matcher.speckleRange);
 
-	ui->minimum_disparity_spin_box->setValue(stereo_proc.stereo_matcher.minDisparity);
-	ui->number_of_disparities_spin_box->setValue(stereo_proc.stereo_matcher.numberOfDisparities);
-	ui->window_size_spin_box->setValue(stereo_proc.stereo_matcher.SADWindowSize);
-	ui->p1_spin_box->setValue(stereo_proc.stereo_matcher.P1);
-	ui->p2_spin_box->setValue(stereo_proc.stereo_matcher.P2);
-	ui->pre_filter_cap_spin_box->setValue(stereo_proc.stereo_matcher.preFilterCap);
-	ui->uniqueness_ratio_spin_box->setValue(stereo_proc.stereo_matcher.uniquenessRatio);
-	ui->speckle_window_size_spin_box->setValue(stereo_proc.stereo_matcher.speckleWindowSize);
-	ui->speckle_range_spin_box->setValue(stereo_proc.stereo_matcher.speckleRange);
+	ui->minimum_disparity_spin_box->setValue(tuner.stereo_matcher.minDisparity);
+	ui->number_of_disparities_spin_box->setValue(tuner.stereo_matcher.numberOfDisparities);
+	ui->window_size_spin_box->setValue(tuner.stereo_matcher.SADWindowSize);
+	ui->p1_spin_box->setValue(tuner.stereo_matcher.P1);
+	ui->p2_spin_box->setValue(tuner.stereo_matcher.P2);
+	ui->pre_filter_cap_spin_box->setValue(tuner.stereo_matcher.preFilterCap);
+	ui->uniqueness_ratio_spin_box->setValue(tuner.stereo_matcher.uniquenessRatio);
+	ui->speckle_window_size_spin_box->setValue(tuner.stereo_matcher.speckleWindowSize);
+	ui->speckle_range_spin_box->setValue(tuner.stereo_matcher.speckleRange);
 #elif CV_VERSION_MAJOR == 3
-	ui->minimum_disparity_slider->      setValue(stereo_proc.stereo_matcher->getMinDisparity());
-	ui->number_of_disparities_slider->  setValue(stereo_proc.stereo_matcher->getNumDisparities());
-	ui->window_size_slider->            setValue(stereo_proc.stereo_matcher->getBlockSize());
-	ui->p1_slider->                     setValue(stereo_proc.stereo_matcher->getP1());
-	ui->p2_slider->                     setValue(stereo_proc.stereo_matcher->getP2());
-	ui->pre_filter_cap_slider->         setValue(stereo_proc.stereo_matcher->getPreFilterCap());
-	ui->uniqueness_ratio_slider->       setValue(stereo_proc.stereo_matcher->getUniquenessRatio());
-	ui->speckle_window_size_slider->    setValue(stereo_proc.stereo_matcher->getSpeckleWindowSize());
-	ui->speckle_range_slider->          setValue(stereo_proc.stereo_matcher->getSpeckleRange());
-	ui->v_offset_slider->               setValue(stereo_proc.get_v_offset());
+	ui->minimum_disparity_slider->      setValue(tuner.stereo_matcher->getMinDisparity());
+	ui->number_of_disparities_slider->  setValue(tuner.stereo_matcher->getNumDisparities());
+	ui->window_size_slider->            setValue(tuner.stereo_matcher->getBlockSize());
+	ui->p1_slider->                     setValue(tuner.stereo_matcher->getP1());
+	ui->p2_slider->                     setValue(tuner.stereo_matcher->getP2());
+	ui->pre_filter_cap_slider->         setValue(tuner.stereo_matcher->getPreFilterCap());
+	ui->uniqueness_ratio_slider->       setValue(tuner.stereo_matcher->getUniquenessRatio());
+	ui->speckle_window_size_slider->    setValue(tuner.stereo_matcher->getSpeckleWindowSize());
+	ui->speckle_range_slider->          setValue(tuner.stereo_matcher->getSpeckleRange());
+	ui->v_offset_slider->               setValue(tuner.get_v_offset());
 
-	ui->minimum_disparity_spin_box->    setValue(stereo_proc.stereo_matcher->getMinDisparity());
-	ui->number_of_disparities_spin_box->setValue(stereo_proc.stereo_matcher->getNumDisparities());
-	ui->window_size_spin_box->          setValue(stereo_proc.stereo_matcher->getBlockSize());
-	ui->p1_spin_box->                   setValue(stereo_proc.stereo_matcher->getP1());
-	ui->p2_spin_box->                   setValue(stereo_proc.stereo_matcher->getP2());
-	ui->pre_filter_cap_spin_box->       setValue(stereo_proc.stereo_matcher->getPreFilterCap());
-	ui->uniqueness_ratio_spin_box->     setValue(stereo_proc.stereo_matcher->getUniquenessRatio());
-	ui->speckle_window_size_spin_box->  setValue(stereo_proc.stereo_matcher->getSpeckleWindowSize());
-	ui->speckle_range_spin_box->        setValue(stereo_proc.stereo_matcher->getSpeckleRange());
-	ui->v_offset_spin_box->             setValue(stereo_proc.get_v_offset());
+	ui->minimum_disparity_spin_box->    setValue(tuner.stereo_matcher->getMinDisparity());
+	ui->number_of_disparities_spin_box->setValue(tuner.stereo_matcher->getNumDisparities());
+	ui->window_size_spin_box->          setValue(tuner.stereo_matcher->getBlockSize());
+	ui->p1_spin_box->                   setValue(tuner.stereo_matcher->getP1());
+	ui->p2_spin_box->                   setValue(tuner.stereo_matcher->getP2());
+	ui->pre_filter_cap_spin_box->       setValue(tuner.stereo_matcher->getPreFilterCap());
+	ui->uniqueness_ratio_spin_box->     setValue(tuner.stereo_matcher->getUniquenessRatio());
+	ui->speckle_window_size_spin_box->  setValue(tuner.stereo_matcher->getSpeckleWindowSize());
+	ui->speckle_range_spin_box->        setValue(tuner.stereo_matcher->getSpeckleRange());
+	ui->v_offset_spin_box->             setValue(tuner.get_v_offset());
 #endif
-	connect(ui->minimum_disparity_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_minimum_disparity(int)));
+	connect(ui->minimum_disparity_slider, SIGNAL(valueChanged(int)), &tuner, SLOT(set_minimum_disparity(int)));
 	connect(ui->minimum_disparity_slider, SIGNAL(valueChanged(int)), ui->minimum_disparity_spin_box, SLOT(setValue(int)));
 	connect(ui->minimum_disparity_spin_box, SIGNAL(valueChanged(int)), ui->minimum_disparity_slider, SLOT(setValue(int)));
-	connect(ui->number_of_disparities_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_num_disparities(int)));
+	connect(ui->number_of_disparities_slider, SIGNAL(valueChanged(int)), &tuner, SLOT(set_num_disparities(int)));
 	connect(ui->number_of_disparities_slider, SIGNAL(valueChanged(int)), ui->number_of_disparities_spin_box, SLOT(setValue(int)));
 	connect(ui->number_of_disparities_spin_box, SIGNAL(valueChanged(int)), ui->number_of_disparities_slider, SLOT(setValue(int)));
-	connect(ui->window_size_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_window_size(int)));
+	connect(ui->window_size_slider, SIGNAL(valueChanged(int)), &tuner, SLOT(set_window_size(int)));
 	connect(ui->window_size_slider, SIGNAL(valueChanged(int)), ui->window_size_spin_box, SLOT(setValue(int)));
 	connect(ui->window_size_spin_box, SIGNAL(valueChanged(int)), ui->window_size_slider, SLOT(setValue(int)));
-	connect(ui->p1_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_p1(int)));
+	connect(ui->p1_slider, SIGNAL(valueChanged(int)), &tuner, SLOT(set_p1(int)));
 	connect(ui->p1_slider, SIGNAL(valueChanged(int)), ui->p1_spin_box, SLOT(setValue(int)));
 	connect(ui->p1_spin_box, SIGNAL(valueChanged(int)), ui->p1_slider, SLOT(setValue(int)));
-	connect(ui->p2_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_p2(int)));
+	connect(ui->p2_slider, SIGNAL(valueChanged(int)), &tuner, SLOT(set_p2(int)));
 	connect(ui->p2_slider, SIGNAL(valueChanged(int)), ui->p2_spin_box, SLOT(setValue(int)));
 	connect(ui->p2_spin_box, SIGNAL(valueChanged(int)), ui->p2_slider, SLOT(setValue(int)));
-	connect(ui->pre_filter_cap_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_pre_filter_cap(int)));
+	connect(ui->pre_filter_cap_slider, SIGNAL(valueChanged(int)), &tuner, SLOT(set_pre_filter_cap(int)));
 	connect(ui->pre_filter_cap_slider, SIGNAL(valueChanged(int)), ui->pre_filter_cap_spin_box, SLOT(setValue(int)));
 	connect(ui->pre_filter_cap_spin_box, SIGNAL(valueChanged(int)), ui->pre_filter_cap_slider, SLOT(setValue(int)));
-	connect(ui->uniqueness_ratio_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_uniqueness_ratio(int)));
+	connect(ui->uniqueness_ratio_slider, SIGNAL(valueChanged(int)), &tuner, SLOT(set_uniqueness_ratio(int)));
 	connect(ui->uniqueness_ratio_slider, SIGNAL(valueChanged(int)), ui->uniqueness_ratio_spin_box, SLOT(setValue(int)));
 	connect(ui->uniqueness_ratio_spin_box, SIGNAL(valueChanged(int)), ui->uniqueness_ratio_slider, SLOT(setValue(int)));
-	connect(ui->speckle_window_size_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_speckle_window_size(int)));
+	connect(ui->speckle_window_size_slider, SIGNAL(valueChanged(int)), &tuner, SLOT(set_speckle_window_size(int)));
 	connect(ui->speckle_window_size_slider, SIGNAL(valueChanged(int)), ui->speckle_window_size_spin_box, SLOT(setValue(int)));
 	connect(ui->speckle_window_size_spin_box, SIGNAL(valueChanged(int)), ui->speckle_window_size_slider, SLOT(setValue(int)));
-	connect(ui->speckle_range_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_speckle_range(int)));
+	connect(ui->speckle_range_slider, SIGNAL(valueChanged(int)), &tuner, SLOT(set_speckle_range(int)));
 	connect(ui->speckle_range_slider, SIGNAL(valueChanged(int)), ui->speckle_range_spin_box, SLOT(setValue(int)));
 	connect(ui->speckle_range_spin_box, SIGNAL(valueChanged(int)), ui->speckle_range_slider, SLOT(setValue(int)));
-	connect(ui->v_offset_slider, SIGNAL(valueChanged(int)), &stereo_proc, SLOT(set_v_offset(int)));
+	connect(ui->v_offset_slider, SIGNAL(valueChanged(int)), &tuner, SLOT(set_v_offset(int)));
 	connect(ui->v_offset_slider, SIGNAL(valueChanged(int)), ui->v_offset_spin_box, SLOT(setValue(int)));
 	connect(ui->v_offset_spin_box, SIGNAL(valueChanged(int)), ui->v_offset_slider, SLOT(setValue(int)));
 
@@ -207,7 +221,7 @@ void main_window::closeEvent(QCloseEvent* event) {
 	std::shared_ptr<hal::ImageArray> dummy;
 	video_buffer->clear();
 	video_buffer->push_back(dummy);//send dummy to signal end
-	this->stereo_proc.stop();
+	this->tuner.stop();
 
 }
 
@@ -245,12 +259,11 @@ void main_window::open_image_pair(){
  */
 void main_window::open_calibration_file(){
 	QString qfile_path = QFileDialog::getOpenFileName(this, tr("Open Calibration File"),
-			DEFAULT_CALIB_PATH, tr("Calibu calibration files (*.xml)"));
+			DEFAULT_CALIB_PATH, tr("Calibration files (*.xml)"));
 
 	if (!qfile_path.isEmpty()) {
 		std::string file_path = qfile_path.toStdString();
-		stereo_proc.set_calibration(calibu::ReadXmlRig(file_path));
-
+		tuner.set_rectifier(std::shared_ptr<rectifier>(new calibu_rectifier(calibu::ReadXmlRig(file_path))));
 	}
 }
 
@@ -258,14 +271,14 @@ void main_window::open_calibration_file(){
  * Saves the currently processed stereo image pair as "left.png" and "right.png"
  */
 void main_window::on_save_current_button_clicked(){
-	stereo_proc.save_current();
+	tuner.save_current();
 }
 
 /**
  * Enables or disables stereo rectification
  */
 void main_window::on_rectify_checkbox_clicked(){
-	stereo_proc.toggle_rectification();
+	tuner.toggle_rectification();
 }
 
 

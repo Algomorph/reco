@@ -24,8 +24,7 @@ namespace utils {
 class worker  {
 
 private:
-	//locking
-	std::mutex pause_mutex;
+
 	std::thread thread;
 	std::condition_variable pause_cv;
 
@@ -42,12 +41,14 @@ protected:
 	 */
 	virtual bool do_unit_of_work() = 0;
 	virtual void pre_thread_join();
-
+	//locking
+	std::mutex pause_mutex;
 public:
 	//thread run management
 	virtual void run();
 	void pause();
 	virtual void stop();
+	bool is_paused();
 
 	worker();
 	virtual ~worker();

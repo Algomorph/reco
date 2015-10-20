@@ -16,11 +16,8 @@
 #include <QMainWindow>
 
 //datapipe
-#include <reco/datapipe/stereo_pipe.h>
+#include <reco/datapipe/hal_stereo_pipe.h>
 #include <reco/datapipe/typedefs.h>
-
-//misc
-#include <reco/misc/calibration_parameters.h>
 
 //local
 #include <src/stereo_tuner.h>
@@ -45,11 +42,10 @@ private:
 	Ui_main_window* ui;
 
 	datapipe::frame_buffer_type video_buffer;
-	std::unique_ptr<datapipe::stereo_pipe> pipe;
+	std::unique_ptr<datapipe::hal_stereo_pipe> pipe;
 	datapipe::frame_buffer_type stereo_input_buffer;
 	datapipe::frame_buffer_type stereo_output_buffer;
-	std::shared_ptr<calibu::Rigd> calibration;
-	stereo_tuner stereo_proc;
+	stereo_tuner tuner;
 
 	void hook_pipe();
 	void unhook_pipe();

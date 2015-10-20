@@ -6,7 +6,7 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
-#include <reco/datapipe/stereo_pipe.h>
+#include <reco/datapipe/hal_stereo_pipe.h>
 
 //util
 #include <reco/utils/cpp_exception_util.h>
@@ -14,7 +14,7 @@
 namespace reco {
 namespace datapipe {
 
-stereo_pipe::stereo_pipe(frame_buffer_type buffer,
+hal_stereo_pipe::hal_stereo_pipe(frame_buffer_type buffer,
 						stereo_source source,
 						std::vector<std::string> paths,
 						std::string calibration_file_path,
@@ -26,9 +26,9 @@ stereo_pipe::stereo_pipe(frame_buffer_type buffer,
 						source(source),
 						paths(paths){}
 
-stereo_pipe::~stereo_pipe(){}
+hal_stereo_pipe::~hal_stereo_pipe(){}
 
-std::string stereo_pipe::compile_camera_uri(stereo_source source,
+std::string hal_stereo_pipe::compile_camera_uri(stereo_source source,
 		std::vector<std::string> paths,
 		std::string calibration_file_path,
 		bool use_stereo_rectification){
