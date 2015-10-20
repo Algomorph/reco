@@ -35,7 +35,7 @@ namespace stereo_workbench {
 #define VIDEO_LEFT "s19l_edit.mp4"
 #define VIDEO_RIGHT "s19r_edit.mp4"
 #define CALIB_FILE "s22.xml"
-#define CV_CALIB_FILE "s25cv1.xml"
+#define CV_CALIB_FILE "s25cv12_BEST.xml"
 
 main_window::main_window() :
 		ui(new Ui_main_window),
