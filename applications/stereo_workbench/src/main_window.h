@@ -7,9 +7,6 @@
  *   Copyright: (c) Gregory Kramida 2014
  */
 
-#ifndef RECO_WORKBENCH_MAIN_WINDOW_H_
-#define RECO_WORKBENCH_MAIN_WINDOW_H_
-
 #pragma once
 
 //Qt
@@ -63,5 +60,3 @@ private slots:
 
 }//end namespace workbench
 } //end namespace reco
-
-#endif /* HMD_MAIN_WINDOW_H_ */

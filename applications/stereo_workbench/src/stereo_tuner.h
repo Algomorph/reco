@@ -45,7 +45,7 @@ public:
 
 
 	int get_v_offset();
-
+	bool is_rectification_enabled();
 	void set_rectifier(std::shared_ptr<rectifier> _rectifier);
 	void toggle_rectification();
 

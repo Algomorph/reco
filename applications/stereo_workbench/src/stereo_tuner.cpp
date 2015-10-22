@@ -134,6 +134,10 @@ void stereo_tuner::recompute_disparity_if_paused(){
 	}
 }
 
+bool stereo_tuner::is_rectification_enabled(){
+	return this->rectification_enabled;
+}
+
 /**
  * Compute disparity and emit ready frame
  * @param left

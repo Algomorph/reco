@@ -35,12 +35,9 @@ namespace stereo_workbench {
 #define DEFAULT_CAP_PATH DEFAULT_RECO_DATA_PATH "cap/yi/"
 #define DEFAULT_CALIB_PATH "/home/algomorph/Dropbox/calib/yi/"
 
-#define VIDEO_LEFT "s24l_edit.mp4"
-#define VIDEO_RIGHT "s24r_edit.mp4"
+#define VIDEO_LEFT "sm01l_edit.mp4"
+#define VIDEO_RIGHT "sm01r_edit.mp4"
 #define CALIB_FILE "s25cv12_BEST.xml"
-
-//#define VIDEO_LEFT "x"
-//#define VIDEO_RIGHT "y"
 
 main_window::main_window() :
 		ui(new Ui_main_window),
@@ -94,7 +91,9 @@ void main_window::connect_actions() {
 //====================== ACTIONS ===================================================================
 	connect(ui->action_open_calibration_file,SIGNAL(triggered()),this,SLOT(open_calibration_file()));
 	connect(ui->action_open_image_pair,SIGNAL(triggered()),this,SLOT(open_image_pair()));
-//====================== SLIDER CONTROLS ===========================================================
+//==================================================================================================
+	ui->rectify_checkbox->setChecked(tuner.is_rectification_enabled());
+//====================== SLIDER / SPINNER CONTROLS =================================================
 
 #if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
 	ui->minimum_disparity_slider->setValue(tuner.stereo_matcher.minDisparity);
@@ -176,12 +175,12 @@ void main_window::connect_actions() {
  * Connect the pipe to output and all related buttons
  */
 void main_window::hook_pipe(){
-	//in case previously hooked
-	//unhook_pipe();
-	ui->stereo_feed_viewer->configure_for_pipe(pipe->get_num_channels());
-	connect(pipe.get(),SIGNAL(frame()), this, SLOT(handle_frame()));
-	connect(ui->capture_button, SIGNAL(released()), pipe.get(), SLOT(run()));
-	connect(ui->pause_button, SIGNAL(released()), pipe.get(), SLOT(pause()));
+	if(pipe){
+		ui->stereo_feed_viewer->configure_for_pipe(pipe->get_num_channels());
+		connect(pipe.get(),SIGNAL(frame()), this, SLOT(handle_frame()));
+		connect(ui->capture_button, SIGNAL(released()), pipe.get(), SLOT(run()));
+		connect(ui->pause_button, SIGNAL(released()), pipe.get(), SLOT(pause()));
+	}
 }
 
 /**
