@@ -20,12 +20,13 @@
 #include <Eigen/Eigen>
 //opencv
 #include <opencv2/highgui/highgui.hpp>
-#include "stereo_tuner.h"
+#include <src/stereo_processor.hpp>
 
 namespace reco {
 namespace stereo_workbench {
 
-stereo_tuner::stereo_tuner(
+template<class MATCHER>
+stereo_processor<MATCHER>::stereo_processor(
 		datapipe::frame_buffer_type input_frame_buffer,
 		datapipe::frame_buffer_type output_frame_buffer,
 		std::shared_ptr<rectifier>  rectifier)
@@ -46,17 +47,18 @@ stereo_tuner::stereo_tuner(
 				output_frame_buffer(output_frame_buffer),
 				worker_shutting_down(false),
 				right_v_offset(0),
-
 				_rectifier(rectifier)
 
 {
 }
 
-stereo_tuner::~stereo_tuner() {
+template<class MATCHER>
+stereo_processor<MATCHER>::~stereo_processor() {
 
 }
 
-void stereo_tuner::set_rectifier(std::shared_ptr<rectifier> _rectifier) {
+template<class MATCHER>
+void stereo_processor<MATCHER>::set_rectifier(std::shared_ptr<rectifier> _rectifier) {
 	std::unique_lock<std::mutex> lckr(this->rectify_guard);
 	this->_rectifier = _rectifier;
 	if(!_rectifier){
@@ -71,7 +73,8 @@ void stereo_tuner::set_rectifier(std::shared_ptr<rectifier> _rectifier) {
 	}
 }
 
-void stereo_tuner::pre_thread_join() {
+template<class MATCHER>
+void stereo_processor<MATCHER>::pre_thread_join() {
 
 	std::shared_ptr<hal::ImageArray> dummy;
 	//run through a "fake" frame to queue to ensure thread doesn't get
@@ -80,7 +83,8 @@ void stereo_tuner::pre_thread_join() {
 	input_frame_buffer->push_back(dummy);
 }
 
-bool stereo_tuner::do_unit_of_work() {
+template<class MATCHER>
+bool stereo_processor<MATCHER>::do_unit_of_work() {
 	std::shared_ptr<hal::ImageArray> array = input_frame_buffer->pop_front();
 	if (array) {
 		//for now, assume stereo pair
@@ -91,13 +95,12 @@ bool stereo_tuner::do_unit_of_work() {
 		left.copyTo(last_left);
 		right.copyTo(last_right);
 
-		{
+		if (rectification_enabled) {
 			//protect _rectifier from write access during rectification
 			std::unique_lock<std::mutex> lck(this->rectify_guard);
-			if (rectification_enabled) {
-				_rectifier->rectify(last_left,last_right,last_left_rectified,last_right_rectified);
-			}
+			_rectifier->rectify(last_left,last_right,last_left_rectified,last_right_rectified);
 		}
+
 		recompute_disparity();
 
 		return true;
@@ -106,7 +109,8 @@ bool stereo_tuner::do_unit_of_work() {
 	return false;
 }
 
-void stereo_tuner::save_current() {
+template<class MATCHER>
+void stereo_processor<MATCHER>::save_current_matcher_input() {
 	if(rectification_enabled){
 		cv::imwrite("left.png", last_left_rectified);
 		cv::imwrite("right.png", last_right_rectified);
@@ -116,8 +120,8 @@ void stereo_tuner::save_current() {
 	}
 }
 
-
-void stereo_tuner::recompute_disparity(){
+template<class MATCHER>
+void stereo_processor<MATCHER>::recompute_disparity(){
 	if(rectification_enabled){
 		compute_disparity(last_left_rectified,last_right_rectified);
 	}else{
@@ -125,16 +129,18 @@ void stereo_tuner::recompute_disparity(){
 	}
 }
 
-void stereo_tuner::recompute_disparity_if_paused(){
+//TODO: figure out a way to make this thread safe
+template<class MATCHER>
+void stereo_processor<MATCHER>::recompute_disparity_if_paused(){
 	//protect the paused variable from being written during recompute
 
 	std::unique_lock<std::mutex> lck(this->pause_mutex);
-	if(this->is_paused()){
+	//if(this->is_paused()){
 		recompute_disparity();
-	}
+	//}
 }
-
-bool stereo_tuner::is_rectification_enabled(){
+template<class MATCHER>
+bool stereo_processor<MATCHER>::is_rectification_enabled(){
 	return this->rectification_enabled;
 }
 
@@ -143,7 +149,8 @@ bool stereo_tuner::is_rectification_enabled(){
  * @param left
  * @param right
  */
-void stereo_tuner::compute_disparity(cv::Mat left, cv::Mat right) {
+template<class MATCHER>
+void stereo_processor<MATCHER>::compute_disparity(cv::Mat left, cv::Mat right) {
 	cv::Mat disparity;
 
 	int offset = this->right_v_offset;
@@ -159,11 +166,7 @@ void stereo_tuner::compute_disparity(cv::Mat left, cv::Mat right) {
 		right = right_adjusted;
 	}
 
-#if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
-	stereo_matcher(left, right, disparity);
-#elif CV_VERSION_MAJOR == 3
 	stereo_matcher->compute(left, right, disparity);
-#endif
 
 	cv::Mat disparity_normalized;
 
@@ -180,103 +183,58 @@ void stereo_tuner::compute_disparity(cv::Mat left, cv::Mat right) {
 }
 
 #if CV_VERSION_MAJOR == 3
-void stereo_tuner::compute_disparity_daisy(cv::Mat left, cv::Mat right) {
+template<class MATCHER>
+void stereo_processor<MATCHER>::compute_disparity_daisy(cv::Mat left, cv::Mat right) {
 
 }
 #endif
 
-int stereo_tuner::get_v_offset() {
+template<class MATCHER>
+int stereo_processor<MATCHER>::get_v_offset() {
 	return this->right_v_offset;
 }
 
-#if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
-void stereo_tuner::set_minimum_disparity(int value) {
-	stereo_matcher.minDisparity = value;
-	recompute_disparity_if_paused();
-}
-void stereo_tuner::set_num_disparities(int value) {
-	stereo_matcher.numberOfDisparities = value - (value % 16);
-	recompute_disparity_if_paused();
-}
-void stereo_tuner::set_window_size(int value) {
-	stereo_matcher.SADWindowSize = value + ((value + 1) % 2);
-	recompute_disparity_if_paused();
-}
-void stereo_tuner::set_p1(int value) {
-	if(value < stereo_matcher.P2) {
-		stereo_matcher.P1 = value;
-		recompute_disparity_if_paused();
-	}
-}
-void stereo_tuner::set_p2(int value) {
-	if(value > stereo_matcher.P1) {
-		stereo_matcher.P2 = value;
-		recompute_disparity_if_paused();
-	}
-}
-void stereo_tuner::set_pre_filter_cap(int value) {
-	stereo_matcher.preFilterCap = value;
-	recompute_disparity_if_paused();
-}
-void stereo_tuner::set_uniqueness_ratio(int value) {
-	stereo_matcher.uniquenessRatio = value;
-	recompute_disparity_if_paused();
-}
-void stereo_tuner::set_speckle_window_size(int value) {
-	stereo_matcher.speckleRange = value;
-	recompute_disparity_if_paused();
-}
-void stereo_tuner::set_speckle_range(int value) {
-	stereo_matcher.speckleRange = value;
-	recompute_disparity_if_paused();
-}
-#elif CV_VERSION_MAJOR == 3
-void stereo_tuner::set_minimum_disparity(int value) {
+template<class MATCHER>
+void stereo_processor<MATCHER>::set_minimum_disparity(int value) {
 	stereo_matcher->setMinDisparity(value);
 	recompute_disparity_if_paused();
 }
-void stereo_tuner::set_num_disparities(int value) {
+
+template<class MATCHER>
+void stereo_processor<MATCHER>::set_num_disparities(int value) {
 	stereo_matcher->setNumDisparities(value - (value % 16));
 	recompute_disparity_if_paused();
 }
-void stereo_tuner::set_window_size(int value) {
+
+template<class MATCHER>
+void stereo_processor<MATCHER>::set_block_size(int value) {
 	int new_window_size = value + ((value + 1) % 2);
 	stereo_matcher->setBlockSize(new_window_size);
 	recompute_disparity_if_paused();
 }
-void stereo_tuner::set_p1(int value) {
-	if (value < stereo_matcher->getP2()) {
-		stereo_matcher->setP1(value);
-		recompute_disparity_if_paused();
-	}
-}
-void stereo_tuner::set_p2(int value) {
-	if (value > stereo_matcher->getP1()) {
-		stereo_matcher->setP2(value);
-		recompute_disparity_if_paused();
-	}
-}
-void stereo_tuner::set_pre_filter_cap(int value) {
-	stereo_matcher->setPreFilterCap(value);
-	recompute_disparity_if_paused();
-}
-void stereo_tuner::set_uniqueness_ratio(int value) {
-	stereo_matcher->setUniquenessRatio(value);
-	recompute_disparity_if_paused();
-}
-void stereo_tuner::set_speckle_window_size(int value) {
+
+template<class MATCHER>
+void stereo_processor<MATCHER>::set_speckle_window_size(int value) {
 	stereo_matcher->setSpeckleWindowSize(value);
 	recompute_disparity_if_paused();
 }
-void stereo_tuner::set_speckle_range(int value) {
+template<class MATCHER>
+void stereo_processor<MATCHER>::set_speckle_range(int value) {
 	stereo_matcher->setSpeckleRange(value);
 	recompute_disparity_if_paused();
 }
-void stereo_tuner::set_v_offset(int value) {
+template<class MATCHER>
+void stereo_processor<MATCHER>::set_v_offset(int value) {
 	right_v_offset = value;
 	recompute_disparity_if_paused();
 }
-void stereo_tuner::toggle_rectification(){
+template<class MATCHER>
+void stereo_processor<MATCHER>::set_disp_1_2_max_diff(int value){
+	stereo_matcher->setDisp12MaxDiff(value);
+}
+
+template<class MATCHER>
+void stereo_processor<MATCHER>::toggle_rectification(){
 	if(this->_rectifier){
 		rectification_enabled = !rectification_enabled;
 		std::unique_lock<std::mutex> lck(pause_mutex);
@@ -289,7 +247,6 @@ void stereo_tuner::toggle_rectification(){
 	}
 }
 
-#endif
 
 } /* namespace stereo_workbench */
 } /* namespace reco */

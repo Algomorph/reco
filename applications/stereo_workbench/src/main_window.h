@@ -17,7 +17,7 @@
 #include <reco/datapipe/typedefs.h>
 
 //local
-#include <src/stereo_tuner.h>
+#include <src/stereo_processor_sgbm.hpp>
 
 class Ui_main_window;
 
@@ -42,7 +42,7 @@ private:
 	std::unique_ptr<datapipe::hal_stereo_pipe> pipe;
 	datapipe::frame_buffer_type stereo_input_buffer;
 	datapipe::frame_buffer_type stereo_output_buffer;
-	stereo_tuner tuner;
+	stereo_processor_sgbm processor;
 
 	void hook_pipe();
 	void unhook_pipe();
