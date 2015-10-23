@@ -33,7 +33,7 @@ class stereo_processor_qt_base: public QObject{
 	public slots:
 		//tuning slots
 		virtual void set_block_size(int value) = 0;
-		virtual void set_disp_1_2_max_diff(int value) = 0;
+		virtual void set_disparity_max_diff(int value) = 0;
 		virtual void set_minimum_disparity(int value) = 0;
 		virtual void set_num_disparities(int value) = 0;
 		virtual void set_speckle_range(int value) = 0;
@@ -50,7 +50,6 @@ class stereo_processor_qt_base: public QObject{
 
 template<class MATCHER>
 class stereo_processor: public stereo_processor_qt_base, public utils::worker {
-
 
 	static_assert(
         std::is_base_of<cv::StereoMatcher, MATCHER>::value,
@@ -99,9 +98,10 @@ private:
 #endif
 
 public:
+
 	//tuning slots
 	virtual void set_block_size(int value);
-	virtual void set_disp_1_2_max_diff(int value);
+	virtual void set_disparity_max_diff(int value);
 	virtual void set_minimum_disparity(int value);
 	virtual void set_num_disparities(int value);
 	virtual void set_speckle_range(int value);

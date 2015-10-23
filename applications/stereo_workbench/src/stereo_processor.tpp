@@ -229,7 +229,7 @@ void stereo_processor<MATCHER>::set_v_offset(int value) {
 	recompute_disparity_if_paused();
 }
 template<class MATCHER>
-void stereo_processor<MATCHER>::set_disp_1_2_max_diff(int value){
+void stereo_processor<MATCHER>::set_disparity_max_diff(int value){
 	stereo_matcher->setDisp12MaxDiff(value);
 }
 

@@ -97,7 +97,7 @@ void main_window::connect_actions() {
 //====================== SLIDER / SPINNER CONTROLS =================================================
 	ui->minimum_disparity_slider->      setValue(processor.stereo_matcher->getMinDisparity());
 	ui->number_of_disparities_slider->  setValue(processor.stereo_matcher->getNumDisparities());
-	ui->window_size_slider->            setValue(processor.stereo_matcher->getBlockSize());
+	ui->block_size_slider->             setValue(processor.stereo_matcher->getBlockSize());
 	ui->p1_slider->                     setValue(processor.stereo_matcher->getP1());
 	ui->p2_slider->                     setValue(processor.stereo_matcher->getP2());
 	ui->pre_filter_cap_slider->         setValue(processor.stereo_matcher->getPreFilterCap());
@@ -108,7 +108,7 @@ void main_window::connect_actions() {
 
 	ui->minimum_disparity_spin_box->    setValue(processor.stereo_matcher->getMinDisparity());
 	ui->number_of_disparities_spin_box->setValue(processor.stereo_matcher->getNumDisparities());
-	ui->window_size_spin_box->          setValue(processor.stereo_matcher->getBlockSize());
+	ui->block_size_spin_box->           setValue(processor.stereo_matcher->getBlockSize());
 	ui->p1_spin_box->                   setValue(processor.stereo_matcher->getP1());
 	ui->p2_spin_box->                   setValue(processor.stereo_matcher->getP2());
 	ui->pre_filter_cap_spin_box->       setValue(processor.stereo_matcher->getPreFilterCap());
@@ -123,9 +123,9 @@ void main_window::connect_actions() {
 	connect(ui->number_of_disparities_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_num_disparities(int)));
 	connect(ui->number_of_disparities_slider, SIGNAL(valueChanged(int)), ui->number_of_disparities_spin_box, SLOT(setValue(int)));
 	connect(ui->number_of_disparities_spin_box, SIGNAL(valueChanged(int)), ui->number_of_disparities_slider, SLOT(setValue(int)));
-	connect(ui->window_size_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_block_size(int)));
-	connect(ui->window_size_slider, SIGNAL(valueChanged(int)), ui->window_size_spin_box, SLOT(setValue(int)));
-	connect(ui->window_size_spin_box, SIGNAL(valueChanged(int)), ui->window_size_slider, SLOT(setValue(int)));
+	connect(ui->block_size_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_block_size(int)));
+	connect(ui->block_size_slider, SIGNAL(valueChanged(int)), ui->block_size_spin_box, SLOT(setValue(int)));
+	connect(ui->block_size_spin_box, SIGNAL(valueChanged(int)), ui->block_size_slider, SLOT(setValue(int)));
 	connect(ui->p1_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_p1(int)));
 	connect(ui->p1_slider, SIGNAL(valueChanged(int)), ui->p1_spin_box, SLOT(setValue(int)));
 	connect(ui->p1_spin_box, SIGNAL(valueChanged(int)), ui->p1_slider, SLOT(setValue(int)));
@@ -159,17 +159,6 @@ void main_window::hook_pipe(){
 		connect(pipe.get(),SIGNAL(frame()), this, SLOT(handle_frame()));
 		connect(ui->capture_button, SIGNAL(released()), pipe.get(), SLOT(run()));
 		connect(ui->pause_button, SIGNAL(released()), pipe.get(), SLOT(pause()));
-	}
-}
-
-/**
- * Disconnect existing pipe from everything and destroy it
- * TODO: 078 is this method needed?
- */
-void main_window::unhook_pipe(){
-	if(pipe){
-		disconnect(ui->capture_button,0,0,0);
-		disconnect(ui->pause_button,0,0,0);
 	}
 }
 

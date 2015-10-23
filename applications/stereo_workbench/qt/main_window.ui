@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>1104</width>
-    <height>840</height>
+    <height>870</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -40,9 +40,61 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_6">
+       <layout class="QHBoxLayout" name="block_size_horizontal_layout">
         <item>
-         <widget class="QLabel" name="label">
+         <widget class="QLabel" name="block_size_label">
+          <property name="text">
+           <string>block size</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="block_size_spin_box">
+          <property name="minimum">
+           <number>1</number>
+          </property>
+          <property name="maximum">
+           <number>65</number>
+          </property>
+          <property name="singleStep">
+           <number>2</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QSlider" name="block_size_slider">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="maximum">
+         <number>65</number>
+        </property>
+        <property name="singleStep">
+         <number>2</number>
+        </property>
+        <property name="value">
+         <number>1</number>
+        </property>
+        <property name="tracking">
+         <bool>false</bool>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="minimum_disparity_horizontal_layout">
+        <item>
+         <widget class="QLabel" name="minimum_disparity_label">
           <property name="text">
            <string>minimum disparity</string>
           </property>
@@ -83,9 +135,9 @@
        </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_5">
+       <layout class="QHBoxLayout" name="number_of_disparities_horizontal_layout">
         <item>
-         <widget class="QLabel" name="label_2">
+         <widget class="QLabel" name="number_of_disparities_label">
           <property name="text">
            <string>number of disparities</string>
           </property>
@@ -135,48 +187,36 @@
        </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_7">
+       <layout class="QHBoxLayout" name="speckle_range_horizontal_layout">
         <item>
-         <widget class="QLabel" name="label_3">
+         <widget class="QLabel" name="speckle_range_label">
           <property name="text">
-           <string>window size</string>
+           <string>speckle range</string>
           </property>
          </widget>
         </item>
         <item>
-         <widget class="QSpinBox" name="window_size_spin_box">
-          <property name="minimum">
-           <number>1</number>
-          </property>
+         <widget class="QSpinBox" name="speckle_range_spin_box">
           <property name="maximum">
-           <number>65</number>
-          </property>
-          <property name="singleStep">
-           <number>2</number>
+           <number>5</number>
           </property>
          </widget>
         </item>
        </layout>
       </item>
       <item>
-       <widget class="QSlider" name="window_size_slider">
+       <widget class="QSlider" name="speckle_range_slider">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
           <horstretch>0</horstretch>
           <verstretch>0</verstretch>
          </sizepolicy>
         </property>
-        <property name="minimum">
-         <number>1</number>
-        </property>
         <property name="maximum">
-         <number>65</number>
+         <number>5</number>
         </property>
-        <property name="singleStep">
+        <property name="pageStep">
          <number>2</number>
-        </property>
-        <property name="value">
-         <number>1</number>
         </property>
         <property name="tracking">
          <bool>false</bool>
@@ -187,9 +227,95 @@
        </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_4">
+       <layout class="QHBoxLayout" name="speckle_window_size_horizontal_layout">
         <item>
-         <widget class="QLabel" name="label_4">
+         <widget class="QLabel" name="speckle_window_size_label">
+          <property name="text">
+           <string>speckle window size</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="speckle_window_size_spin_box">
+          <property name="maximum">
+           <number>300</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QSlider" name="speckle_window_size_slider">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="maximum">
+         <number>300</number>
+        </property>
+        <property name="singleStep">
+         <number>5</number>
+        </property>
+        <property name="pageStep">
+         <number>20</number>
+        </property>
+        <property name="tracking">
+         <bool>false</bool>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="v_offset_horizontal_layout">
+        <item>
+         <widget class="QLabel" name="v_offset_label">
+          <property name="text">
+           <string>vertical offset</string>
+          </property>
+         </widget>
+        </item>
+        <item>
+         <widget class="QSpinBox" name="v_offset_spin_box">
+          <property name="minimum">
+           <number>-128</number>
+          </property>
+          <property name="maximum">
+           <number>128</number>
+          </property>
+         </widget>
+        </item>
+       </layout>
+      </item>
+      <item>
+       <widget class="QSlider" name="v_offset_slider">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <property name="minimum">
+         <number>-128</number>
+        </property>
+        <property name="maximum">
+         <number>128</number>
+        </property>
+        <property name="tracking">
+         <bool>false</bool>
+        </property>
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <layout class="QHBoxLayout" name="p1_horizontal_layout">
+        <item>
+         <widget class="QLabel" name="p1_label">
           <property name="text">
            <string>P1</string>
           </property>
@@ -239,9 +365,9 @@
        </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <layout class="QHBoxLayout" name="p2_horizontal_layout">
         <item>
-         <widget class="QLabel" name="label_5">
+         <widget class="QLabel" name="p2_label">
           <property name="text">
            <string>P2</string>
           </property>
@@ -293,7 +419,7 @@
       <item>
        <layout class="QHBoxLayout" name="horizontalLayout_2">
         <item>
-         <widget class="QLabel" name="label_6">
+         <widget class="QLabel" name="pre_filter_cap_label">
           <property name="text">
            <string>pre-filter cap</string>
           </property>
@@ -328,7 +454,7 @@
        </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_8">
+       <layout class="QHBoxLayout" name="uniqueness_ration_horizontal_layout">
         <item>
          <widget class="QLabel" name="uniqueness_rato_label">
           <property name="text">
@@ -365,133 +491,7 @@
        </widget>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_9">
-        <item>
-         <widget class="QLabel" name="speckle_window_size_label">
-          <property name="text">
-           <string>speckle window size</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QSpinBox" name="speckle_window_size_spin_box">
-          <property name="maximum">
-           <number>300</number>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <widget class="QSlider" name="speckle_window_size_slider">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximum">
-         <number>300</number>
-        </property>
-        <property name="singleStep">
-         <number>5</number>
-        </property>
-        <property name="pageStep">
-         <number>20</number>
-        </property>
-        <property name="tracking">
-         <bool>false</bool>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_10">
-        <item>
-         <widget class="QLabel" name="speckle_range_label">
-          <property name="text">
-           <string>speckle range</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QSpinBox" name="speckle_range_spin_box">
-          <property name="maximum">
-           <number>5</number>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <widget class="QSlider" name="speckle_range_slider">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="maximum">
-         <number>5</number>
-        </property>
-        <property name="pageStep">
-         <number>2</number>
-        </property>
-        <property name="tracking">
-         <bool>false</bool>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_11">
-        <item>
-         <widget class="QLabel" name="v_offset_label">
-          <property name="text">
-           <string>vertical offset</string>
-          </property>
-         </widget>
-        </item>
-        <item>
-         <widget class="QSpinBox" name="v_offset_spin_box">
-          <property name="minimum">
-           <number>-128</number>
-          </property>
-          <property name="maximum">
-           <number>128</number>
-          </property>
-         </widget>
-        </item>
-       </layout>
-      </item>
-      <item>
-       <widget class="QSlider" name="v_offset_slider">
-        <property name="sizePolicy">
-         <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
-          <horstretch>0</horstretch>
-          <verstretch>0</verstretch>
-         </sizepolicy>
-        </property>
-        <property name="minimum">
-         <number>-128</number>
-        </property>
-        <property name="maximum">
-         <number>128</number>
-        </property>
-        <property name="tracking">
-         <bool>false</bool>
-        </property>
-        <property name="orientation">
-         <enum>Qt::Horizontal</enum>
-        </property>
-       </widget>
-      </item>
-      <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_13">
+       <layout class="QHBoxLayout" name="rectification_horizontal_layout">
         <item>
          <widget class="QCheckBox" name="rectify_checkbox">
           <property name="text">
@@ -505,15 +505,11 @@
        </layout>
       </item>
       <item>
-       <layout class="QHBoxLayout" name="horizontalLayout_12">
-        <item>
-         <widget class="QPushButton" name="save_current_button">
-          <property name="text">
-           <string>Save current image pair</string>
-          </property>
-         </widget>
-        </item>
-       </layout>
+       <widget class="QPushButton" name="save_current_button">
+        <property name="text">
+         <string>Save matcher input image pair</string>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QPushButton" name="capture_button">

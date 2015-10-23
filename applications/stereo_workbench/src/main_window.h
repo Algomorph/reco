@@ -18,6 +18,7 @@
 
 //local
 #include <src/stereo_processor_sgbm.hpp>
+#include "stereo_matcher_tuning_panel.hpp"
 
 class Ui_main_window;
 
