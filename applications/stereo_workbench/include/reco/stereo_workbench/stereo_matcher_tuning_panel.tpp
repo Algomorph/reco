@@ -84,6 +84,7 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 	block_size_horizontal_layout->setObjectName(QStringLiteral("block_size_horizontal_layout"));
 	block_size_label = new QLabel(this);
 	block_size_label->setObjectName(QStringLiteral("block_size_label"));
+	block_size_label->setText("block size (pixels):");
 
 	block_size_horizontal_layout->addWidget(block_size_label);
 
@@ -111,6 +112,7 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 	block_size_slider->setValue(1);
 	block_size_slider->setTracking(false);
 	block_size_slider->setOrientation(Qt::Horizontal);
+	block_size_slider->setToolTip("block size (pixels)");
 
 	tuning_controls_vlayout->addWidget(block_size_slider);
 
@@ -118,6 +120,7 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 	disparity_max_diff_horizontal_layout->setObjectName(QStringLiteral("disparity_max_diff_horizontal_layout"));
 	disparity_max_diff_label = new QLabel(this);
 	disparity_max_diff_label->setObjectName(QStringLiteral("disparity_max_diff_label"));
+	disparity_max_diff_label->setText("maximum difference (px):");
 
 	disparity_max_diff_horizontal_layout->addWidget(disparity_max_diff_label);
 
@@ -127,6 +130,8 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 
 	disparity_max_diff_horizontal_layout->addWidget(disparity_max_diff_spin_box);
 
+	tuning_controls_vlayout->addLayout(disparity_max_diff_horizontal_layout);
+
 	disparity_max_diff_slider = new QSlider(this);
 	disparity_max_diff_slider->setObjectName(QStringLiteral("disparity_max_diff_slider"));
 	sizePolicy1.setHeightForWidth(disparity_max_diff_slider->sizePolicy().hasHeightForWidth());
@@ -135,15 +140,15 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 	disparity_max_diff_slider->setMaximum(256);
 	disparity_max_diff_slider->setTracking(false);
 	disparity_max_diff_slider->setOrientation(Qt::Horizontal);
+	disparity_max_diff_slider->setToolTip("maximum pixel difference between the two views");
 
 	tuning_controls_vlayout->addWidget(disparity_max_diff_slider);
-
-	tuning_controls_vlayout->addLayout(disparity_max_diff_horizontal_layout);
 
 	minimum_disparity_horizontal_layout = new QHBoxLayout();
 	minimum_disparity_horizontal_layout->setObjectName(QStringLiteral("minimum_disparity_horizontal_layout"));
 	minimum_disparity_label = new QLabel(this);
 	minimum_disparity_label->setObjectName(QStringLiteral("minimum_disparity_label"));
+	minimum_disparity_label->setText("minimum disparity:");
 
 	minimum_disparity_horizontal_layout->addWidget(minimum_disparity_label);
 
@@ -171,6 +176,7 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 	number_of_disparities_horizontal_layout->setObjectName(QStringLiteral("number_of_disparities_horizontal_layout"));
 	number_of_disparities_label = new QLabel(this);
 	number_of_disparities_label->setObjectName(QStringLiteral("number_of_disparities_label"));
+	number_of_disparities_label->setText("number of disparities:");
 
 	number_of_disparities_horizontal_layout->addWidget(number_of_disparities_label);
 
@@ -202,6 +208,7 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 	speckle_range_horizontal_layout->setObjectName(QStringLiteral("speckle_range_horizontal_layout"));
 	speckle_range_label = new QLabel(this);
 	speckle_range_label->setObjectName(QStringLiteral("speckle_range_label"));
+	speckle_range_label->setText("speckle range:");
 
 	speckle_range_horizontal_layout->addWidget(speckle_range_label);
 
@@ -229,6 +236,7 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 	speckle_window_size_horizontal_layout->setObjectName(QStringLiteral("speckle_window_size_horizontal_layout"));
 	speckle_window_size_label = new QLabel(this);
 	speckle_window_size_label->setObjectName(QStringLiteral("speckle_window_size_label"));
+	speckle_window_size_label->setText("speckle window size:");
 
 	speckle_window_size_horizontal_layout->addWidget(speckle_window_size_label);
 
@@ -257,6 +265,7 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 	v_offset_horizontal_layout->setObjectName(QStringLiteral("v_offset_horizontal_layout"));
 	v_offset_label = new QLabel(this);
 	v_offset_label->setObjectName(QStringLiteral("v_offset_label"));
+	v_offset_label->setText("vertical offset (px):");
 
 	v_offset_horizontal_layout->addWidget(v_offset_label);
 
@@ -267,8 +276,8 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 
 	v_offset_horizontal_layout->addWidget(v_offset_spin_box);
 
-
 	tuning_controls_vlayout->addLayout(v_offset_horizontal_layout);
+
 
 	v_offset_slider = new QSlider(this);
 	v_offset_slider->setObjectName(QStringLiteral("v_offset_slider"));
@@ -278,12 +287,16 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 	v_offset_slider->setMaximum(128);
 	v_offset_slider->setTracking(false);
 	v_offset_slider->setOrientation(Qt::Horizontal);
+	v_offset_slider->setToolTip("manually-imposed vertical offset between views in pixels");
+
+	tuning_controls_vlayout->addWidget(v_offset_slider);
 
 	rectification_horizontal_layout = new QHBoxLayout();
 	rectification_horizontal_layout->setObjectName(QStringLiteral("rectification_horizontal_layout"));
 	rectify_checkbox = new QCheckBox(this);
 	rectify_checkbox->setObjectName(QStringLiteral("rectify_checkbox"));
 	rectify_checkbox->setChecked(true);
+	rectify_checkbox->setText("enable rectification");
 
 	rectification_horizontal_layout->addWidget(rectify_checkbox);
 
@@ -292,6 +305,8 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 
 	save_current_button = new QPushButton(this);
 	save_current_button->setObjectName(QStringLiteral("save_current_button"));
+	save_current_button->setText("Save current");
+	save_current_button->setToolTip("save current stereo matcher input");
 
 	other_controls_vlayout->addWidget(save_current_button);
 }

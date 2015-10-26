@@ -48,6 +48,7 @@ void sgbm_tuning_panel::construct_specialized_controls(){
 	p1_horizontal_layout->setObjectName(QStringLiteral("p1_horizontal_layout"));
 	p1_label = new QLabel(this);
 	p1_label->setObjectName(QStringLiteral("p1_label"));
+	p1_label->setText("p1:");
 
 	p1_horizontal_layout->addWidget(p1_label);
 
@@ -79,6 +80,7 @@ void sgbm_tuning_panel::construct_specialized_controls(){
 	p2_horizontal_layout->setObjectName(QStringLiteral("p2_horizontal_layout"));
 	p2_label = new QLabel(this);
 	p2_label->setObjectName(QStringLiteral("p2_label"));
+	p2_label->setText("p2:");
 
 	p2_horizontal_layout->addWidget(p2_label);
 
@@ -110,6 +112,7 @@ void sgbm_tuning_panel::construct_specialized_controls(){
 	pre_filter_cap_horizontal_layout->setObjectName(QStringLiteral("horizontalLayout_2"));
 	pre_filter_cap_label = new QLabel(this);
 	pre_filter_cap_label->setObjectName(QStringLiteral("pre_filter_cap_label"));
+	pre_filter_cap_label->setText("pre-filter cap:");
 
 	pre_filter_cap_horizontal_layout->addWidget(pre_filter_cap_label);
 
@@ -118,7 +121,6 @@ void sgbm_tuning_panel::construct_specialized_controls(){
 	pre_filter_cap_spin_box->setMaximum(256);
 
 	pre_filter_cap_horizontal_layout->addWidget(pre_filter_cap_spin_box);
-
 
 	tuning_controls_vlayout->addLayout(pre_filter_cap_horizontal_layout);
 
@@ -134,10 +136,11 @@ void sgbm_tuning_panel::construct_specialized_controls(){
 
 	uniqueness_ration_horizontal_layout = new QHBoxLayout();
 	uniqueness_ration_horizontal_layout->setObjectName(QStringLiteral("uniqueness_ration_horizontal_layout"));
-	uniqueness_rato_label = new QLabel(this);
-	uniqueness_rato_label->setObjectName(QStringLiteral("uniqueness_rato_label"));
+	uniqueness_ratio_label = new QLabel(this);
+	uniqueness_ratio_label->setObjectName(QStringLiteral("uniqueness_ratio_label"));
+	uniqueness_ratio_label->setText("uniqueness ratio");
 
-	uniqueness_ration_horizontal_layout->addWidget(uniqueness_rato_label);
+	uniqueness_ration_horizontal_layout->addWidget(uniqueness_ratio_label);
 
 	uniqueness_ratio_spin_box = new QSpinBox(this);
 	uniqueness_ratio_spin_box->setObjectName(QStringLiteral("uniqueness_ratio_spin_box"));
