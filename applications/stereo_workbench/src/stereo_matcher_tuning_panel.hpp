@@ -8,6 +8,7 @@
 
 #pragma once
 
+//qt
 #include <QWidget>
 #include <QHBoxLayout>
 #include <QtWidgets/QLabel>
@@ -22,21 +23,24 @@
 #include <string>
 #include <memory>
 
+//local
+#include "stereo_processor.hpp"
+
 namespace reco {
 namespace stereo_workbench {
 
-template<typename PROC>
+template<typename MATCHER>
 class stereo_matcher_tuning_panel:
 		public QWidget {
 	static_assert(
-		std::is_base_of<reco::stereo_workbench::stereo_processor, PROC>::value,
+		std::is_base_of<cv::StereoMatcher, MATCHER>::value,
 		"PROC must be a descendant of reco::stereo_workbench::stereo_processor"
 	);
 public:
 	stereo_matcher_tuning_panel();
 	virtual ~stereo_matcher_tuning_panel();
 protected:
-	std::shared_ptr<PROC> processor;
+	std::shared_ptr<MATCHER> processor;
 	QVBoxLayout* tuning_controls_vlayout;
 private:
 	QVBoxLayout* other_controls_vlayout;
@@ -76,35 +80,16 @@ private:
 	QSpinBox* v_offset_spin_box;
 	QSlider* v_offset_slider;
 
-/*
-	QHBoxLayout* p1_horizontal_layout;
-	QLabel* p1_label;
-	QSpinBox* p1_spin_box;
-	QSlider* p1_slider;
-	QHBoxLayout* p2_horizontal_layout;
-	QLabel* p2_label;
-	QSpinBox* p2_spin_box;
-	QSlider* p2_slider;
-	QHBoxLayout* pre_filter_cap_horizontal_layout;
-	QLabel* pre_filter_cap_label;
-	QSpinBox* pre_filter_cap_spin_box;
-	QSlider* pre_filter_cap_slider;
-	QHBoxLayout* uniqueness_ration_horizontal_layout;
-	QLabel* uniqueness_rato_label;
-	QSpinBox* uniqueness_ratio_spin_box;
-	QSlider* uniqueness_ratio_slider;
-*/
-
-
-
 	QHBoxLayout* rectification_horizontal_layout;
 	QCheckBox* rectify_checkbox;
 	QPushButton* save_current_button;
 
-	void generate_tuning_controls();
+
 
 };
 
 
 } /* namespace stereo_workbench */
 } /* namespace reco */
+
+#include "stereo_matcher_tuning_panel.tpp"

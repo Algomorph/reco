@@ -11,9 +11,6 @@
 #include "../ui_main_window.h"
 #include "main_window.h"
 #include "calibu_rectifier.h"
-#include "opencv_rectifier.h"
-
-//datapipe
 #include <reco/datapipe/hal_stereo_pipe.h>
 #include <reco/datapipe/hal_interop.h>
 
@@ -27,6 +24,7 @@
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <src/opencv_rectifier.hpp>
 
 namespace reco {
 namespace stereo_workbench {

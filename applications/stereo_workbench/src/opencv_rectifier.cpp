@@ -6,12 +6,13 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
-#include <src/opencv_rectifier.h>
 #include <reco/utils/debug_util.h>
+#include <Eigen/Eigen>
 #include <opencv2/core/eigen.hpp>
 #include <opencv2/core/core_c.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
+#include <src/opencv_rectifier.hpp>
 
 namespace reco {
 namespace stereo_workbench {

@@ -12,8 +12,8 @@
 namespace reco {
 namespace stereo_workbench {
 
-template<typename PROC>
-stereo_matcher_tuning_panel<PROC>::stereo_matcher_tuning_panel(){
+template<typename MATCHER>
+stereo_matcher_tuning_panel<MATCHER>::stereo_matcher_tuning_panel(){
 
 	this->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 	this->setMinimumSize(100,100);
@@ -241,8 +241,8 @@ stereo_matcher_tuning_panel<PROC>::stereo_matcher_tuning_panel(){
 }
 
 
-template<typename PROC>
-stereo_matcher_tuning_panel<PROC>::~stereo_matcher_tuning_panel(){
+template<typename MATCHER>
+stereo_matcher_tuning_panel<MATCHER>::~stereo_matcher_tuning_panel(){
 
 }
 
