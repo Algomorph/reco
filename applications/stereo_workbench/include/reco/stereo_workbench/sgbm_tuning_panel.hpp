@@ -37,7 +37,7 @@ private:
 	QSpinBox* pre_filter_cap_spin_box;
 	QSlider* pre_filter_cap_slider;
 
-	QHBoxLayout* uniqueness_ration_horizontal_layout;
+	QHBoxLayout* uniqueness_ratio_horizontal_layout;
 	QLabel* uniqueness_ratio_label;
 	QSpinBox* uniqueness_ratio_spin_box;
 	QSlider* uniqueness_ratio_slider;

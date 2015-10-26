@@ -122,7 +122,7 @@ add_subdirectory ("applications")
 #-------------------------RUN SCRIPTS------------------------------------------#
 if(UNIX)
     execute_process(
-       COMMAND "python" "./scripts/addEclipseProjectFilter.py" "-p" "${CMAKE_BINARY_DIR}/.project"
+       COMMAND "python" "./scripts/add_Eclipse_project_filter.py" "-p" "${CMAKE_BINARY_DIR}/.project"
        RESULT_VARIABLE FILT_RET
        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
     )

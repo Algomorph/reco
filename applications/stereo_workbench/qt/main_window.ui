@@ -64,6 +64,20 @@
        </widget>
       </item>
       <item>
+       <widget class="QComboBox" name="pre_filter_type_combo_box">
+        <item>
+         <property name="text">
+          <string>normalized response</string>
+         </property>
+        </item>
+        <item>
+         <property name="text">
+          <string>x-sobel</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="capture_button">
         <property name="toolTip">
          <string>Start playback &amp; capture of the input video</string>

@@ -17,7 +17,6 @@
 //opencv
 #include <opencv2/core/core_c.h>
 #include <opencv2/calib3d/calib3d.hpp>
-//#include <opencv2/xfeatures2d/xfeatures2d.hpp>
 
 //calibu
 #include <calibu/Calibu.h>
@@ -59,6 +58,7 @@ class stereo_processor: public stereo_processor_qt_base, public utils::worker {
 public:
 	stereo_processor(datapipe::frame_buffer_type input_frame_buffer,
 			datapipe::frame_buffer_type output_frame_buffer,
+			cv::Ptr<MATCHER> matcher,
 			std::shared_ptr<rectifier>  rectifier_instance = std::shared_ptr<rectifier>());
 	virtual ~stereo_processor();
 
@@ -105,6 +105,7 @@ private:
 	cv::Mat last_right;
 	cv::Mat last_left_rectified;
 	cv::Mat last_right_rectified;
+	cv::Mat disparity_normalized;
 	std::shared_ptr<rectifier> _rectifier;
 
 

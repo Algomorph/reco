@@ -14,7 +14,9 @@ namespace stereo_workbench {
 stereo_processor_sgbm::stereo_processor_sgbm(datapipe::frame_buffer_type input_frame_buffer,
 		datapipe::frame_buffer_type output_frame_buffer,
 		std::shared_ptr<rectifier> rectifier) :
-		stereo_processor(input_frame_buffer, output_frame_buffer, rectifier) {
+		stereo_processor(input_frame_buffer, output_frame_buffer,
+				cv::StereoSGBM::create(0, 256, 3, 216, 864, -1, 48, 0, 0, 0,
+						cv::StereoSGBM::MODE_SGBM), rectifier) {
 
 }
 

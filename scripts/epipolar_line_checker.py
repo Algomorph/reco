@@ -23,4 +23,4 @@ if __name__ == "__main__":
         cv2.line(combined, (0,y_line),(combined.shape[1]-1,y_line),colors[i_line%3])
         i_line +=1
     
-    cv2.imwrite("output.png",combined);
+    cv2.imwrite("epipolar_lines.png",combined);

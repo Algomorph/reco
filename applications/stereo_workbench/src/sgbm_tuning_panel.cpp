@@ -134,22 +134,22 @@ void sgbm_tuning_panel::construct_specialized_controls(){
 
 	tuning_controls_vlayout->addWidget(pre_filter_cap_slider);
 
-	uniqueness_ration_horizontal_layout = new QHBoxLayout();
-	uniqueness_ration_horizontal_layout->setObjectName(QStringLiteral("uniqueness_ration_horizontal_layout"));
+	uniqueness_ratio_horizontal_layout = new QHBoxLayout();
+	uniqueness_ratio_horizontal_layout->setObjectName(QStringLiteral("uniqueness_ration_horizontal_layout"));
 	uniqueness_ratio_label = new QLabel(this);
 	uniqueness_ratio_label->setObjectName(QStringLiteral("uniqueness_ratio_label"));
 	uniqueness_ratio_label->setText("uniqueness ratio");
 
-	uniqueness_ration_horizontal_layout->addWidget(uniqueness_ratio_label);
+	uniqueness_ratio_horizontal_layout->addWidget(uniqueness_ratio_label);
 
 	uniqueness_ratio_spin_box = new QSpinBox(this);
 	uniqueness_ratio_spin_box->setObjectName(QStringLiteral("uniqueness_ratio_spin_box"));
 	uniqueness_ratio_spin_box->setMaximum(20);
 
-	uniqueness_ration_horizontal_layout->addWidget(uniqueness_ratio_spin_box);
+	uniqueness_ratio_horizontal_layout->addWidget(uniqueness_ratio_spin_box);
 
 
-	tuning_controls_vlayout->addLayout(uniqueness_ration_horizontal_layout);
+	tuning_controls_vlayout->addLayout(uniqueness_ratio_horizontal_layout);
 
 	uniqueness_ratio_slider = new QSlider(this);
 	uniqueness_ratio_slider->setObjectName(QStringLiteral("uniqueness_ratio_slider"));

@@ -29,19 +29,12 @@ template<class MATCHER>
 stereo_processor<MATCHER>::stereo_processor(
 		datapipe::frame_buffer_type input_frame_buffer,
 		datapipe::frame_buffer_type output_frame_buffer,
+		cv::Ptr<MATCHER> matcher,
 		std::shared_ptr<rectifier>  rectifier)
 :
 		worker(),
+				stereo_matcher(matcher),
 
-#if CV_VERSION_EPOCH == 2 || (!defined CV_VERSION_EPOCH && CV_VERSION_MAJOR == 2)
-
-				stereo_matcher(0, 64, 3, 216, 864, -1, 48, 0, 0, 0, false),
-#elif CV_VERSION_MAJOR == 3
-				stereo_matcher(
-						cv::StereoSGBM::create(0, 64, 3, 216, 864, -1, 48, 0, 0, 0,
-								cv::StereoSGBM::MODE_SGBM)),
-
-#endif
 				rectification_enabled((bool)rectifier),
 				input_frame_buffer(input_frame_buffer),
 				output_frame_buffer(output_frame_buffer),
@@ -118,6 +111,9 @@ void stereo_processor<MATCHER>::save_current_matcher_input() {
 		cv::imwrite("left.png", last_left);
 		cv::imwrite("right.png", last_right);
 	}
+	if(!disparity_normalized.empty()){
+		cv::imwrite("output.png", disparity_normalized);
+	}
 }
 
 template<class MATCHER>
@@ -129,7 +125,7 @@ void stereo_processor<MATCHER>::recompute_disparity(){
 	}
 }
 
-//TODO: figure out a way to make this thread safe
+//TODO: figure out a way to make this thread-safe
 template<class MATCHER>
 void stereo_processor<MATCHER>::recompute_disparity_if_paused(){
 	//protect the paused variable from being written during recompute
@@ -168,7 +164,6 @@ void stereo_processor<MATCHER>::compute_disparity(cv::Mat left, cv::Mat right) {
 
 	stereo_matcher->compute(left, right, disparity);
 
-	cv::Mat disparity_normalized;
 
 	cv::normalize(disparity, disparity_normalized, 0, 255, cv::NORM_MINMAX, CV_8U);
 #ifdef MORPHOLOGY_CLOSE
