@@ -20,7 +20,7 @@
 #include <Eigen/Eigen>
 //opencv
 #include <opencv2/highgui/highgui.hpp>
-#include <src/stereo_processor.hpp>
+#include <reco/stereo_workbench/stereo_processor.hpp>
 
 namespace reco {
 namespace stereo_workbench {
@@ -140,7 +140,7 @@ void stereo_processor<MATCHER>::recompute_disparity_if_paused(){
 	//}
 }
 template<class MATCHER>
-bool stereo_processor<MATCHER>::is_rectification_enabled(){
+bool stereo_processor<MATCHER>::is_rectification_enabled() const{
 	return this->rectification_enabled;
 }
 
@@ -182,18 +182,40 @@ void stereo_processor<MATCHER>::compute_disparity(cv::Mat left, cv::Mat right) {
 	emit frame(images);
 }
 
-#if CV_VERSION_MAJOR == 3
-template<class MATCHER>
-void stereo_processor<MATCHER>::compute_disparity_daisy(cv::Mat left, cv::Mat right) {
+//===========================PARAMETER GETTERS======================================================
 
+template<class MATCHER>
+int stereo_processor<MATCHER>::get_bock_size() const{
+	return stereo_matcher->getBlockSize();
 }
-#endif
-
 template<class MATCHER>
-int stereo_processor<MATCHER>::get_v_offset() {
+int stereo_processor<MATCHER>::get_disparity_max_diff() const{
+	return stereo_matcher->getDisp12MaxDiff();
+}
+template<class MATCHER>
+int stereo_processor<MATCHER>::get_minimum_disparity() const{
+	return stereo_matcher->getMinDisparity();
+}
+template<class MATCHER>
+int stereo_processor<MATCHER>::get_num_disparities() const{
+	return stereo_matcher->getNumDisparities();
+}
+template<class MATCHER>
+int stereo_processor<MATCHER>::get_speckle_range() const{
+	return stereo_matcher->getSpeckleRange();
+}
+template<class MATCHER>
+int stereo_processor<MATCHER>::get_speckle_window_size() const{
+	return stereo_matcher->getSpeckleWindowSize();
+}
+template<class MATCHER>
+int stereo_processor<MATCHER>::get_v_offset() const{
 	return this->right_v_offset;
 }
 
+
+//==================================================================================================
+//===========================PARAMETER SETTER SLOTS=================================================
 template<class MATCHER>
 void stereo_processor<MATCHER>::set_minimum_disparity(int value) {
 	stereo_matcher->setMinDisparity(value);
@@ -233,6 +255,8 @@ void stereo_processor<MATCHER>::set_disparity_max_diff(int value){
 	stereo_matcher->setDisp12MaxDiff(value);
 }
 
+//=======================END PARAMETER SETTER SLOTS=================================================
+//==================================================================================================
 template<class MATCHER>
 void stereo_processor<MATCHER>::toggle_rectification(){
 	if(this->_rectifier){

@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include <src/rectifier.hpp>
+#include <reco/stereo_workbench/rectifier.hpp>
 
 namespace reco {
 namespace stereo_workbench {

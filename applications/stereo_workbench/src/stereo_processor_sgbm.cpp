@@ -6,7 +6,7 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
-#include <src/stereo_processor_sgbm.hpp>
+#include <reco/stereo_workbench/stereo_processor_sgbm.hpp>
 
 namespace reco {
 namespace stereo_workbench {
@@ -22,6 +22,21 @@ stereo_processor_sgbm::~stereo_processor_sgbm() {
 
 }
 
+//===============================PARAMETER GETTERS==================================================
+int stereo_processor_sgbm::get_p1() const{
+	return stereo_matcher->getP1();
+}
+int stereo_processor_sgbm::get_p2() const{
+	return stereo_matcher->getP2();
+}
+int stereo_processor_sgbm::get_pre_filter_cap() const{
+	return stereo_matcher->getPreFilterCap();
+}
+int stereo_processor_sgbm::get_uniqueness_ratio() const{
+	return stereo_matcher->getUniquenessRatio();
+}
+
+//===============================PARAMETER SETTER SLOTS=============================================
 void stereo_processor_sgbm::set_p1(int value) {
 	if (value < stereo_matcher->getP2()) {
 		stereo_matcher->setP1(value);

@@ -6,14 +6,15 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
-#include <src/stereo_matcher_tuning_panel.hpp>
+#include <reco/stereo_workbench/stereo_matcher_tuning_panel.hpp>
 #include <QVBoxLayout>
 
 namespace reco {
 namespace stereo_workbench {
 
-template<typename MATCHER>
-stereo_matcher_tuning_panel<MATCHER>::stereo_matcher_tuning_panel(){
+template<typename PROC>
+stereo_matcher_tuning_panel<PROC>::stereo_matcher_tuning_panel(QWidget* parent):
+	QWidget(parent){
 
 	this->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
 	this->setMinimumSize(100,100);
@@ -24,6 +25,61 @@ stereo_matcher_tuning_panel<MATCHER>::stereo_matcher_tuning_panel(){
 	layout->addItem(tuning_controls_vlayout);
 	layout->addItem(other_controls_vlayout);
 
+	set_up_tuning_controls();
+}
+
+template<typename PROC>
+void stereo_matcher_tuning_panel<PROC>
+	::connect_standard_controls(const PROC& processor){
+	rectify_checkbox->setChecked(processor.is_rectification_enabled());
+	//====================== SLIDER / SPINNER CONTROLS =================================================
+	//sliders
+	minimum_disparity_slider->      setValue(processor.get_minimum_disparity());
+	number_of_disparities_slider->  setValue(processor.get_num_disparities());
+	block_size_slider->             setValue(processor.get_bock_size());
+	speckle_window_size_slider->    setValue(processor.get_speckle_window_size());
+	speckle_range_slider->          setValue(processor.get_speckle_range());
+	v_offset_slider->               setValue(processor.get_v_offset());
+
+	//spin-boxes
+	minimum_disparity_spin_box->    setValue(processor.get_minimum_disparity());
+	number_of_disparities_spin_box->setValue(processor.get_num_disparities());
+	block_size_spin_box->           setValue(processor.get_bock_size());
+	speckle_window_size_spin_box->  setValue(processor.get_speckle_window_size());
+	speckle_range_spin_box->        setValue(processor.get_speckle_range());
+	v_offset_spin_box->             setValue(processor.get_v_offset());
+
+	connect(minimum_disparity_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_minimum_disparity(int)));
+	connect(minimum_disparity_slider, SIGNAL(valueChanged(int)), minimum_disparity_spin_box, SLOT(setValue(int)));
+	connect(minimum_disparity_spin_box, SIGNAL(valueChanged(int)), minimum_disparity_slider, SLOT(setValue(int)));
+	connect(number_of_disparities_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_num_disparities(int)));
+	connect(number_of_disparities_slider, SIGNAL(valueChanged(int)), number_of_disparities_spin_box, SLOT(setValue(int)));
+	connect(number_of_disparities_spin_box, SIGNAL(valueChanged(int)), number_of_disparities_slider, SLOT(setValue(int)));
+	connect(block_size_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_block_size(int)));
+	connect(block_size_slider, SIGNAL(valueChanged(int)), block_size_spin_box, SLOT(setValue(int)));
+	connect(block_size_spin_box, SIGNAL(valueChanged(int)), block_size_slider, SLOT(setValue(int)));
+	connect(speckle_window_size_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_speckle_window_size(int)));
+	connect(speckle_window_size_slider, SIGNAL(valueChanged(int)), speckle_window_size_spin_box, SLOT(setValue(int)));
+	connect(speckle_window_size_spin_box, SIGNAL(valueChanged(int)), speckle_window_size_slider, SLOT(setValue(int)));
+	connect(speckle_range_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_speckle_range(int)));
+	connect(speckle_range_slider, SIGNAL(valueChanged(int)), speckle_range_spin_box, SLOT(setValue(int)));
+	connect(speckle_range_spin_box, SIGNAL(valueChanged(int)), speckle_range_slider, SLOT(setValue(int)));
+	connect(v_offset_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_v_offset(int)));
+	connect(v_offset_slider, SIGNAL(valueChanged(int)), v_offset_spin_box, SLOT(setValue(int)));
+	connect(v_offset_spin_box, SIGNAL(valueChanged(int)), v_offset_slider, SLOT(setValue(int)));
+
+}
+
+template<typename PROC>
+void stereo_matcher_tuning_panel<PROC>
+	::connect_to_stereo_processor(const PROC& processor){
+	connect_standard_controls(processor);
+	connect_specialized_controls(processor);
+}
+
+
+template<typename PROC>
+void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 	block_size_horizontal_layout = new QHBoxLayout();
 	block_size_horizontal_layout->setObjectName(QStringLiteral("block_size_horizontal_layout"));
 	block_size_label = new QLabel(this);
@@ -223,26 +279,26 @@ stereo_matcher_tuning_panel<MATCHER>::stereo_matcher_tuning_panel(){
 	v_offset_slider->setTracking(false);
 	v_offset_slider->setOrientation(Qt::Horizontal);
 
-    rectification_horizontal_layout = new QHBoxLayout();
-    rectification_horizontal_layout->setObjectName(QStringLiteral("rectification_horizontal_layout"));
-    rectify_checkbox = new QCheckBox(this);
-    rectify_checkbox->setObjectName(QStringLiteral("rectify_checkbox"));
-    rectify_checkbox->setChecked(true);
+	rectification_horizontal_layout = new QHBoxLayout();
+	rectification_horizontal_layout->setObjectName(QStringLiteral("rectification_horizontal_layout"));
+	rectify_checkbox = new QCheckBox(this);
+	rectify_checkbox->setObjectName(QStringLiteral("rectify_checkbox"));
+	rectify_checkbox->setChecked(true);
 
-    rectification_horizontal_layout->addWidget(rectify_checkbox);
+	rectification_horizontal_layout->addWidget(rectify_checkbox);
 
 
-    other_controls_vlayout->addLayout(rectification_horizontal_layout);
+	other_controls_vlayout->addLayout(rectification_horizontal_layout);
 
-    save_current_button = new QPushButton(this);
-    save_current_button->setObjectName(QStringLiteral("save_current_button"));
+	save_current_button = new QPushButton(this);
+	save_current_button->setObjectName(QStringLiteral("save_current_button"));
 
-    other_controls_vlayout->addWidget(save_current_button);
+	other_controls_vlayout->addWidget(save_current_button);
 }
 
 
-template<typename MATCHER>
-stereo_matcher_tuning_panel<MATCHER>::~stereo_matcher_tuning_panel(){
+template<typename PROC>
+stereo_matcher_tuning_panel<PROC>::~stereo_matcher_tuning_panel(){
 
 }
 

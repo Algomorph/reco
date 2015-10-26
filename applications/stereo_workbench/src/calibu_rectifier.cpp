@@ -6,9 +6,9 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
-#include <src/calibu_rectifier.h>
 #include <calibu/cam/stereo_rectify.h>
 #include <reco/utils/debug_util.h>
+#include <src/calibu_rectifier.hpp>
 
 namespace reco {
 namespace stereo_workbench {

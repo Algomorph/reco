@@ -24,23 +24,22 @@
 #include <memory>
 
 //local
-#include "stereo_processor.hpp"
+#include <reco/stereo_workbench/stereo_processor.hpp>
 
 namespace reco {
 namespace stereo_workbench {
 
-template<typename MATCHER>
+template<typename PROC>
 class stereo_matcher_tuning_panel:
 		public QWidget {
-	static_assert(
-		std::is_base_of<cv::StereoMatcher, MATCHER>::value,
-		"PROC must be a descendant of reco::stereo_workbench::stereo_processor"
-	);
+
 public:
-	stereo_matcher_tuning_panel();
+	stereo_matcher_tuning_panel(QWidget* parent = NULL);
 	virtual ~stereo_matcher_tuning_panel();
+	void connect_to_stereo_processor(const PROC& processor);
 protected:
-	std::shared_ptr<MATCHER> processor;
+	void connect_standard_controls(const PROC& processor);
+	virtual void connect_specialized_controls(const PROC& processor) = 0;
 	QVBoxLayout* tuning_controls_vlayout;
 private:
 	QVBoxLayout* other_controls_vlayout;
@@ -84,6 +83,7 @@ private:
 	QCheckBox* rectify_checkbox;
 	QPushButton* save_current_button;
 
+	void set_up_tuning_controls();
 
 
 };
@@ -92,4 +92,4 @@ private:
 } /* namespace stereo_workbench */
 } /* namespace reco */
 
-#include "stereo_matcher_tuning_panel.tpp"
+#include <reco/stereo_workbench/stereo_matcher_tuning_panel.tpp>

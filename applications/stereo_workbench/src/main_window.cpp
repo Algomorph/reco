@@ -10,7 +10,6 @@
 //local
 #include "../ui_main_window.h"
 #include "main_window.h"
-#include "calibu_rectifier.h"
 #include <reco/datapipe/hal_stereo_pipe.h>
 #include <reco/datapipe/hal_interop.h>
 
@@ -24,6 +23,7 @@
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
+#include <src/calibu_rectifier.hpp>
 #include <src/opencv_rectifier.hpp>
 
 namespace reco {
@@ -91,60 +91,7 @@ void main_window::connect_actions() {
 	connect(ui->action_open_calibration_file,SIGNAL(triggered()),this,SLOT(open_calibration_file()));
 	connect(ui->action_open_image_pair,SIGNAL(triggered()),this,SLOT(open_image_pair()));
 //==================================================================================================
-	ui->rectify_checkbox->setChecked(processor.is_rectification_enabled());
-//====================== SLIDER / SPINNER CONTROLS =================================================
-	ui->minimum_disparity_slider->      setValue(processor.stereo_matcher->getMinDisparity());
-	ui->number_of_disparities_slider->  setValue(processor.stereo_matcher->getNumDisparities());
-	ui->block_size_slider->             setValue(processor.stereo_matcher->getBlockSize());
-	ui->p1_slider->                     setValue(processor.stereo_matcher->getP1());
-	ui->p2_slider->                     setValue(processor.stereo_matcher->getP2());
-	ui->pre_filter_cap_slider->         setValue(processor.stereo_matcher->getPreFilterCap());
-	ui->uniqueness_ratio_slider->       setValue(processor.stereo_matcher->getUniquenessRatio());
-	ui->speckle_window_size_slider->    setValue(processor.stereo_matcher->getSpeckleWindowSize());
-	ui->speckle_range_slider->          setValue(processor.stereo_matcher->getSpeckleRange());
-	ui->v_offset_slider->               setValue(processor.get_v_offset());
-
-	ui->minimum_disparity_spin_box->    setValue(processor.stereo_matcher->getMinDisparity());
-	ui->number_of_disparities_spin_box->setValue(processor.stereo_matcher->getNumDisparities());
-	ui->block_size_spin_box->           setValue(processor.stereo_matcher->getBlockSize());
-	ui->p1_spin_box->                   setValue(processor.stereo_matcher->getP1());
-	ui->p2_spin_box->                   setValue(processor.stereo_matcher->getP2());
-	ui->pre_filter_cap_spin_box->       setValue(processor.stereo_matcher->getPreFilterCap());
-	ui->uniqueness_ratio_spin_box->     setValue(processor.stereo_matcher->getUniquenessRatio());
-	ui->speckle_window_size_spin_box->  setValue(processor.stereo_matcher->getSpeckleWindowSize());
-	ui->speckle_range_spin_box->        setValue(processor.stereo_matcher->getSpeckleRange());
-	ui->v_offset_spin_box->             setValue(processor.get_v_offset());
-
-	connect(ui->minimum_disparity_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_minimum_disparity(int)));
-	connect(ui->minimum_disparity_slider, SIGNAL(valueChanged(int)), ui->minimum_disparity_spin_box, SLOT(setValue(int)));
-	connect(ui->minimum_disparity_spin_box, SIGNAL(valueChanged(int)), ui->minimum_disparity_slider, SLOT(setValue(int)));
-	connect(ui->number_of_disparities_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_num_disparities(int)));
-	connect(ui->number_of_disparities_slider, SIGNAL(valueChanged(int)), ui->number_of_disparities_spin_box, SLOT(setValue(int)));
-	connect(ui->number_of_disparities_spin_box, SIGNAL(valueChanged(int)), ui->number_of_disparities_slider, SLOT(setValue(int)));
-	connect(ui->block_size_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_block_size(int)));
-	connect(ui->block_size_slider, SIGNAL(valueChanged(int)), ui->block_size_spin_box, SLOT(setValue(int)));
-	connect(ui->block_size_spin_box, SIGNAL(valueChanged(int)), ui->block_size_slider, SLOT(setValue(int)));
-	connect(ui->p1_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_p1(int)));
-	connect(ui->p1_slider, SIGNAL(valueChanged(int)), ui->p1_spin_box, SLOT(setValue(int)));
-	connect(ui->p1_spin_box, SIGNAL(valueChanged(int)), ui->p1_slider, SLOT(setValue(int)));
-	connect(ui->p2_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_p2(int)));
-	connect(ui->p2_slider, SIGNAL(valueChanged(int)), ui->p2_spin_box, SLOT(setValue(int)));
-	connect(ui->p2_spin_box, SIGNAL(valueChanged(int)), ui->p2_slider, SLOT(setValue(int)));
-	connect(ui->pre_filter_cap_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_pre_filter_cap(int)));
-	connect(ui->pre_filter_cap_slider, SIGNAL(valueChanged(int)), ui->pre_filter_cap_spin_box, SLOT(setValue(int)));
-	connect(ui->pre_filter_cap_spin_box, SIGNAL(valueChanged(int)), ui->pre_filter_cap_slider, SLOT(setValue(int)));
-	connect(ui->uniqueness_ratio_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_uniqueness_ratio(int)));
-	connect(ui->uniqueness_ratio_slider, SIGNAL(valueChanged(int)), ui->uniqueness_ratio_spin_box, SLOT(setValue(int)));
-	connect(ui->uniqueness_ratio_spin_box, SIGNAL(valueChanged(int)), ui->uniqueness_ratio_slider, SLOT(setValue(int)));
-	connect(ui->speckle_window_size_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_speckle_window_size(int)));
-	connect(ui->speckle_window_size_slider, SIGNAL(valueChanged(int)), ui->speckle_window_size_spin_box, SLOT(setValue(int)));
-	connect(ui->speckle_window_size_spin_box, SIGNAL(valueChanged(int)), ui->speckle_window_size_slider, SLOT(setValue(int)));
-	connect(ui->speckle_range_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_speckle_range(int)));
-	connect(ui->speckle_range_slider, SIGNAL(valueChanged(int)), ui->speckle_range_spin_box, SLOT(setValue(int)));
-	connect(ui->speckle_range_spin_box, SIGNAL(valueChanged(int)), ui->speckle_range_slider, SLOT(setValue(int)));
-	connect(ui->v_offset_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_v_offset(int)));
-	connect(ui->v_offset_slider, SIGNAL(valueChanged(int)), ui->v_offset_spin_box, SLOT(setValue(int)));
-	connect(ui->v_offset_spin_box, SIGNAL(valueChanged(int)), ui->v_offset_slider, SLOT(setValue(int)));
+	ui->tuner_panel->connect_to_stereo_processor(this->processor);
 
 }
 

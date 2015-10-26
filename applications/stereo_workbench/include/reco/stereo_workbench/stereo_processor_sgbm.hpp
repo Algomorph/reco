@@ -8,7 +8,7 @@
 
 #pragma once
 
-#include <src/stereo_processor.hpp>
+#include <reco/stereo_workbench/stereo_processor.hpp>
 
 namespace reco {
 namespace stereo_workbench {
@@ -21,6 +21,12 @@ public:
 			datapipe::frame_buffer_type output_frame_buffer,
 			std::shared_ptr<rectifier>  rectifier_instance = std::shared_ptr<rectifier>());
 	virtual ~stereo_processor_sgbm();
+
+	//getters
+	int get_p1() const;
+	int get_p2() const;
+	int get_pre_filter_cap() const;
+	int get_uniqueness_ratio() const;
 
 public slots:
 	void set_p1(int value);

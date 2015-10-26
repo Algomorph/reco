@@ -63,13 +63,32 @@ public:
 	virtual ~stereo_processor();
 
 
-	int get_v_offset();
-	bool is_rectification_enabled();
+	bool is_rectification_enabled() const;
 	void set_rectifier(std::shared_ptr<rectifier> _rectifier);
 	void toggle_rectification();
+
+	int get_bock_size() const;
+	int get_disparity_max_diff() const;
+	int get_minimum_disparity() const;
+	int get_num_disparities() const;
+	int get_speckle_range() const;
+	int get_speckle_window_size() const;
+	int get_v_offset() const;
+
+	//tuning slots
+	virtual void set_block_size(int value);
+	virtual void set_disparity_max_diff(int value);
+	virtual void set_minimum_disparity(int value);
+	virtual void set_num_disparities(int value);
+	virtual void set_speckle_range(int value);
+	virtual void set_speckle_window_size(int value);
+	virtual void set_v_offset(int value);
+
+	//slots for diagnostics
+	virtual void save_current_matcher_input();
+protected:
 	cv::Ptr<MATCHER> stereo_matcher;
 
-protected:
 	virtual bool do_unit_of_work();
 	virtual void pre_thread_join();
 	void recompute_disparity_if_paused();
@@ -92,27 +111,9 @@ private:
 	void recompute_disparity();
 	void compute_disparity(cv::Mat left, cv::Mat right);
 
-#if CV_VERSION_MAJOR == 3
-	//TODO 203
-	void compute_disparity_daisy(cv::Mat left, cv::Mat right);
-#endif
-
-public:
-
-	//tuning slots
-	virtual void set_block_size(int value);
-	virtual void set_disparity_max_diff(int value);
-	virtual void set_minimum_disparity(int value);
-	virtual void set_num_disparities(int value);
-	virtual void set_speckle_range(int value);
-	virtual void set_speckle_window_size(int value);
-	virtual void set_v_offset(int value);
-
-	//slots for diagnostics
-	virtual void save_current_matcher_input();
 };
 
 } /* namespace stereo_workbench */
 } /* namespace reco */
 
-#include "stereo_processor.tpp"
+#include <reco/stereo_workbench/stereo_processor.tpp>

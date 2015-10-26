@@ -6,12 +6,43 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
-#include <src/sgbm_tuning_panel.h>
+#include <reco/stereo_workbench/sgbm_tuning_panel.hpp>
 
 namespace reco {
 namespace stereo_workbench {
 
-sgbm_tuning_panel::sgbm_tuning_panel():stereo_matcher_tuning_panel<cv::StereoSGBM>(){
+sgbm_tuning_panel::sgbm_tuning_panel(QWidget* parent)
+	:stereo_matcher_tuning_panel<stereo_processor_sgbm>(parent){
+	construct_specialized_controls();
+}
+
+
+void sgbm_tuning_panel::connect_specialized_controls(const stereo_processor_sgbm& processor){
+	p1_slider->                     setValue(processor.get_p1());
+	p2_slider->                     setValue(processor.get_p2());
+	pre_filter_cap_slider->         setValue(processor.get_pre_filter_cap());
+	uniqueness_ratio_slider->       setValue(processor.get_uniqueness_ratio());
+
+	p1_spin_box->                   setValue(processor.get_p1());
+	p2_spin_box->                   setValue(processor.get_p2());
+	pre_filter_cap_spin_box->       setValue(processor.get_pre_filter_cap());
+	uniqueness_ratio_spin_box->     setValue(processor.get_uniqueness_ratio());
+
+	connect(p1_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_p1(int)));
+	connect(p1_slider, SIGNAL(valueChanged(int)), p1_spin_box, SLOT(setValue(int)));
+	connect(p1_spin_box, SIGNAL(valueChanged(int)), p1_slider, SLOT(setValue(int)));
+	connect(p2_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_p2(int)));
+	connect(p2_slider, SIGNAL(valueChanged(int)), p2_spin_box, SLOT(setValue(int)));
+	connect(p2_spin_box, SIGNAL(valueChanged(int)), p2_slider, SLOT(setValue(int)));
+	connect(pre_filter_cap_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_pre_filter_cap(int)));
+	connect(pre_filter_cap_slider, SIGNAL(valueChanged(int)), pre_filter_cap_spin_box, SLOT(setValue(int)));
+	connect(pre_filter_cap_spin_box, SIGNAL(valueChanged(int)), pre_filter_cap_slider, SLOT(setValue(int)));
+	connect(uniqueness_ratio_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_uniqueness_ratio(int)));
+	connect(uniqueness_ratio_slider, SIGNAL(valueChanged(int)), uniqueness_ratio_spin_box, SLOT(setValue(int)));
+	connect(uniqueness_ratio_spin_box, SIGNAL(valueChanged(int)), uniqueness_ratio_slider, SLOT(setValue(int)));
+}
+
+void sgbm_tuning_panel::construct_specialized_controls(){
 	QSizePolicy sizePolicy1(QSizePolicy::Minimum, QSizePolicy::Fixed);
 	p1_horizontal_layout = new QHBoxLayout();
 	p1_horizontal_layout->setObjectName(QStringLiteral("p1_horizontal_layout"));
