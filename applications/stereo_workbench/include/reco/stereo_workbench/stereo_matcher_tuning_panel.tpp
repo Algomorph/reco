@@ -28,6 +28,8 @@ stereo_matcher_tuning_panel<PROC>::stereo_matcher_tuning_panel(QWidget* parent):
 	set_up_tuning_controls();
 }
 
+
+
 template<typename PROC>
 void stereo_matcher_tuning_panel<PROC>
 	::connect_standard_controls(const PROC& processor){
@@ -71,225 +73,146 @@ void stereo_matcher_tuning_panel<PROC>
 }
 
 template<typename PROC>
+void stereo_matcher_tuning_panel<PROC>::construct_integer_control_set(
+			QHBoxLayout* horizontal_layout,
+			QLabel* label,
+			QSpinBox* spin_box,
+			QSlider* slider,
+			QString layout_name,
+			QString label_name,
+			QString spin_box_name,
+			QString slider_name,
+			int min_val, int max_val, int step, int val, int page_step){
+	horizontal_layout = new QHBoxLayout();
+	horizontal_layout->setObjectName(QStringLiteral("horizontal_layout"));
+	label = new QLabel(this);
+	label->setObjectName(QStringLiteral("label"));
+	label->setText("block size (pixels):");
+
+	horizontal_layout->addWidget(label);
+
+	spin_box = new QSpinBox(this);
+	spin_box->setObjectName(QStringLiteral("spin_box"));
+	spin_box->setMinimum(min_val);
+	spin_box->setMaximum(max_val);
+	spin_box->setSingleStep(step);
+
+
+	horizontal_layout->addWidget(spin_box);
+
+	tuning_controls_vlayout->addLayout(horizontal_layout);
+
+	slider = new QSlider(this);
+	slider->setObjectName(QStringLiteral("slider"));
+	QSizePolicy sizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+	sizePolicy.setHorizontalStretch(0);
+	sizePolicy.setVerticalStretch(0);
+	sizePolicy.setHeightForWidth(slider->sizePolicy().hasHeightForWidth());
+	slider->setSizePolicy(sizePolicy);
+	slider->setMinimum(min_val);
+	slider->setMaximum(max_val);
+	slider->setSingleStep(step);
+	slider->setPageStep(page_step);
+	slider->setValue(val);
+	slider->setTracking(false);
+	slider->setOrientation(Qt::Horizontal);
+	slider->setToolTip("block size (pixels)");
+	tuning_controls_vlayout->addWidget(slider);
+}
+
+template<typename PROC>
 void stereo_matcher_tuning_panel<PROC>
 	::connect_to_stereo_processor(const PROC& processor){
 	connect_standard_controls(processor);
 	connect_specialized_controls(processor);
 }
 
-
 template<typename PROC>
 void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
-	block_size_horizontal_layout = new QHBoxLayout();
-	block_size_horizontal_layout->setObjectName(QStringLiteral("block_size_horizontal_layout"));
-	block_size_label = new QLabel(this);
-	block_size_label->setObjectName(QStringLiteral("block_size_label"));
-	block_size_label->setText("block size (pixels):");
 
-	block_size_horizontal_layout->addWidget(block_size_label);
+	construct_integer_control_set(
+			block_size_horizontal_layout,
+			block_size_label,
+			block_size_spin_box,
+			block_size_slider,
+			QStringLiteral("block_size_horizontal_layout"),
+			QStringLiteral("block_size_label"),
+			QStringLiteral("block_size_spin_box"),
+			QStringLiteral("block_size_slider"),
+			1,65,2,1
+			);
 
-	block_size_spin_box = new QSpinBox(this);
-	block_size_spin_box->setObjectName(QStringLiteral("block_size_spin_box"));
-	block_size_spin_box->setMinimum(1);
-	block_size_spin_box->setMaximum(65);
-	block_size_spin_box->setSingleStep(2);
+	construct_integer_control_set(
+			disparity_max_diff_horizontal_layout,
+			disparity_max_diff_label,
+			disparity_max_diff_spin_box,
+			disparity_max_diff_slider,
+			QStringLiteral("disparity_max_diff_horizontal_layout"),
+			QStringLiteral("disparity_max_diff_label"),
+			QStringLiteral("disparity_max_diff_spin_box"),
+			QStringLiteral("disparity_max_diff_slider"),
+			0,256
+			);
 
-	block_size_horizontal_layout->addWidget(block_size_spin_box);
+	construct_integer_control_set(
+			minimum_disparity_horizontal_layout,
+			minimum_disparity_label,
+			minimum_disparity_spin_box,
+			minimum_disparity_slider,
+			QStringLiteral("minimum_disparity_horizontal_layout"),
+			QStringLiteral("minimum_disparity_label"),
+			QStringLiteral("minimum_disparity_spin_box"),
+			QStringLiteral("minimum_disparity_slider"),
+			0,256
+			);
 
+	construct_integer_control_set(
+			number_of_disparities_horizontal_layout,
+			number_of_disparities_label,
+			number_of_disparities_spin_box,
+			number_of_disparities_slider,
+			QStringLiteral("number_of_disparities_horizontal_layout"),
+			QStringLiteral("number_of_disparities_label"),
+			QStringLiteral("number_of_disparities_spin_box"),
+			QStringLiteral("number_of_disparities_slider"),
+			16,256,16,16
+			);
 
-	tuning_controls_vlayout->addLayout(block_size_horizontal_layout);
+	construct_integer_control_set(
+			speckle_range_horizontal_layout,
+			speckle_range_label,
+			speckle_range_spin_box,
+			speckle_range_slider,
+			QStringLiteral("speckle_range_horizontal_layout"),
+			QStringLiteral("speckle_range_label"),
+			QStringLiteral("speckle_range_spin_box"),
+			QStringLiteral("speckle_range_slider"),
+			0,5
+			);
 
-	block_size_slider = new QSlider(this);
-	block_size_slider->setObjectName(QStringLiteral("block_size_slider"));
-	QSizePolicy sizePolicy1(QSizePolicy::Minimum, QSizePolicy::Fixed);
-	sizePolicy1.setHorizontalStretch(0);
-	sizePolicy1.setVerticalStretch(0);
-	sizePolicy1.setHeightForWidth(block_size_slider->sizePolicy().hasHeightForWidth());
-	block_size_slider->setSizePolicy(sizePolicy1);
-	block_size_slider->setMinimum(1);
-	block_size_slider->setMaximum(65);
-	block_size_slider->setSingleStep(2);
-	block_size_slider->setValue(1);
-	block_size_slider->setTracking(false);
-	block_size_slider->setOrientation(Qt::Horizontal);
-	block_size_slider->setToolTip("block size (pixels)");
+	construct_integer_control_set(
+			speckle_window_size_horizontal_layout,
+			speckle_window_size_label,
+			speckle_window_size_spin_box,
+			speckle_window_size_slider,
+			QStringLiteral("speckle_window_size_horizontal_layout"),
+			QStringLiteral("speckle_window_size_label"),
+			QStringLiteral("speckle_window_size_spin_box"),
+			QStringLiteral("speckle_window_size_slider"),
+			0,300,5,0,20
+			);
 
-	tuning_controls_vlayout->addWidget(block_size_slider);
-
-	disparity_max_diff_horizontal_layout = new QHBoxLayout();
-	disparity_max_diff_horizontal_layout->setObjectName(QStringLiteral("disparity_max_diff_horizontal_layout"));
-	disparity_max_diff_label = new QLabel(this);
-	disparity_max_diff_label->setObjectName(QStringLiteral("disparity_max_diff_label"));
-	disparity_max_diff_label->setText("maximum difference (px):");
-
-	disparity_max_diff_horizontal_layout->addWidget(disparity_max_diff_label);
-
-	disparity_max_diff_spin_box = new QSpinBox(this);
-	disparity_max_diff_spin_box->setObjectName(QStringLiteral("disparity_max_diff_spin_box"));
-	disparity_max_diff_spin_box->setMaximum(256);
-
-	disparity_max_diff_horizontal_layout->addWidget(disparity_max_diff_spin_box);
-
-	tuning_controls_vlayout->addLayout(disparity_max_diff_horizontal_layout);
-
-	disparity_max_diff_slider = new QSlider(this);
-	disparity_max_diff_slider->setObjectName(QStringLiteral("disparity_max_diff_slider"));
-	sizePolicy1.setHeightForWidth(disparity_max_diff_slider->sizePolicy().hasHeightForWidth());
-	disparity_max_diff_slider->setSizePolicy(sizePolicy1);
-	disparity_max_diff_slider->setMinimumSize(QSize(400, 0));
-	disparity_max_diff_slider->setMaximum(256);
-	disparity_max_diff_slider->setTracking(false);
-	disparity_max_diff_slider->setOrientation(Qt::Horizontal);
-	disparity_max_diff_slider->setToolTip("maximum pixel difference between the two views");
-
-	tuning_controls_vlayout->addWidget(disparity_max_diff_slider);
-
-	minimum_disparity_horizontal_layout = new QHBoxLayout();
-	minimum_disparity_horizontal_layout->setObjectName(QStringLiteral("minimum_disparity_horizontal_layout"));
-	minimum_disparity_label = new QLabel(this);
-	minimum_disparity_label->setObjectName(QStringLiteral("minimum_disparity_label"));
-	minimum_disparity_label->setText("minimum disparity:");
-
-	minimum_disparity_horizontal_layout->addWidget(minimum_disparity_label);
-
-	minimum_disparity_spin_box = new QSpinBox(this);
-	minimum_disparity_spin_box->setObjectName(QStringLiteral("minimum_disparity_spin_box"));
-	minimum_disparity_spin_box->setMaximum(256);
-
-	minimum_disparity_horizontal_layout->addWidget(minimum_disparity_spin_box);
-
-
-	tuning_controls_vlayout->addLayout(minimum_disparity_horizontal_layout);
-
-	minimum_disparity_slider = new QSlider(this);
-	minimum_disparity_slider->setObjectName(QStringLiteral("minimum_disparity_slider"));
-	sizePolicy1.setHeightForWidth(minimum_disparity_slider->sizePolicy().hasHeightForWidth());
-	minimum_disparity_slider->setSizePolicy(sizePolicy1);
-	minimum_disparity_slider->setMinimumSize(QSize(400, 0));
-	minimum_disparity_slider->setMaximum(256);
-	minimum_disparity_slider->setTracking(false);
-	minimum_disparity_slider->setOrientation(Qt::Horizontal);
-
-	tuning_controls_vlayout->addWidget(minimum_disparity_slider);
-
-	number_of_disparities_horizontal_layout = new QHBoxLayout();
-	number_of_disparities_horizontal_layout->setObjectName(QStringLiteral("number_of_disparities_horizontal_layout"));
-	number_of_disparities_label = new QLabel(this);
-	number_of_disparities_label->setObjectName(QStringLiteral("number_of_disparities_label"));
-	number_of_disparities_label->setText("number of disparities:");
-
-	number_of_disparities_horizontal_layout->addWidget(number_of_disparities_label);
-
-	number_of_disparities_spin_box = new QSpinBox(this);
-	number_of_disparities_spin_box->setObjectName(QStringLiteral("number_of_disparities_spin_box"));
-	number_of_disparities_spin_box->setMinimum(8);
-	number_of_disparities_spin_box->setMaximum(256);
-	number_of_disparities_spin_box->setSingleStep(16);
-
-	number_of_disparities_horizontal_layout->addWidget(number_of_disparities_spin_box);
-
-
-	tuning_controls_vlayout->addLayout(number_of_disparities_horizontal_layout);
-
-	number_of_disparities_slider = new QSlider(this);
-	number_of_disparities_slider->setObjectName(QStringLiteral("number_of_disparities_slider"));
-	sizePolicy1.setHeightForWidth(number_of_disparities_slider->sizePolicy().hasHeightForWidth());
-	number_of_disparities_slider->setSizePolicy(sizePolicy1);
-	number_of_disparities_slider->setMinimum(8);
-	number_of_disparities_slider->setMaximum(256);
-	number_of_disparities_slider->setSingleStep(16);
-	number_of_disparities_slider->setPageStep(32);
-	number_of_disparities_slider->setTracking(false);
-	number_of_disparities_slider->setOrientation(Qt::Horizontal);
-
-	tuning_controls_vlayout->addWidget(number_of_disparities_slider);
-
-	speckle_range_horizontal_layout = new QHBoxLayout();
-	speckle_range_horizontal_layout->setObjectName(QStringLiteral("speckle_range_horizontal_layout"));
-	speckle_range_label = new QLabel(this);
-	speckle_range_label->setObjectName(QStringLiteral("speckle_range_label"));
-	speckle_range_label->setText("speckle range:");
-
-	speckle_range_horizontal_layout->addWidget(speckle_range_label);
-
-	speckle_range_spin_box = new QSpinBox(this);
-	speckle_range_spin_box->setObjectName(QStringLiteral("speckle_range_spin_box"));
-	speckle_range_spin_box->setMaximum(5);
-
-	speckle_range_horizontal_layout->addWidget(speckle_range_spin_box);
-
-
-	tuning_controls_vlayout->addLayout(speckle_range_horizontal_layout);
-
-	speckle_range_slider = new QSlider(this);
-	speckle_range_slider->setObjectName(QStringLiteral("speckle_range_slider"));
-	sizePolicy1.setHeightForWidth(speckle_range_slider->sizePolicy().hasHeightForWidth());
-	speckle_range_slider->setSizePolicy(sizePolicy1);
-	speckle_range_slider->setMaximum(5);
-	speckle_range_slider->setPageStep(2);
-	speckle_range_slider->setTracking(false);
-	speckle_range_slider->setOrientation(Qt::Horizontal);
-
-	tuning_controls_vlayout->addWidget(speckle_range_slider);
-
-	speckle_window_size_horizontal_layout = new QHBoxLayout();
-	speckle_window_size_horizontal_layout->setObjectName(QStringLiteral("speckle_window_size_horizontal_layout"));
-	speckle_window_size_label = new QLabel(this);
-	speckle_window_size_label->setObjectName(QStringLiteral("speckle_window_size_label"));
-	speckle_window_size_label->setText("speckle window size:");
-
-	speckle_window_size_horizontal_layout->addWidget(speckle_window_size_label);
-
-	speckle_window_size_spin_box = new QSpinBox(this);
-	speckle_window_size_spin_box->setObjectName(QStringLiteral("speckle_window_size_spin_box"));
-	speckle_window_size_spin_box->setMaximum(300);
-
-	speckle_window_size_horizontal_layout->addWidget(speckle_window_size_spin_box);
-
-
-	tuning_controls_vlayout->addLayout(speckle_window_size_horizontal_layout);
-
-	speckle_window_size_slider = new QSlider(this);
-	speckle_window_size_slider->setObjectName(QStringLiteral("speckle_window_size_slider"));
-	sizePolicy1.setHeightForWidth(speckle_window_size_slider->sizePolicy().hasHeightForWidth());
-	speckle_window_size_slider->setSizePolicy(sizePolicy1);
-	speckle_window_size_slider->setMaximum(300);
-	speckle_window_size_slider->setSingleStep(5);
-	speckle_window_size_slider->setPageStep(20);
-	speckle_window_size_slider->setTracking(false);
-	speckle_window_size_slider->setOrientation(Qt::Horizontal);
-
-	tuning_controls_vlayout->addWidget(speckle_window_size_slider);
-
-	v_offset_horizontal_layout = new QHBoxLayout();
-	v_offset_horizontal_layout->setObjectName(QStringLiteral("v_offset_horizontal_layout"));
-	v_offset_label = new QLabel(this);
-	v_offset_label->setObjectName(QStringLiteral("v_offset_label"));
-	v_offset_label->setText("vertical offset (px):");
-
-	v_offset_horizontal_layout->addWidget(v_offset_label);
-
-	v_offset_spin_box = new QSpinBox(this);
-	v_offset_spin_box->setObjectName(QStringLiteral("v_offset_spin_box"));
-	v_offset_spin_box->setMinimum(-128);
-	v_offset_spin_box->setMaximum(128);
-
-	v_offset_horizontal_layout->addWidget(v_offset_spin_box);
-
-	tuning_controls_vlayout->addLayout(v_offset_horizontal_layout);
-
-
-	v_offset_slider = new QSlider(this);
-	v_offset_slider->setObjectName(QStringLiteral("v_offset_slider"));
-	sizePolicy1.setHeightForWidth(v_offset_slider->sizePolicy().hasHeightForWidth());
-	v_offset_slider->setSizePolicy(sizePolicy1);
-	v_offset_slider->setMinimum(-128);
-	v_offset_slider->setMaximum(128);
-	v_offset_slider->setTracking(false);
-	v_offset_slider->setOrientation(Qt::Horizontal);
-	v_offset_slider->setToolTip("manually-imposed vertical offset between views in pixels");
-
-	tuning_controls_vlayout->addWidget(v_offset_slider);
+	construct_integer_control_set(
+			v_offset_horizontal_layout,
+			v_offset_label,
+			v_offset_spin_box,
+			v_offset_slider,
+			QStringLiteral("v_offset_horizontal_layout"),
+			QStringLiteral("v_offset_label"),
+			QStringLiteral("v_offset_spin_box"),
+			QStringLiteral("v_offset_slider"),
+			-128,128
+			);
 
 	rectification_horizontal_layout = new QHBoxLayout();
 	rectification_horizontal_layout->setObjectName(QStringLiteral("rectification_horizontal_layout"));

@@ -11,6 +11,8 @@
 #include <reco/stereo_workbench/stereo_matcher_tuning_panel.hpp>
 #include <reco/stereo_workbench/stereo_processor_bm.hpp>
 
+#include <QComboBox>
+
 namespace reco {
 namespace stereo_workbench {
 
@@ -31,7 +33,7 @@ private:
 	QSpinBox* pre_filter_size_spin_box;
 	QSlider* pre_filter_size_slider;
 
-	QComboBox *pre_filter_type_combo_box;
+	QComboBox* pre_filter_type_combo_box;
 
 //	QHBoxLayout* pre_filter_type_horizontal_layout;
 //	QLabel* pre_filter_type_label;

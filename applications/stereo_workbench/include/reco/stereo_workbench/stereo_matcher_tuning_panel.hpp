@@ -40,6 +40,16 @@ public:
 protected:
 	void connect_standard_controls(const PROC& processor);
 	virtual void connect_specialized_controls(const PROC& processor) = 0;
+	void construct_integer_control_set(
+			QHBoxLayout* layout,
+			QLabel* label,
+			QSpinBox* spin_box,
+			QSlider* slider,
+			QString layout_name,
+			QString label_name,
+			QString spin_box_name,
+			QString slider_name,
+			int min_val, int max_val, int step = 1, int val = 0, int page_step = 1);
 	QVBoxLayout* tuning_controls_vlayout;
 private:
 	QVBoxLayout* other_controls_vlayout;

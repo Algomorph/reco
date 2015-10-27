@@ -109,7 +109,7 @@ void sgbm_tuning_panel::construct_specialized_controls(){
 	tuning_controls_vlayout->addWidget(p2_slider);
 
 	pre_filter_cap_horizontal_layout = new QHBoxLayout();
-	pre_filter_cap_horizontal_layout->setObjectName(QStringLiteral("horizontalLayout_2"));
+	pre_filter_cap_horizontal_layout->setObjectName(QStringLiteral("pre_filter_cap_horizontal_layout"));
 	pre_filter_cap_label = new QLabel(this);
 	pre_filter_cap_label->setObjectName(QStringLiteral("pre_filter_cap_label"));
 	pre_filter_cap_label->setText("pre-filter cap:");
