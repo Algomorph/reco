@@ -173,7 +173,6 @@ public:
 private:
 	std::atomic_bool allow_pop;
 	std::atomic_bool allow_push;
-	std::atomic<T> storage_a;
 	T storage[2];
 	int push_ix = 0;
 	int pop_ix = 0;
