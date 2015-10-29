@@ -53,7 +53,7 @@ void tuning_panel::construct_integer_control_set(
 	horizontal_layout->setObjectName(layout_name);
 	label = new QLabel(this);
 	label->setObjectName(label_name);
-	label->setText("block size (pixels):");
+	label->setText(label_text);
 
 	horizontal_layout->addWidget(label);
 

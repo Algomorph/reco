@@ -51,14 +51,16 @@ void stereo_matcher_tuning_panel
 	connect(block_size_slider, SIGNAL(valueChanged(int)), matcher.get(), SLOT(set_block_size(int)));
 	connect(speckle_window_size_slider, SIGNAL(valueChanged(int)), matcher.get(), SLOT(set_speckle_window_size(int)));
 	connect(speckle_range_slider, SIGNAL(valueChanged(int)), matcher.get(), SLOT(set_speckle_range(int)));
-	connect(v_offset_slider, SIGNAL(valueChanged(int)), matcher.get(), SLOT(set_v_offset(int)));
+	connect(v_offset_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_v_offset(int)));
 
 	swap_specialized_panel(matcher->panel);
 
 }
 
 void stereo_matcher_tuning_panel::swap_specialized_panel(tuning_panel* new_panel){
-	tuning_controls_vlayout->removeWidget(specialized_parameter_panel);
+	if(specialized_parameter_panel){
+		tuning_controls_vlayout->removeWidget(specialized_parameter_panel);
+	}
 	specialized_parameter_panel = new_panel;
 	tuning_controls_vlayout->addWidget(specialized_parameter_panel);
 }
