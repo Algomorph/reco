@@ -8,19 +8,18 @@
 
 #pragma once
 
-#include <reco/stereo_workbench/stereo_matcher_tuning_panel.hpp>
-#include <reco/stereo_workbench/stereo_processor_bm.hpp>
-
+#include <reco/stereo_workbench/matcher_qt_wrapper_bm.hpp>
+#include <reco/stereo_workbench/tuning_panel.hpp>
 #include <QComboBox>
 
 namespace reco {
 namespace stereo_workbench {
 
-class bm_tuning_panel:
-		public stereo_matcher_tuning_panel<stereo_processor_bm> {
+class tuning_panel_bm:
+		public tuning_panel {
 public:
-	bm_tuning_panel(QWidget* parent = NULL);
-	virtual ~bm_tuning_panel();
+	tuning_panel_bm(QWidget* parent = NULL);
+	virtual ~tuning_panel_bm();
 
 private:
 	QHBoxLayout* pre_filter_cap_horizontal_layout;
@@ -34,11 +33,6 @@ private:
 	QSlider* pre_filter_size_slider;
 
 	QComboBox* pre_filter_type_combo_box;
-
-//	QHBoxLayout* pre_filter_type_horizontal_layout;
-//	QLabel* pre_filter_type_label;
-//	QSpinBox* pre_filter_type_spin_box;
-//	QSlider* pre_filter_type_slider;
 
 	QHBoxLayout* smaller_block_size_horizontal_layout;
 	QLabel* smaller_block_size_label;

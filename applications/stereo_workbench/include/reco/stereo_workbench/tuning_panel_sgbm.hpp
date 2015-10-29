@@ -8,18 +8,18 @@
 
 #pragma once
 
-#include <reco/stereo_workbench/stereo_matcher_tuning_panel.hpp>
-#include <reco/stereo_workbench/stereo_processor_sgbm.hpp>
+#include <reco/stereo_workbench/matcher_qt_wrapper_sgbm.hpp>
+#include <reco/stereo_workbench/tuning_panel.hpp>
+#include <QWidget>
+
 namespace reco {
 namespace stereo_workbench {
 
-class sgbm_tuning_panel:
-		public stereo_matcher_tuning_panel<stereo_processor_sgbm> {
+class tuning_panel_sgbm:
+		public tuning_panel{
 public:
-	sgbm_tuning_panel(QWidget* parent = NULL);
-	virtual ~sgbm_tuning_panel();
-
-	virtual void connect_specialized_controls(const stereo_processor_sgbm& processor);
+	tuning_panel_sgbm(const matcher_qt_wrapper_sgbm& processor, QWidget* parent = NULL);
+	virtual ~tuning_panel_sgbm();
 
 private:
 	QHBoxLayout* p1_horizontal_layout;
@@ -43,6 +43,7 @@ private:
 	QSlider* uniqueness_ratio_slider;
 
 	void construct_specialized_controls();
+	void connect_specialized_controls(const matcher_qt_wrapper_sgbm& processor);
 };
 
 } /* namespace stereo_workbench */

@@ -15,9 +15,9 @@
 //datapipe
 #include <reco/datapipe/hal_stereo_pipe.h>
 #include <reco/datapipe/typedefs.h>
+#include <reco/stereo_workbench/stereo_processor.hpp>
 
 //local
-#include <reco/stereo_workbench/stereo_processor_sgbm.hpp>
 #include <reco/stereo_workbench/stereo_matcher_tuning_panel.hpp>
 
 class Ui_main_window;
@@ -43,7 +43,7 @@ private:
 	std::unique_ptr<datapipe::hal_stereo_pipe> pipe;
 	datapipe::frame_buffer_type stereo_input_buffer;
 	datapipe::frame_buffer_type stereo_output_buffer;
-	stereo_processor_sgbm processor;
+	stereo_processor processor;
 
 	void hook_pipe();
 	void unhook_pipe();

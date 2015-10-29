@@ -25,35 +25,26 @@
 
 //local
 #include <reco/stereo_workbench/stereo_processor.hpp>
+#include <reco/stereo_workbench/matcher_qt_wrapper.hpp>
+#include <reco/stereo_workbench/tuning_panel.hpp>
 
 namespace reco {
 namespace stereo_workbench {
 
-template<typename PROC>
+
 class stereo_matcher_tuning_panel:
-		public QWidget {
+		public tuning_panel {
 
 public:
 	stereo_matcher_tuning_panel(QWidget* parent = NULL);
 	virtual ~stereo_matcher_tuning_panel();
-	void connect_to_stereo_processor(const PROC& processor);
-protected:
-	void connect_standard_controls(const PROC& processor);
-	virtual void connect_specialized_controls(const PROC& processor) = 0;
-	void construct_integer_control_set(
-			QHBoxLayout*& layout,
-			QLabel*& label,
-			QSpinBox*& spin_box,
-			QSlider*& slider,
-			QString label_text,
-			QString layout_name,
-			QString label_name,
-			QString spin_box_name,
-			QString slider_name,
-			int min_val, int max_val, int step = 1, int val = 0, int page_step = 1,
-			QString slider_tooltip = "");
-	QVBoxLayout* tuning_controls_vlayout;
+
+	void connect_stereo_processor(const stereo_processor& processor);
+
 private:
+	void swap_specialized_panel(tuning_panel* new_panel);
+
+	tuning_panel* specialized_parameter_panel;
 	QVBoxLayout* other_controls_vlayout;
 
 	QHBoxLayout* block_size_horizontal_layout;
@@ -103,5 +94,3 @@ private:
 
 } /* namespace stereo_workbench */
 } /* namespace reco */
-
-#include <reco/stereo_workbench/stereo_matcher_tuning_panel.tpp>

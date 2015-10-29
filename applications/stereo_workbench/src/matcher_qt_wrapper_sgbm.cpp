@@ -1,23 +1,35 @@
 /*
- * sgbm_tuning_panel.cpp
+ * stereo_processor_sgbm.cpp
  *
- *  Created on: Oct 26, 2015
+ *  Created on: Oct 23, 2015
  *      Author: Gregory Kramida
  *   Copyright: 2015 Gregory Kramida
  */
 
-#include <reco/stereo_workbench/sgbm_tuning_panel.hpp>
+#include <reco/stereo_workbench/matcher_qt_wrapper_sgbm.hpp>
 
 namespace reco {
 namespace stereo_workbench {
 
-sgbm_tuning_panel::sgbm_tuning_panel(QWidget* parent)
-	:stereo_matcher_tuning_panel<stereo_processor_sgbm>(parent){
-	construct_specialized_controls();
+matcher_qt_wrapper_sgbm::matcher_qt_wrapper_sgbm() :
+		matcher_qt_wrapper(cv::StereoSGBM::create(0, 256, 3, 216, 864, -1, 48, 0, 0, 0,
+						cv::StereoSGBM::MODE_SGBM)) {
+	this->panel = new tuning_panel_sgbm(*this);
+}
+
+matcher_qt_wrapper_sgbm::~matcher_qt_wrapper_sgbm() {
+
 }
 
 
-void sgbm_tuning_panel::connect_specialized_controls(const stereo_processor_sgbm& processor){
+matcher_qt_wrapper_sgbm::tuning_panel_sgbm::tuning_panel_sgbm(const matcher_qt_wrapper_sgbm& processor, QWidget* parent)
+	:tuning_panel(parent){
+	construct_specialized_controls();
+	connect_specialized_controls(processor);
+}
+
+
+void matcher_qt_wrapper_sgbm::tuning_panel_sgbm::connect_specialized_controls(const matcher_qt_wrapper_sgbm& processor){
 	p1_slider->                     setValue(processor.get_p1());
 	p2_slider->                     setValue(processor.get_p2());
 	pre_filter_cap_slider->         setValue(processor.get_pre_filter_cap());
@@ -42,7 +54,7 @@ void sgbm_tuning_panel::connect_specialized_controls(const stereo_processor_sgbm
 	connect(uniqueness_ratio_spin_box, SIGNAL(valueChanged(int)), uniqueness_ratio_slider, SLOT(setValue(int)));
 }
 
-void sgbm_tuning_panel::construct_specialized_controls(){
+void matcher_qt_wrapper_sgbm::tuning_panel_sgbm::construct_specialized_controls(){
 	QSizePolicy sizePolicy1(QSizePolicy::Minimum, QSizePolicy::Fixed);
 	p1_horizontal_layout = new QHBoxLayout();
 	p1_horizontal_layout->setObjectName(QStringLiteral("p1_horizontal_layout"));
@@ -162,8 +174,47 @@ void sgbm_tuning_panel::construct_specialized_controls(){
 	tuning_controls_vlayout->addWidget(uniqueness_ratio_slider);
 }
 
-sgbm_tuning_panel::~sgbm_tuning_panel(){
+matcher_qt_wrapper_sgbm::tuning_panel_sgbm::~tuning_panel_sgbm(){
 
+}
+
+//===============================PARAMETER GETTERS==================================================
+int matcher_qt_wrapper_sgbm::get_p1() const{
+	return stereo_matcher->getP1();
+}
+int matcher_qt_wrapper_sgbm::get_p2() const{
+	return stereo_matcher->getP2();
+}
+int matcher_qt_wrapper_sgbm::get_pre_filter_cap() const{
+	return stereo_matcher->getPreFilterCap();
+}
+int matcher_qt_wrapper_sgbm::get_uniqueness_ratio() const{
+	return stereo_matcher->getUniquenessRatio();
+}
+
+//===============================PARAMETER SETTER SLOTS=============================================
+void matcher_qt_wrapper_sgbm::set_p1(int value) {
+	if (value < stereo_matcher->getP2()) {
+		stereo_matcher->setP1(value);
+		emit parameters_changed();
+	}
+}
+
+void matcher_qt_wrapper_sgbm::set_p2(int value) {
+	if (value > stereo_matcher->getP1()) {
+		stereo_matcher->setP2(value);
+		emit parameters_changed();
+	}
+}
+
+void matcher_qt_wrapper_sgbm::set_pre_filter_cap(int value) {
+	stereo_matcher->setPreFilterCap(value);
+	emit parameters_changed();
+}
+
+void matcher_qt_wrapper_sgbm::set_uniqueness_ratio(int value) {
+	stereo_matcher->setUniquenessRatio(value);
+	emit parameters_changed();
 }
 
 } /* namespace stereo_workbench */

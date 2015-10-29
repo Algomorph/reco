@@ -22,79 +22,41 @@
 #include <calibu/Calibu.h>
 //std
 #include <mutex>
-#include "rectifier.hpp"
+
+#include <reco/stereo_workbench/rectifier.hpp>
+#include <reco/stereo_workbench/matcher_qt_wrapper.hpp>
 
 namespace reco {
 namespace stereo_workbench {
 
-class stereo_processor_qt_base: public QObject{
+
+class stereo_processor: public QObject, public utils::worker {
 	Q_OBJECT
-	public slots:
-		//tuning slots
-		virtual void set_block_size(int value) = 0;
-		virtual void set_disparity_max_diff(int value) = 0;
-		virtual void set_minimum_disparity(int value) = 0;
-		virtual void set_num_disparities(int value) = 0;
-		virtual void set_speckle_range(int value) = 0;
-		virtual void set_speckle_window_size(int value) = 0;
-		virtual void set_v_offset(int value) = 0;
-
-		//for diagnostics
-		virtual void save_current_matcher_input() = 0;
-
-	signals:
-		void frame(std::shared_ptr<std::vector<cv::Mat>> images);
-};
-
-
-template<class MATCHER>
-class stereo_processor: public stereo_processor_qt_base, public utils::worker {
-
-	static_assert(
-        std::is_base_of<cv::StereoMatcher, MATCHER>::value,
-        "MATCHER must be a descendant of cv::StereoMatcher"
-    );
 
 public:
+
 	stereo_processor(datapipe::frame_buffer_type input_frame_buffer,
 			datapipe::frame_buffer_type output_frame_buffer,
-			cv::Ptr<MATCHER> matcher,
+			std::shared_ptr<matcher_qt_wrapper_base> matcher,
 			std::shared_ptr<rectifier>  rectifier_instance = std::shared_ptr<rectifier>());
 	virtual ~stereo_processor();
-
-
 	bool is_rectification_enabled() const;
 	void set_rectifier(std::shared_ptr<rectifier> _rectifier);
 	void toggle_rectification();
-
-	int get_bock_size() const;
-	int get_disparity_max_diff() const;
-	int get_minimum_disparity() const;
-	int get_num_disparities() const;
-	int get_speckle_range() const;
-	int get_speckle_window_size() const;
 	int get_v_offset() const;
+	std::shared_ptr<matcher_qt_wrapper_base> get_matcher() const;
 
-	//tuning slots
-	virtual void set_block_size(int value);
-	virtual void set_disparity_max_diff(int value);
-	virtual void set_minimum_disparity(int value);
-	virtual void set_num_disparities(int value);
-	virtual void set_speckle_range(int value);
-	virtual void set_speckle_window_size(int value);
-	virtual void set_v_offset(int value);
 
-	//slots for diagnostics
-	virtual void save_current_matcher_input();
 protected:
-	cv::Ptr<MATCHER> stereo_matcher;
+
+	std::shared_ptr<matcher_qt_wrapper_base> matcher;
 
 	virtual bool do_unit_of_work();
 	virtual void pre_thread_join();
-	void recompute_disparity_if_paused();
 
 private:
 	std::mutex rectify_guard;
+	std::mutex input_guard;
 	bool rectification_enabled;
 	datapipe::frame_buffer_type input_frame_buffer;
 	datapipe::frame_buffer_type output_frame_buffer;
@@ -108,13 +70,23 @@ private:
 	cv::Mat disparity_normalized;
 	std::shared_ptr<rectifier> _rectifier;
 
-
-	void recompute_disparity();
 	void compute_disparity(cv::Mat left, cv::Mat right);
 
+public slots:
+
+
+	//tuning slot
+	virtual void set_v_offset(int value);
+
+	//for diagnostics
+	virtual void save_current_matcher_input();
+
+private slots:
+	void recompute_disparity();
+
+signals:
+	void frame(std::shared_ptr<std::vector<cv::Mat>> images);
 };
 
 } /* namespace stereo_workbench */
 } /* namespace reco */
-
-#include <reco/stereo_workbench/stereo_processor.tpp>

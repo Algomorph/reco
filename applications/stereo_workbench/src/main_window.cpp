@@ -25,6 +25,8 @@
 #include <boost/filesystem/operations.hpp>
 #include <src/calibu_rectifier.hpp>
 #include <src/opencv_rectifier.hpp>
+#include <reco/stereo_workbench/matcher_qt_wrapper.hpp>
+#include <reco/stereo_workbench/matcher_qt_wrapper_sgbm.hpp>
 
 namespace reco {
 namespace stereo_workbench {
@@ -46,7 +48,7 @@ main_window::main_window() :
 		//stereo_input_buffer(new utils::unbounded_queue<std::shared_ptr<hal::ImageArray>>()),
 		stereo_input_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 		stereo_output_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
-		processor(stereo_input_buffer,stereo_output_buffer)
+		processor(stereo_input_buffer,stereo_output_buffer,std::shared_ptr<matcher_qt_wrapper_base>(new matcher_qt_wrapper_sgbm()))
 {
 	using namespace boost::filesystem;
 	ui->setupUi(this);
@@ -93,7 +95,7 @@ void main_window::connect_actions() {
 	connect(ui->action_open_calibration_file,SIGNAL(triggered()),this,SLOT(open_calibration_file()));
 	connect(ui->action_open_image_pair,SIGNAL(triggered()),this,SLOT(open_image_pair()));
 //==================================================================================================
-	ui->tuner_panel->connect_to_stereo_processor(this->processor);
+	ui->tuner_panel->connect_stereo_processor(this->processor);
 
 }
 

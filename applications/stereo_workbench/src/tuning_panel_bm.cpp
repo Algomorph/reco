@@ -6,18 +6,18 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
-#include <reco/stereo_workbench/bm_tuning_panel.hpp>
+#include <reco/stereo_workbench/tuning_panel_bm.hpp>
 #include <QString>
 #include <QApplication>
 
 namespace reco {
 namespace stereo_workbench {
 
-bm_tuning_panel::bm_tuning_panel(QWidget* parent):stereo_matcher_tuning_panel<stereo_processor_bm>(parent){
+tuning_panel_bm::tuning_panel_bm(QWidget* parent):tuning_panel(parent){
 	construct_specialized_controls();
 }
 
-void bm_tuning_panel::construct_specialized_controls(){
+void tuning_panel_bm::construct_specialized_controls(){
 	//************************************** pre-filter cap ****************************************
 	construct_integer_control_set(
 		pre_filter_cap_horizontal_layout,
@@ -96,7 +96,7 @@ void bm_tuning_panel::construct_specialized_controls(){
 
 }
 
-bm_tuning_panel::~bm_tuning_panel(){
+tuning_panel_bm::~tuning_panel_bm(){
 }
 
 } /* namespace stereo_workbench */

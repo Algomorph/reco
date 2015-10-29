@@ -8,19 +8,17 @@
 
 #pragma once
 
-#include <reco/stereo_workbench/stereo_processor.hpp>
+#include <reco/stereo_workbench/matcher_qt_wrapper.hpp>
 
 namespace reco {
 namespace stereo_workbench {
 
-class stereo_processor_bm:
-		public stereo_processor<cv::StereoBM> {
+class matcher_qt_wrapper_bm:
+		public matcher_qt_wrapper<cv::StereoBM> {
 	Q_OBJECT
 public:
-	stereo_processor_bm(datapipe::frame_buffer_type input_frame_buffer,
-			datapipe::frame_buffer_type output_frame_buffer,
-			std::shared_ptr<rectifier>  rectifier_instance = std::shared_ptr<rectifier>());
-	virtual ~stereo_processor_bm();
+	matcher_qt_wrapper_bm();
+	virtual ~matcher_qt_wrapper_bm();
 	int get_pre_filter_cap() const;
 	int get_pre_filter_size() const;
 	int get_pre_filter_type() const;
