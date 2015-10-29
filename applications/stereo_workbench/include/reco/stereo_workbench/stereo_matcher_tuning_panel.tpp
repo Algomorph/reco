@@ -74,25 +74,27 @@ void stereo_matcher_tuning_panel<PROC>
 
 template<typename PROC>
 void stereo_matcher_tuning_panel<PROC>::construct_integer_control_set(
-			QHBoxLayout* horizontal_layout,
-			QLabel* label,
-			QSpinBox* spin_box,
-			QSlider* slider,
+			QHBoxLayout*& horizontal_layout,
+			QLabel*& label,
+			QSpinBox*& spin_box,
+			QSlider*& slider,
+			QString label_text,
 			QString layout_name,
 			QString label_name,
 			QString spin_box_name,
 			QString slider_name,
-			int min_val, int max_val, int step, int val, int page_step){
+			int min_val, int max_val, int step, int val, int page_step,
+			QString slider_tooltip){
 	horizontal_layout = new QHBoxLayout();
-	horizontal_layout->setObjectName(QStringLiteral("horizontal_layout"));
+	horizontal_layout->setObjectName(layout_name);
 	label = new QLabel(this);
-	label->setObjectName(QStringLiteral("label"));
+	label->setObjectName(label_name);
 	label->setText("block size (pixels):");
 
 	horizontal_layout->addWidget(label);
 
 	spin_box = new QSpinBox(this);
-	spin_box->setObjectName(QStringLiteral("spin_box"));
+	spin_box->setObjectName(spin_box_name);
 	spin_box->setMinimum(min_val);
 	spin_box->setMaximum(max_val);
 	spin_box->setSingleStep(step);
@@ -103,12 +105,13 @@ void stereo_matcher_tuning_panel<PROC>::construct_integer_control_set(
 	tuning_controls_vlayout->addLayout(horizontal_layout);
 
 	slider = new QSlider(this);
-	slider->setObjectName(QStringLiteral("slider"));
+	slider->setObjectName(slider_name);
 	QSizePolicy sizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
 	sizePolicy.setHorizontalStretch(0);
 	sizePolicy.setVerticalStretch(0);
 	sizePolicy.setHeightForWidth(slider->sizePolicy().hasHeightForWidth());
 	slider->setSizePolicy(sizePolicy);
+	slider->setMinimumSize(QSize(400, 0));
 	slider->setMinimum(min_val);
 	slider->setMaximum(max_val);
 	slider->setSingleStep(step);
@@ -116,7 +119,9 @@ void stereo_matcher_tuning_panel<PROC>::construct_integer_control_set(
 	slider->setValue(val);
 	slider->setTracking(false);
 	slider->setOrientation(Qt::Horizontal);
-	slider->setToolTip("block size (pixels)");
+	if(!slider_tooltip.isEmpty()){
+		slider->setToolTip(slider_tooltip);
+	}
 	tuning_controls_vlayout->addWidget(slider);
 }
 
@@ -135,6 +140,7 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 			block_size_label,
 			block_size_spin_box,
 			block_size_slider,
+			tr("block size:"),
 			QStringLiteral("block_size_horizontal_layout"),
 			QStringLiteral("block_size_label"),
 			QStringLiteral("block_size_spin_box"),
@@ -147,6 +153,7 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 			disparity_max_diff_label,
 			disparity_max_diff_spin_box,
 			disparity_max_diff_slider,
+			tr("max. pixel diff.:"),
 			QStringLiteral("disparity_max_diff_horizontal_layout"),
 			QStringLiteral("disparity_max_diff_label"),
 			QStringLiteral("disparity_max_diff_spin_box"),
@@ -159,6 +166,7 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 			minimum_disparity_label,
 			minimum_disparity_spin_box,
 			minimum_disparity_slider,
+			tr("minimum disparity:"),
 			QStringLiteral("minimum_disparity_horizontal_layout"),
 			QStringLiteral("minimum_disparity_label"),
 			QStringLiteral("minimum_disparity_spin_box"),
@@ -171,6 +179,7 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 			number_of_disparities_label,
 			number_of_disparities_spin_box,
 			number_of_disparities_slider,
+			tr("number of disparities:"),
 			QStringLiteral("number_of_disparities_horizontal_layout"),
 			QStringLiteral("number_of_disparities_label"),
 			QStringLiteral("number_of_disparities_spin_box"),
@@ -183,6 +192,7 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 			speckle_range_label,
 			speckle_range_spin_box,
 			speckle_range_slider,
+			tr("speckle range:"),
 			QStringLiteral("speckle_range_horizontal_layout"),
 			QStringLiteral("speckle_range_label"),
 			QStringLiteral("speckle_range_spin_box"),
@@ -195,6 +205,7 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 			speckle_window_size_label,
 			speckle_window_size_spin_box,
 			speckle_window_size_slider,
+			tr("speckle window size:"),
 			QStringLiteral("speckle_window_size_horizontal_layout"),
 			QStringLiteral("speckle_window_size_label"),
 			QStringLiteral("speckle_window_size_spin_box"),
@@ -207,6 +218,7 @@ void stereo_matcher_tuning_panel<PROC>::set_up_tuning_controls(){
 			v_offset_label,
 			v_offset_spin_box,
 			v_offset_slider,
+			tr("vertical offset (px):"),
 			QStringLiteral("v_offset_horizontal_layout"),
 			QStringLiteral("v_offset_label"),
 			QStringLiteral("v_offset_spin_box"),
