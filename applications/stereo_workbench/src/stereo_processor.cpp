@@ -6,11 +6,13 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
-//local
+//utils
 #include <reco/utils/queue.h>
+#include <reco/utils/debug_util.h>
+#include <reco/utils/cpp_exception_util.h>
 //std
 #include <memory>
-#include <reco/utils/debug_util.h>
+
 //calibu
 #include <calibu/Calibu.h>
 #include <calibu/cam/stereo_rectify.h>
@@ -22,6 +24,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <reco/stereo_workbench/stereo_processor.hpp>
 
+
 namespace reco {
 namespace stereo_workbench {
 
@@ -30,12 +33,12 @@ stereo_processor::stereo_processor(
 		datapipe::frame_buffer_type output_frame_buffer,
 		std::shared_ptr<matcher_qt_wrapper_base> matcher,
 		std::shared_ptr<rectifier> rectifier) :
-		worker(),
-
-		rectification_enabled((bool) rectifier),
+				worker(),
+				matcher(matcher),
+				rectification_enabled((bool) rectifier),
 				input_frame_buffer(input_frame_buffer),
 				output_frame_buffer(output_frame_buffer),
-				matcher(matcher),
+
 				worker_shutting_down(false),
 				right_v_offset(0),
 				_rectifier(rectifier)
@@ -56,6 +59,22 @@ void stereo_processor::set_rectifier(std::shared_ptr<rectifier> _rectifier) {
 	if (!last_left.empty()) {
 		if (rectification_enabled) {
 			_rectifier->rectify(last_left, last_right, last_left_rectified, last_right_rectified);
+			compute_disparity(last_left_rectified, last_right_rectified);
+		} else {
+			compute_disparity(last_left, last_right);
+		}
+	}
+}
+
+void stereo_processor::set_matcher(std::shared_ptr<matcher_qt_wrapper_base> matcher) {
+	std::unique_lock<std::mutex> lck(this->input_guard);
+	this->matcher = matcher;
+	if (!matcher) {
+		err2(std::invalid_argument,"matcher contents cannot be null");
+	}
+	emit matcher_updated(matcher.get());
+	if (!last_left.empty()) {
+		if (rectification_enabled) {
 			compute_disparity(last_left_rectified, last_right_rectified);
 		} else {
 			compute_disparity(last_left, last_right);

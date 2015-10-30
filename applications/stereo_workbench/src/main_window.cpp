@@ -132,11 +132,13 @@ void main_window::handle_frame(){
  * @param event window close event
  */
 void main_window::closeEvent(QCloseEvent* event) {
-	pipe->stop();
-	//halt frame consumption
-	std::shared_ptr<hal::ImageArray> dummy;
-	video_buffer->clear();
-	video_buffer->push_back(dummy);//send dummy to signal end
+	if(pipe){
+		pipe->stop();
+		//halt frame consumption
+		std::shared_ptr<hal::ImageArray> dummy;
+		video_buffer->clear();
+		video_buffer->push_back(dummy);//send dummy to signal end
+	}
 	this->processor.stop();
 
 }

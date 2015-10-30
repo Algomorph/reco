@@ -42,6 +42,7 @@ public:
 	virtual ~stereo_processor();
 	bool is_rectification_enabled() const;
 	void set_rectifier(std::shared_ptr<rectifier> _rectifier);
+	void set_matcher(std::shared_ptr<matcher_qt_wrapper_base> matcher);
 	void toggle_rectification();
 	int get_v_offset() const;
 	std::shared_ptr<matcher_qt_wrapper_base> get_matcher() const;
@@ -86,6 +87,7 @@ private slots:
 
 signals:
 	void frame(std::shared_ptr<std::vector<cv::Mat>> images);
+	void matcher_updated(matcher_qt_wrapper_base* matcher);
 };
 
 } /* namespace stereo_workbench */
