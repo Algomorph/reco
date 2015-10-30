@@ -9,6 +9,8 @@
 #pragma once
 
 #include <reco/stereo_workbench/matcher_qt_wrapper.hpp>
+#include <reco/stereo_workbench/tuning_panel.hpp>
+#include <QComboBox>
 
 namespace reco {
 namespace stereo_workbench {
@@ -16,9 +18,52 @@ namespace stereo_workbench {
 class matcher_qt_wrapper_bm:
 		public matcher_qt_wrapper<cv::StereoBM> {
 	Q_OBJECT
+private:
+
+	class tuning_panel_bm:
+			public tuning_panel{
+	public:
+		tuning_panel_bm(
+				const matcher_qt_wrapper_bm& matcher,
+				QWidget* parent = NULL);
+		virtual ~tuning_panel_bm();
+
+	private:
+		QHBoxLayout* pre_filter_cap_horizontal_layout;
+		QLabel* pre_filter_cap_label;
+		QSpinBox* pre_filter_cap_spin_box;
+		QSlider* pre_filter_cap_slider;
+
+		QHBoxLayout* pre_filter_size_horizontal_layout;
+		QLabel* pre_filter_size_label;
+		QSpinBox* pre_filter_size_spin_box;
+		QSlider* pre_filter_size_slider;
+
+		QComboBox* pre_filter_type_combo_box;
+
+		QHBoxLayout* smaller_block_size_horizontal_layout;
+		QLabel* smaller_block_size_label;
+		QSpinBox* smaller_block_size_spin_box;
+		QSlider* smaller_block_size_slider;
+
+		QHBoxLayout* texture_threshold_horizontal_layout;
+		QLabel* texture_threshold_label;
+		QSpinBox* texture_threshold_spin_box;
+		QSlider* texture_threshold_slider;
+
+		QHBoxLayout* uniqueness_ratio_horizontal_layout;
+		QLabel* uniqueness_ratio_label;
+		QSpinBox* uniqueness_ratio_spin_box;
+		QSlider* uniqueness_ratio_slider;
+
+		void construct_specialized_controls();
+		void connect_specialized_controls(const matcher_qt_wrapper_bm& matcher);
+	};
 public:
 	matcher_qt_wrapper_bm();
 	virtual ~matcher_qt_wrapper_bm();
+
+	//getters
 	int get_pre_filter_cap() const;
 	int get_pre_filter_size() const;
 	int get_pre_filter_type() const;

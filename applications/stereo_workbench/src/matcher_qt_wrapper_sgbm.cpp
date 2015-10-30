@@ -22,36 +22,30 @@ matcher_qt_wrapper_sgbm::~matcher_qt_wrapper_sgbm() {
 }
 
 
-matcher_qt_wrapper_sgbm::tuning_panel_sgbm::tuning_panel_sgbm(const matcher_qt_wrapper_sgbm& processor, QWidget* parent)
+matcher_qt_wrapper_sgbm::tuning_panel_sgbm::tuning_panel_sgbm(
+		const matcher_qt_wrapper_sgbm& matcher,
+		QWidget* parent)
 	:tuning_panel(parent){
 	construct_specialized_controls();
-	connect_specialized_controls(processor);
+	connect_specialized_controls(matcher);
 }
 
 
-void matcher_qt_wrapper_sgbm::tuning_panel_sgbm::connect_specialized_controls(const matcher_qt_wrapper_sgbm& processor){
-	p1_slider->                     setValue(processor.get_p1());
-	p2_slider->                     setValue(processor.get_p2());
-	pre_filter_cap_slider->         setValue(processor.get_pre_filter_cap());
-	uniqueness_ratio_slider->       setValue(processor.get_uniqueness_ratio());
+void matcher_qt_wrapper_sgbm::tuning_panel_sgbm::connect_specialized_controls(const matcher_qt_wrapper_sgbm& wrapper){
+	p1_slider->                     setValue(wrapper.get_p1());
+	p2_slider->                     setValue(wrapper.get_p2());
+	pre_filter_cap_slider->         setValue(wrapper.get_pre_filter_cap());
+	uniqueness_ratio_slider->       setValue(wrapper.get_uniqueness_ratio());
 
-	p1_spin_box->                   setValue(processor.get_p1());
-	p2_spin_box->                   setValue(processor.get_p2());
-	pre_filter_cap_spin_box->       setValue(processor.get_pre_filter_cap());
-	uniqueness_ratio_spin_box->     setValue(processor.get_uniqueness_ratio());
+	p1_spin_box->                   setValue(wrapper.get_p1());
+	p2_spin_box->                   setValue(wrapper.get_p2());
+	pre_filter_cap_spin_box->       setValue(wrapper.get_pre_filter_cap());
+	uniqueness_ratio_spin_box->     setValue(wrapper.get_uniqueness_ratio());
 
-	connect(p1_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_p1(int)));
-	connect(p1_slider, SIGNAL(valueChanged(int)), p1_spin_box, SLOT(setValue(int)));
-	connect(p1_spin_box, SIGNAL(valueChanged(int)), p1_slider, SLOT(setValue(int)));
-	connect(p2_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_p2(int)));
-	connect(p2_slider, SIGNAL(valueChanged(int)), p2_spin_box, SLOT(setValue(int)));
-	connect(p2_spin_box, SIGNAL(valueChanged(int)), p2_slider, SLOT(setValue(int)));
-	connect(pre_filter_cap_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_pre_filter_cap(int)));
-	connect(pre_filter_cap_slider, SIGNAL(valueChanged(int)), pre_filter_cap_spin_box, SLOT(setValue(int)));
-	connect(pre_filter_cap_spin_box, SIGNAL(valueChanged(int)), pre_filter_cap_slider, SLOT(setValue(int)));
-	connect(uniqueness_ratio_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_uniqueness_ratio(int)));
-	connect(uniqueness_ratio_slider, SIGNAL(valueChanged(int)), uniqueness_ratio_spin_box, SLOT(setValue(int)));
-	connect(uniqueness_ratio_spin_box, SIGNAL(valueChanged(int)), uniqueness_ratio_slider, SLOT(setValue(int)));
+	connect(p1_slider, SIGNAL(valueChanged(int)), &wrapper, SLOT(set_p1(int)));
+	connect(p2_slider, SIGNAL(valueChanged(int)), &wrapper, SLOT(set_p2(int)));
+	connect(pre_filter_cap_slider, SIGNAL(valueChanged(int)), &wrapper, SLOT(set_pre_filter_cap(int)));
+	connect(uniqueness_ratio_slider, SIGNAL(valueChanged(int)), &wrapper, SLOT(set_uniqueness_ratio(int)));
 }
 
 void matcher_qt_wrapper_sgbm::tuning_panel_sgbm::construct_specialized_controls(){
@@ -146,32 +140,18 @@ void matcher_qt_wrapper_sgbm::tuning_panel_sgbm::construct_specialized_controls(
 
 	tuning_controls_vlayout->addWidget(pre_filter_cap_slider);
 
-	uniqueness_ratio_horizontal_layout = new QHBoxLayout();
-	uniqueness_ratio_horizontal_layout->setObjectName(QStringLiteral("uniqueness_ration_horizontal_layout"));
-	uniqueness_ratio_label = new QLabel(this);
-	uniqueness_ratio_label->setObjectName(QStringLiteral("uniqueness_ratio_label"));
-	uniqueness_ratio_label->setText("uniqueness ratio");
-
-	uniqueness_ratio_horizontal_layout->addWidget(uniqueness_ratio_label);
-
-	uniqueness_ratio_spin_box = new QSpinBox(this);
-	uniqueness_ratio_spin_box->setObjectName(QStringLiteral("uniqueness_ratio_spin_box"));
-	uniqueness_ratio_spin_box->setMaximum(20);
-
-	uniqueness_ratio_horizontal_layout->addWidget(uniqueness_ratio_spin_box);
-
-
-	tuning_controls_vlayout->addLayout(uniqueness_ratio_horizontal_layout);
-
-	uniqueness_ratio_slider = new QSlider(this);
-	uniqueness_ratio_slider->setObjectName(QStringLiteral("uniqueness_ratio_slider"));
-	sizePolicy1.setHeightForWidth(uniqueness_ratio_slider->sizePolicy().hasHeightForWidth());
-	uniqueness_ratio_slider->setSizePolicy(sizePolicy1);
-	uniqueness_ratio_slider->setMaximum(20);
-	uniqueness_ratio_slider->setTracking(false);
-	uniqueness_ratio_slider->setOrientation(Qt::Horizontal);
-
-	tuning_controls_vlayout->addWidget(uniqueness_ratio_slider);
+	construct_integer_control_set(
+		uniqueness_ratio_horizontal_layout,
+		uniqueness_ratio_label,
+		uniqueness_ratio_spin_box,
+		uniqueness_ratio_slider,
+		tr("uniqueness ratio:"),
+		QStringLiteral("uniqueness_ratio_horizontal_layout"),
+		QStringLiteral("uniqueness_ratio_label"),
+		QStringLiteral("uniqueness_ratio_spin_box"),
+		QStringLiteral("uniqueness_ratio_slider"),
+		0,256
+		);
 }
 
 matcher_qt_wrapper_sgbm::tuning_panel_sgbm::~tuning_panel_sgbm(){

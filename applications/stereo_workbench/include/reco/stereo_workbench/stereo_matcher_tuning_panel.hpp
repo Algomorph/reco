@@ -34,7 +34,7 @@ namespace stereo_workbench {
 
 class stereo_matcher_tuning_panel:
 		public tuning_panel {
-
+Q_OBJECT
 public:
 	stereo_matcher_tuning_panel(QWidget* parent = NULL);
 	virtual ~stereo_matcher_tuning_panel();
@@ -87,7 +87,8 @@ private:
 	QPushButton* save_current_button;
 
 	void set_up_tuning_controls();
-
+private slots:
+	void connect_matcher(matcher_qt_wrapper_base* matcher);
 
 };
 

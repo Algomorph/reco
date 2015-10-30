@@ -9,7 +9,7 @@
 #pragma once
 
 #include <reco/stereo_workbench/matcher_qt_wrapper.hpp>
-
+#include <reco/stereo_workbench/tuning_panel.hpp>
 namespace reco {
 namespace stereo_workbench {
 
@@ -20,7 +20,9 @@ private:
 	class tuning_panel_sgbm:
 			public tuning_panel{
 	public:
-		tuning_panel_sgbm(const matcher_qt_wrapper_sgbm& processor, QWidget* parent = NULL);
+		tuning_panel_sgbm(
+				const matcher_qt_wrapper_sgbm& matcher,
+				QWidget* parent = NULL);
 		virtual ~tuning_panel_sgbm();
 
 	private:
