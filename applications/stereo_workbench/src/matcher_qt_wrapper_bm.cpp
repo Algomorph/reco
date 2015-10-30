@@ -33,6 +33,8 @@ matcher_qt_wrapper_bm::tuning_panel_bm::tuning_panel_bm(
 
 
 void matcher_qt_wrapper_bm::tuning_panel_bm::connect_specialized_controls(const matcher_qt_wrapper_bm& matcher){
+	pre_filter_type_combo_box->setCurrentIndex(matcher.get_pre_filter_type());
+
 	pre_filter_cap_slider->         setValue(matcher.get_pre_filter_cap());
 	pre_filter_size_slider->        setValue(matcher.get_pre_filter_size());
 	smaller_block_size_slider->     setValue(matcher.get_smaller_block_size());
@@ -50,6 +52,7 @@ void matcher_qt_wrapper_bm::tuning_panel_bm::connect_specialized_controls(const 
 	connect(smaller_block_size_slider, SIGNAL(valueChanged(int)), &matcher, SLOT(set_block_size(int)));
 	connect(texture_threshold_slider, SIGNAL(valueChanged(int)), &matcher, SLOT(set_texture_threshold(int)));
 	connect(uniqueness_ratio_slider, SIGNAL(valueChanged(int)), &matcher, SLOT(set_uniqueness_ratio(int)));
+	connect(pre_filter_type_combo_box, SIGNAL(currentIndexChanged(int)),&matcher, SLOT(set_pre_filter_type(int)));
 }
 
 void matcher_qt_wrapper_bm::tuning_panel_bm::construct_specialized_controls(){

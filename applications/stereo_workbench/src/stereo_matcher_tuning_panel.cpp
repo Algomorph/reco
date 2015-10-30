@@ -35,7 +35,8 @@ void stereo_matcher_tuning_panel
 	connect(v_offset_slider, SIGNAL(valueChanged(int)), &processor, SLOT(set_v_offset(int)));
 
 
-
+	connect(&processor, SIGNAL(matcher_updated(matcher_qt_wrapper_base*)),
+			this, SLOT(connect_matcher(matcher_qt_wrapper_base*)));
 	connect_matcher(matcher.get());
 
 
@@ -68,6 +69,13 @@ void stereo_matcher_tuning_panel::connect_matcher(matcher_qt_wrapper_base* match
 	block_size_spin_box->           setValue(matcher->get_bock_size());
 	speckle_window_size_spin_box->  setValue(matcher->get_speckle_window_size());
 	speckle_range_spin_box->        setValue(matcher->get_speckle_range());
+
+	//disconnect from previous (if any)
+	disconnect(minimum_disparity_slider, 0,0,0);
+	disconnect(number_of_disparities_slider, 0,0,0);
+	disconnect(block_size_slider, 0,0,0);
+	disconnect(speckle_window_size_slider, 0,0,0);
+	disconnect(speckle_range_slider, 0,0,0);
 
 	//connect controls
 	connect(minimum_disparity_slider, SIGNAL(valueChanged(int)), matcher, SLOT(set_minimum_disparity(int)));
