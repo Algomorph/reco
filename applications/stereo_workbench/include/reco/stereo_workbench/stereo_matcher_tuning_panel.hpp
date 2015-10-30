@@ -51,18 +51,14 @@ public:
 
 private:
 
-
-	stereo_processor* processor;
-
 	void swap_specialized_panel(tuning_panel* new_panel);
 
+	stereo_processor* processor;
+	matcher_qt_wrapper_base* matcher;
 	tuning_panel* specialized_parameter_panel;
+
 	QVBoxLayout* other_controls_vlayout;
 
-	QHBoxLayout* block_size_horizontal_layout;
-	QLabel* block_size_label;
-	QSpinBox* block_size_spin_box;
-	QSlider* block_size_slider;
 
 	QHBoxLayout* disparity_max_diff_horizontal_layout;
 	QLabel* disparity_max_diff_label;

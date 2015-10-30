@@ -29,7 +29,7 @@ namespace stereo_workbench {
 class matcher_qt_wrapper_base: public QObject{
 	Q_OBJECT
 public:
-	virtual void compute(const cv::Mat& left,const cv::Mat& right,const cv::Mat disparity) = 0;
+	virtual void compute(const cv::Mat& left,const cv::Mat& right, cv::Mat& disparity) = 0;
 	virtual int get_bock_size() const = 0;
 	virtual int get_disparity_max_diff() const = 0;
 	virtual int get_minimum_disparity() const = 0;
@@ -63,7 +63,7 @@ public:
 	matcher_qt_wrapper(cv::Ptr<MATCHER> matcher);
 	virtual ~matcher_qt_wrapper();
 
-	virtual void compute(const cv::Mat& left,const cv::Mat& right,const cv::Mat disparity);
+	virtual void compute(const cv::Mat& left,const cv::Mat& right, cv::Mat& disparity);
 
 	virtual int get_bock_size() const;
 	virtual int get_disparity_max_diff() const;

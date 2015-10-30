@@ -6,27 +6,28 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
-#include <reco/stereo_workbench/matcher_qt_wrapper_bm.hpp>
+#include <reco/stereo_workbench/matcher_qt_wrapper_bp.hpp>
 #include <QApplication>
 #include <reco/utils/cpp_exception_util.h>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/cudastereo.hpp>
 
 namespace reco {
 namespace stereo_workbench {
 
 
-matcher_qt_wrapper_bm::matcher_qt_wrapper_bm():
-		matcher_qt_wrapper(cv::StereoBM::create(256, 5)){
-	this->panel = new tuning_panel_bm(*this);
+matcher_qt_wrapper_bp::matcher_qt_wrapper_bp():
+		matcher_qt_wrapper(cv::cuda::createStereoBeliefPropagation()){
+	this->panel = new tuning_panel_bp(*this);
 
 }
-matcher_qt_wrapper_bm::~matcher_qt_wrapper_bm(){
+matcher_qt_wrapper_bp::~matcher_qt_wrapper_bp(){
 
 }
 
 
-matcher_qt_wrapper_bm::tuning_panel_bm::tuning_panel_bm(
-		const matcher_qt_wrapper_bm& matcher,
+matcher_qt_wrapper_bp::tuning_panel_bp::tuning_panel_bp(
+		const matcher_qt_wrapper_bp& matcher,
 		QWidget* parent)
 	:tuning_panel(parent){
 	construct_specialized_controls();
@@ -34,7 +35,7 @@ matcher_qt_wrapper_bm::tuning_panel_bm::tuning_panel_bm(
 }
 
 
-void matcher_qt_wrapper_bm::tuning_panel_bm::connect_specialized_controls(const matcher_qt_wrapper_bm& matcher){
+void matcher_qt_wrapper_bp::tuning_panel_bp::connect_specialized_controls(const matcher_qt_wrapper_bp& matcher){
 	pre_filter_type_combo_box->setCurrentIndex(matcher.get_pre_filter_type());
 
 	block_size_slider->             setValue(matcher.get_bock_size());
@@ -60,7 +61,7 @@ void matcher_qt_wrapper_bm::tuning_panel_bm::connect_specialized_controls(const 
 	connect(pre_filter_type_combo_box, SIGNAL(currentIndexChanged(int)),&matcher, SLOT(set_pre_filter_type(int)));
 }
 
-void matcher_qt_wrapper_bm::tuning_panel_bm::construct_specialized_controls(){
+void matcher_qt_wrapper_bp::tuning_panel_bp::construct_specialized_controls(){
 	construct_integer_control_set(
 			block_size_horizontal_layout,
 			block_size_label,
@@ -151,7 +152,7 @@ void matcher_qt_wrapper_bm::tuning_panel_bm::construct_specialized_controls(){
 
 }
 
-void matcher_qt_wrapper_bm::compute(const cv::Mat& left,const cv::Mat& right, cv::Mat& disparity){
+void matcher_qt_wrapper_bp::compute(const cv::Mat& left,const cv::Mat& right, cv::Mat& disparity){
 	if(left.type() == CV_8UC3 && right.type() == CV_8UC3){
 		cv::Mat left_target,right_target;
 		cv::cvtColor(left,left_target,cv::COLOR_BGR2GRAY);
@@ -164,54 +165,62 @@ void matcher_qt_wrapper_bm::compute(const cv::Mat& left,const cv::Mat& right, cv
 	}
 }
 
-matcher_qt_wrapper_bm::tuning_panel_bm::~tuning_panel_bm(){
+matcher_qt_wrapper_bp::tuning_panel_bp::~tuning_panel_bp(){
 
 }
 
-int matcher_qt_wrapper_bm::get_pre_filter_cap() const{
-	return stereo_matcher->getPreFilterCap();
+double matcher_qt_wrapper_bp::get_data_weight() const{
+	return stereo_matcher->getDataWeight();
 }
 
-int matcher_qt_wrapper_bm::get_pre_filter_size() const{
-	return stereo_matcher->getPreFilterSize();
+double matcher_qt_wrapper_bp::get_disc_single_jump() const{
+	return stereo_matcher->getDiscSingleJump();
 }
-int matcher_qt_wrapper_bm::get_pre_filter_type() const{
-	return stereo_matcher->getPreFilterType();
+double matcher_qt_wrapper_bp::get_max_data_term() const{
+	return stereo_matcher->getMaxDataTerm();
 }
-int matcher_qt_wrapper_bm::get_smaller_block_size() const{
-	return stereo_matcher->getSmallerBlockSize();
+double matcher_qt_wrapper_bp::get_max_disc_term() const{
+	return stereo_matcher->getMaxDiscTerm();
 }
-int matcher_qt_wrapper_bm::get_texture_threshold() const{
-	return stereo_matcher->getTextureThreshold();
-}
-
-int matcher_qt_wrapper_bm::get_uniqueness_ratio() const{
-	return stereo_matcher->getUniquenessRatio();
+int matcher_qt_wrapper_bp::get_msg_type() const{
+	return stereo_matcher->getMsgType();
 }
 
-void matcher_qt_wrapper_bm::set_pre_filter_cap(int value) {
-	stereo_matcher->setPreFilterCap(value);
+int matcher_qt_wrapper_bp::get_num_iters() const{
+	return stereo_matcher->getNumIters();
+}
+
+int matcher_qt_wrapper_bp::get_num_levels() const{
+	return stereo_matcher->getNumLevels();
+}
+
+void matcher_qt_wrapper_bp::set_data_weight(double value) {
+	stereo_matcher->setDataWeight(value);
 	emit parameters_changed();
 }
 
-void matcher_qt_wrapper_bm::set_pre_filter_size(int value){
-	stereo_matcher->setPreFilterSize(value);
+void matcher_qt_wrapper_bp::set_disc_single_jump(double value){
+	stereo_matcher->setDiscSingleJump(value);
 	emit parameters_changed();
 }
-void matcher_qt_wrapper_bm::set_pre_filter_type(int value){
-	stereo_matcher->setPreFilterType(value);
+void matcher_qt_wrapper_bp::set_max_data_term(double value){
+	stereo_matcher->setMaxDataTerm(value);
 	emit parameters_changed();
 }
-void matcher_qt_wrapper_bm::set_smaller_block_size(int value){
-	stereo_matcher->setSmallerBlockSize(value);
+void matcher_qt_wrapper_bp::set_max_disc_term(double value){
+	stereo_matcher->setMaxDiscTerm(value);
 	emit parameters_changed();
 }
-void matcher_qt_wrapper_bm::set_texture_threshold(int value){
-	stereo_matcher->setTextureThreshold(value);
+void matcher_qt_wrapper_bp::set_msg_type(int value){
+	stereo_matcher->setMsgType(value);
 	emit parameters_changed();
 }
-void matcher_qt_wrapper_bm::set_uniqueness_ratio(int value) {
-	stereo_matcher->setUniquenessRatio(value);
+void matcher_qt_wrapper_bp::set_num_iters(int value) {
+	stereo_matcher->setNumIters(value);
+	emit parameters_changed();
+}
+void matcher_qt_wrapper_bp::set_num_levels(int value) {
+	stereo_matcher->setNumLevels(value);
 	emit parameters_changed();
 }
 

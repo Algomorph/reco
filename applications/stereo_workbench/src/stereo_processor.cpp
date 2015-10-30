@@ -69,20 +69,14 @@ void stereo_processor::set_rectifier(std::shared_ptr<rectifier> _rectifier) {
 }
 
 void stereo_processor::set_matcher(std::shared_ptr<matcher_qt_wrapper_base> matcher) {
-	std::unique_lock<std::mutex> lck(this->input_guard);
+
 	this->matcher = matcher;
 	if (!matcher) {
 		err2(std::invalid_argument,"matcher contents cannot be null");
 	}
 	connect(matcher.get(), SIGNAL(parameters_changed()), this, SLOT(recompute_disparity()));
 	emit matcher_updated(matcher.get());
-	if (!last_left.empty()) {
-		if (rectification_enabled) {
-			compute_disparity(last_left_rectified, last_right_rectified);
-		} else {
-			compute_disparity(last_left, last_right);
-		}
-	}
+	recompute_disparity();
 }
 
 void stereo_processor::pre_thread_join() {

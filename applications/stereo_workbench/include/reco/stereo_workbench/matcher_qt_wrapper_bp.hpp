@@ -15,18 +15,18 @@
 namespace reco {
 namespace stereo_workbench {
 
-class matcher_qt_wrapper_bm:
-		public matcher_qt_wrapper<cv::StereoBM> {
+class matcher_qt_wrapper_bp:
+		public matcher_qt_wrapper<cv::cuda::StereoBeliefPropagation> {
 	Q_OBJECT
 private:
 
-	class tuning_panel_bm:
+	class tuning_panel_bp:
 			public tuning_panel{
 	public:
-		tuning_panel_bm(
-				const matcher_qt_wrapper_bm& matcher,
+		tuning_panel_bp(
+				const matcher_qt_wrapper_bp& matcher,
 				QWidget* parent = NULL);
-		virtual ~tuning_panel_bm();
+		virtual ~tuning_panel_bp();
 
 	private:
 		QHBoxLayout* block_size_horizontal_layout;
@@ -62,29 +62,31 @@ private:
 		QSlider* uniqueness_ratio_slider;
 
 		void construct_specialized_controls();
-		void connect_specialized_controls(const matcher_qt_wrapper_bm& matcher);
+		void connect_specialized_controls(const matcher_qt_wrapper_bp& matcher);
 	};
 public:
-	matcher_qt_wrapper_bm();
-	virtual ~matcher_qt_wrapper_bm();
+	matcher_qt_wrapper_bp();
+	virtual ~matcher_qt_wrapper_bp();
 
 	virtual void compute(const cv::Mat& left,const cv::Mat& right, cv::Mat& disparity);
 
 	//getters
-	int get_pre_filter_cap() const;
-	int get_pre_filter_size() const;
-	int get_pre_filter_type() const;
-	int get_smaller_block_size() const;
-	int get_texture_threshold() const;
-	int get_uniqueness_ratio() const;
+	double get_data_weight() const;
+	double get_disc_single_jump() const;
+	double get_max_data_term() const;
+	double get_max_disc_term() const;
+	int get_msg_type() const;
+	int get_num_iters() const;
+	int get_num_levels() const;
 
 public slots:
-	void set_pre_filter_cap(int value);
-	void set_pre_filter_size(int value);
-	void set_pre_filter_type(int value);
-	void set_smaller_block_size(int value);
-	void set_texture_threshold(int value);
-	void set_uniqueness_ratio(int value);
+	void set_data_weight(double value);
+	void set_disc_single_jump(double value);
+	void set_max_data_term(double value);
+	void set_max_disc_term(double value);
+	void set_msg_type(int value);
+	void set_num_iters(int value);
+	void set_num_levels(int value);
 
 };
 

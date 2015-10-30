@@ -26,6 +26,11 @@ private:
 		virtual ~tuning_panel_sgbm();
 
 	private:
+		QHBoxLayout* block_size_horizontal_layout;
+		QLabel* block_size_label;
+		QSpinBox* block_size_spin_box;
+		QSlider* block_size_slider;
+
 		QHBoxLayout* p1_horizontal_layout;
 		QLabel* p1_label;
 		QSpinBox* p1_spin_box;

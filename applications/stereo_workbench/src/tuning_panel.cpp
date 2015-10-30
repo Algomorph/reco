@@ -94,6 +94,66 @@ void tuning_panel::construct_integer_control_set(
 	connect(spin_box, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)));
 }
 
+void tuning_panel::construct_double_control_set(
+			QHBoxLayout*& horizontal_layout,
+			QLabel*& label,
+			QDoubleSpinBox*& spin_box,
+			QSlider*& slider,
+			QString label_text,
+			QString layout_name,
+			QString label_name,
+			QString spin_box_name,
+			QString slider_name,
+			double min_val, double max_val, double step, double val, double page_step,
+			QString slider_tooltip){
+
+	const int slider_factor = 100;
+
+	horizontal_layout = new QHBoxLayout();
+	horizontal_layout->setObjectName(layout_name);
+	label = new QLabel(this);
+	label->setObjectName(label_name);
+	label->setText(label_text);
+
+	horizontal_layout->addWidget(label);
+
+	spin_box = new QDoubleSpinBox(this);
+	spin_box->setObjectName(spin_box_name);
+	spin_box->setMinimum(min_val);
+	spin_box->setMaximum(max_val);
+	spin_box->setSingleStep(step);
+
+
+	horizontal_layout->addWidget(spin_box);
+
+	tuning_controls_vlayout->addLayout(horizontal_layout);
+
+	slider = new QSlider(this);
+	slider->setObjectName(slider_name);
+	QSizePolicy sizePolicy(QSizePolicy::Minimum, QSizePolicy::Fixed);
+	sizePolicy.setHorizontalStretch(0);
+	sizePolicy.setVerticalStretch(0);
+	sizePolicy.setHeightForWidth(slider->sizePolicy().hasHeightForWidth());
+	slider->setSizePolicy(sizePolicy);
+	slider->setMinimumSize(QSize(400, 0));
+	slider->setMinimum(min_val * slider_factor);
+	slider->setMaximum(max_val * slider_factor);
+	slider->setSingleStep(step * slider_factor);
+	slider->setPageStep(page_step * slider_factor);
+	slider->setValue(val * slider_factor);
+	slider->setTracking(false);
+	slider->setOrientation(Qt::Horizontal);
+	if(!slider_tooltip.isEmpty()){
+		slider->setToolTip(slider_tooltip);
+	}
+	tuning_controls_vlayout->addWidget(slider);
+
+	//connect slider and spinbox
+	//TODO: investigate - this causes double value upgrades during spinbox stepping
+	connect(slider, SIGNAL(valueChanged(int)), spin_box, SLOT(setValue(int)));
+	connect(spin_box, SIGNAL(valueChanged(int)), slider, SLOT(setValue(int)));
+}
+
 
 }//stereo_workbench
 

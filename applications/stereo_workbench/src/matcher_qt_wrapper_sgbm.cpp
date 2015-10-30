@@ -31,114 +31,78 @@ matcher_qt_wrapper_sgbm::tuning_panel_sgbm::tuning_panel_sgbm(
 }
 
 
-void matcher_qt_wrapper_sgbm::tuning_panel_sgbm::connect_specialized_controls(const matcher_qt_wrapper_sgbm& wrapper){
-	p1_slider->                     setValue(wrapper.get_p1());
-	p2_slider->                     setValue(wrapper.get_p2());
-	pre_filter_cap_slider->         setValue(wrapper.get_pre_filter_cap());
-	uniqueness_ratio_slider->       setValue(wrapper.get_uniqueness_ratio());
+void matcher_qt_wrapper_sgbm::tuning_panel_sgbm::connect_specialized_controls(const matcher_qt_wrapper_sgbm& matcher){
+	p1_slider->                     setValue(matcher.get_p1());
+	p2_slider->                     setValue(matcher.get_p2());
+	pre_filter_cap_slider->         setValue(matcher.get_pre_filter_cap());
+	uniqueness_ratio_slider->       setValue(matcher.get_uniqueness_ratio());
+	block_size_slider->             setValue(matcher.get_bock_size());
 
-	p1_spin_box->                   setValue(wrapper.get_p1());
-	p2_spin_box->                   setValue(wrapper.get_p2());
-	pre_filter_cap_spin_box->       setValue(wrapper.get_pre_filter_cap());
-	uniqueness_ratio_spin_box->     setValue(wrapper.get_uniqueness_ratio());
+	p1_spin_box->                   setValue(matcher.get_p1());
+	p2_spin_box->                   setValue(matcher.get_p2());
+	pre_filter_cap_spin_box->       setValue(matcher.get_pre_filter_cap());
+	uniqueness_ratio_spin_box->     setValue(matcher.get_uniqueness_ratio());\
+	block_size_spin_box->           setValue(matcher.get_bock_size());
 
-	connect(p1_slider, SIGNAL(valueChanged(int)), &wrapper, SLOT(set_p1(int)));
-	connect(p2_slider, SIGNAL(valueChanged(int)), &wrapper, SLOT(set_p2(int)));
-	connect(pre_filter_cap_slider, SIGNAL(valueChanged(int)), &wrapper, SLOT(set_pre_filter_cap(int)));
-	connect(uniqueness_ratio_slider, SIGNAL(valueChanged(int)), &wrapper, SLOT(set_uniqueness_ratio(int)));
+	connect(block_size_slider, SIGNAL(valueChanged(int)), &matcher, SLOT(set_block_size(int)));
+	connect(p1_slider, SIGNAL(valueChanged(int)), &matcher, SLOT(set_p1(int)));
+	connect(p2_slider, SIGNAL(valueChanged(int)), &matcher, SLOT(set_p2(int)));
+	connect(pre_filter_cap_slider, SIGNAL(valueChanged(int)), &matcher, SLOT(set_pre_filter_cap(int)));
+	connect(uniqueness_ratio_slider, SIGNAL(valueChanged(int)), &matcher, SLOT(set_uniqueness_ratio(int)));
 }
 
 void matcher_qt_wrapper_sgbm::tuning_panel_sgbm::construct_specialized_controls(){
-	QSizePolicy sizePolicy1(QSizePolicy::Minimum, QSizePolicy::Fixed);
-	p1_horizontal_layout = new QHBoxLayout();
-	p1_horizontal_layout->setObjectName(QStringLiteral("p1_horizontal_layout"));
-	p1_label = new QLabel(this);
-	p1_label->setObjectName(QStringLiteral("p1_label"));
-	p1_label->setText("p1:");
+	construct_integer_control_set(
+		block_size_horizontal_layout,
+		block_size_label,
+		block_size_spin_box,
+		block_size_slider,
+		tr("block size:"),
+		QStringLiteral("block_size_horizontal_layout"),
+		QStringLiteral("block_size_label"),
+		QStringLiteral("block_size_spin_box"),
+		QStringLiteral("block_size_slider"),
+		1,65,2,1
+		);
 
-	p1_horizontal_layout->addWidget(p1_label);
+	construct_integer_control_set(
+		p1_horizontal_layout,
+		p1_label,
+		p1_spin_box,
+		p1_slider,
+		tr("p1:"),
+		QStringLiteral("p1_horizontal_layout"),
+		QStringLiteral("p1_label"),
+		QStringLiteral("p1_spin_box"),
+		QStringLiteral("p1_slider"),
+		0,2904, 12, 0, 480
+		);
 
-	p1_spin_box = new QSpinBox(this);
-	p1_spin_box->setObjectName(QStringLiteral("p1_spin_box"));
-	p1_spin_box->setMinimum(0);
-	p1_spin_box->setMaximum(2904);
-	p1_spin_box->setSingleStep(12);
+	construct_integer_control_set(
+		p2_horizontal_layout,
+		p2_label,
+		p2_spin_box,
+		p2_slider,
+		tr("p2:"),
+		QStringLiteral("p2_horizontal_layout"),
+		QStringLiteral("p2_label"),
+		QStringLiteral("p2_spin_box"),
+		QStringLiteral("p2_slider"),
+		0,11616, 24, 0, 960
+		);
 
-	p1_horizontal_layout->addWidget(p1_spin_box);
-
-
-	tuning_controls_vlayout->addLayout(p1_horizontal_layout);
-
-	p1_slider = new QSlider(this);
-	p1_slider->setObjectName(QStringLiteral("p1_slider"));
-	sizePolicy1.setHeightForWidth(p1_slider->sizePolicy().hasHeightForWidth());
-	p1_slider->setSizePolicy(sizePolicy1);
-	p1_slider->setMinimum(0);
-	p1_slider->setMaximum(2904);
-	p1_slider->setSingleStep(24);
-	p1_slider->setPageStep(960);
-	p1_slider->setTracking(false);
-	p1_slider->setOrientation(Qt::Horizontal);
-
-	tuning_controls_vlayout->addWidget(p1_slider);
-
-	p2_horizontal_layout = new QHBoxLayout();
-	p2_horizontal_layout->setObjectName(QStringLiteral("p2_horizontal_layout"));
-	p2_label = new QLabel(this);
-	p2_label->setObjectName(QStringLiteral("p2_label"));
-	p2_label->setText("p2:");
-
-	p2_horizontal_layout->addWidget(p2_label);
-
-	p2_spin_box = new QSpinBox(this);
-	p2_spin_box->setObjectName(QStringLiteral("p2_spin_box"));
-	p2_spin_box->setMinimum(0);
-	p2_spin_box->setMaximum(11616);
-	p2_spin_box->setSingleStep(12);
-
-	p2_horizontal_layout->addWidget(p2_spin_box);
-
-
-	tuning_controls_vlayout->addLayout(p2_horizontal_layout);
-
-	p2_slider = new QSlider(this);
-	p2_slider->setObjectName(QStringLiteral("p2_slider"));
-	sizePolicy1.setHeightForWidth(p2_slider->sizePolicy().hasHeightForWidth());
-	p2_slider->setSizePolicy(sizePolicy1);
-	p2_slider->setMinimum(0);
-	p2_slider->setMaximum(11616);
-	p2_slider->setSingleStep(24);
-	p2_slider->setPageStep(960);
-	p2_slider->setTracking(false);
-	p2_slider->setOrientation(Qt::Horizontal);
-
-	tuning_controls_vlayout->addWidget(p2_slider);
-
-	pre_filter_cap_horizontal_layout = new QHBoxLayout();
-	pre_filter_cap_horizontal_layout->setObjectName(QStringLiteral("pre_filter_cap_horizontal_layout"));
-	pre_filter_cap_label = new QLabel(this);
-	pre_filter_cap_label->setObjectName(QStringLiteral("pre_filter_cap_label"));
-	pre_filter_cap_label->setText("pre-filter cap:");
-
-	pre_filter_cap_horizontal_layout->addWidget(pre_filter_cap_label);
-
-	pre_filter_cap_spin_box = new QSpinBox(this);
-	pre_filter_cap_spin_box->setObjectName(QStringLiteral("pre_filter_cap_spin_box"));
-	pre_filter_cap_spin_box->setMaximum(256);
-
-	pre_filter_cap_horizontal_layout->addWidget(pre_filter_cap_spin_box);
-
-	tuning_controls_vlayout->addLayout(pre_filter_cap_horizontal_layout);
-
-	pre_filter_cap_slider = new QSlider(this);
-	pre_filter_cap_slider->setObjectName(QStringLiteral("pre_filter_cap_slider"));
-	sizePolicy1.setHeightForWidth(pre_filter_cap_slider->sizePolicy().hasHeightForWidth());
-	pre_filter_cap_slider->setSizePolicy(sizePolicy1);
-	pre_filter_cap_slider->setMaximum(256);
-	pre_filter_cap_slider->setTracking(false);
-	pre_filter_cap_slider->setOrientation(Qt::Horizontal);
-
-	tuning_controls_vlayout->addWidget(pre_filter_cap_slider);
+	construct_integer_control_set(
+		pre_filter_cap_horizontal_layout,
+		pre_filter_cap_label,
+		pre_filter_cap_spin_box,
+		pre_filter_cap_slider,
+		tr("pre-filter cap:"),
+		QStringLiteral("pre_filter_cap_horizontal_layout"),
+		QStringLiteral("pre_filter_cap_label"),
+		QStringLiteral("pre_filter_cap_spin_box"),
+		QStringLiteral("pre_filter_cap_slider"),
+		0,256
+		);
 
 	construct_integer_control_set(
 		uniqueness_ratio_horizontal_layout,

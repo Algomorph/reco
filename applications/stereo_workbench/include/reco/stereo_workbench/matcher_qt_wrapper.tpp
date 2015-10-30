@@ -36,7 +36,7 @@ matcher_qt_wrapper<MATCHER>::~matcher_qt_wrapper(){
 }
 
 template<class MATCHER>
-void matcher_qt_wrapper<MATCHER>::compute(const cv::Mat& left,const cv::Mat& right,const cv::Mat disparity){
+void matcher_qt_wrapper<MATCHER>::compute(const cv::Mat& left,const cv::Mat& right,cv::Mat& disparity){
 	stereo_matcher->compute(left,right,disparity);
 }
 

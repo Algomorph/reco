@@ -48,6 +48,19 @@ protected:
 					int min_val, int max_val, int step = 1, int val = 0, int page_step = 1,
 					QString slider_tooltip = "");
 
+	void construct_double_control_set(
+						QHBoxLayout*& layout,
+						QLabel*& label,
+						QDoubleSpinBox*& spin_box,
+						QSlider*& slider,
+						QString label_text,
+						QString layout_name,
+						QString label_name,
+						QString spin_box_name,
+						QString slider_name,
+						double min_val, double max_val, double step = 1, double val = 0, double page_step = 1,
+						QString slider_tooltip = "");
+
 	QVBoxLayout* tuning_controls_vlayout;
 
 

@@ -22,6 +22,8 @@ stereo_matcher_tuning_panel::stereo_matcher_tuning_panel(QWidget* parent):
 		matchers({std::shared_ptr<matcher_qt_wrapper_base>(new matcher_qt_wrapper_sgbm()),
 				          std::shared_ptr<matcher_qt_wrapper_base>(new matcher_qt_wrapper_bm()),
 						  std::shared_ptr<matcher_qt_wrapper_base>()}),
+		processor(NULL),
+		matcher(NULL),
 		specialized_parameter_panel(NULL)
 		{
 
@@ -68,28 +70,27 @@ void stereo_matcher_tuning_panel::connect_matcher(matcher_qt_wrapper_base* match
 	//sliders
 	minimum_disparity_slider->      setValue(matcher->get_minimum_disparity());
 	number_of_disparities_slider->  setValue(matcher->get_num_disparities());
-	block_size_slider->             setValue(matcher->get_bock_size());
 	speckle_window_size_slider->    setValue(matcher->get_speckle_window_size());
 	speckle_range_slider->          setValue(matcher->get_speckle_range());
 
 	//spin-boxes
 	minimum_disparity_spin_box->    setValue(matcher->get_minimum_disparity());
 	number_of_disparities_spin_box->setValue(matcher->get_num_disparities());
-	block_size_spin_box->           setValue(matcher->get_bock_size());
 	speckle_window_size_spin_box->  setValue(matcher->get_speckle_window_size());
 	speckle_range_spin_box->        setValue(matcher->get_speckle_range());
 
 	//disconnect from previous (if any)
-	disconnect(minimum_disparity_slider, 0,0,0);
-	disconnect(number_of_disparities_slider, 0,0,0);
-	disconnect(block_size_slider, 0,0,0);
-	disconnect(speckle_window_size_slider, 0,0,0);
-	disconnect(speckle_range_slider, 0,0,0);
+	if(this->matcher){
+		disconnect(minimum_disparity_slider, SIGNAL(valueChanged(int)), this->matcher, SLOT(set_minimum_disparity(int)));
+		disconnect(number_of_disparities_slider, SIGNAL(valueChanged(int)), this->matcher, SLOT(set_num_disparities(int)));
+		disconnect(speckle_window_size_slider, SIGNAL(valueChanged(int)), this->matcher, SLOT(set_speckle_window_size(int)));
+		disconnect(speckle_range_slider, SIGNAL(valueChanged(int)), this->matcher, SLOT(set_speckle_range(int)));
+	}
+	this->matcher = matcher;
 
 	//connect controls
 	connect(minimum_disparity_slider, SIGNAL(valueChanged(int)), matcher, SLOT(set_minimum_disparity(int)));
 	connect(number_of_disparities_slider, SIGNAL(valueChanged(int)), matcher, SLOT(set_num_disparities(int)));
-	connect(block_size_slider, SIGNAL(valueChanged(int)), matcher, SLOT(set_block_size(int)));
 	connect(speckle_window_size_slider, SIGNAL(valueChanged(int)), matcher, SLOT(set_speckle_window_size(int)));
 	connect(speckle_range_slider, SIGNAL(valueChanged(int)), matcher, SLOT(set_speckle_range(int)));
 	swap_specialized_panel(matcher->panel);
@@ -98,19 +99,6 @@ void stereo_matcher_tuning_panel::connect_matcher(matcher_qt_wrapper_base* match
 
 
 void stereo_matcher_tuning_panel::set_up_tuning_controls(){
-
-	construct_integer_control_set(
-			block_size_horizontal_layout,
-			block_size_label,
-			block_size_spin_box,
-			block_size_slider,
-			tr("block size:"),
-			QStringLiteral("block_size_horizontal_layout"),
-			QStringLiteral("block_size_label"),
-			QStringLiteral("block_size_spin_box"),
-			QStringLiteral("block_size_slider"),
-			1,65,2,1
-			);
 
 	construct_integer_control_set(
 			disparity_max_diff_horizontal_layout,
