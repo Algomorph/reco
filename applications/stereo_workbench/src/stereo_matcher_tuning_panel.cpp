@@ -52,7 +52,8 @@ void stereo_matcher_tuning_panel
 
 void stereo_matcher_tuning_panel::swap_specialized_panel(tuning_panel* new_panel){
 	if(specialized_parameter_panel){
-		tuning_controls_vlayout->removeWidget(specialized_parameter_panel);
+		this->layout()->removeWidget(specialized_parameter_panel);
+		specialized_parameter_panel->setVisible(false);
 	}
 	specialized_parameter_panel = new_panel;
 	new_panel->setParent(this);
