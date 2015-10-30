@@ -13,6 +13,7 @@ namespace stereo_workbench {
 
 tuning_panel_sgbm::tuning_panel_sgbm(const matcher_qt_wrapper_sgbm& processor, QWidget* parent)
 	:tuning_panel(parent){
+	construct_specialized_controls();
 	connect_specialized_controls(processor);
 }
 

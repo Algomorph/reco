@@ -8,6 +8,7 @@
 
 #include <reco/stereo_workbench/stereo_matcher_tuning_panel.hpp>
 #include <QVBoxLayout>
+#include <reco/utils/debug_util.h>
 
 namespace reco {
 namespace stereo_workbench {
@@ -62,7 +63,10 @@ void stereo_matcher_tuning_panel::swap_specialized_panel(tuning_panel* new_panel
 		tuning_controls_vlayout->removeWidget(specialized_parameter_panel);
 	}
 	specialized_parameter_panel = new_panel;
-	tuning_controls_vlayout->addWidget(specialized_parameter_panel);
+	new_panel->setParent(this);
+	new_panel->setVisible(true);
+
+	this->layout()->addWidget(specialized_parameter_panel);
 }
 
 
