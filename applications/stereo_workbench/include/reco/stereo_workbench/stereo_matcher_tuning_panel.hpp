@@ -16,6 +16,7 @@
 #include <QtWidgets/QSpinBox>
 #include <QtWidgets/QCheckBox>
 #include <QtWidgets/QPushButton>
+#include <QtWidgets/QComboBox>
 
 //std
 #include <unordered_map>
@@ -39,9 +40,20 @@ public:
 	stereo_matcher_tuning_panel(QWidget* parent = NULL);
 	virtual ~stereo_matcher_tuning_panel();
 
-	void connect_stereo_processor(const stereo_processor& processor);
+	void connect_stereo_processor(stereo_processor& processor);
+	enum matcher_type{
+		sgbm = 0,
+		bm = 1,
+		bp = 2
+	};
+
+	std::array<std::shared_ptr<matcher_qt_wrapper_base>,3> matchers;
 
 private:
+
+
+	stereo_processor* processor;
+
 	void swap_specialized_panel(tuning_panel* new_panel);
 
 	tuning_panel* specialized_parameter_panel;
@@ -86,8 +98,12 @@ private:
 	QCheckBox* rectify_checkbox;
 	QPushButton* save_current_button;
 
+	QComboBox* matcher_type_combo_box;
+
+
 	void set_up_tuning_controls();
 private slots:
+	void on_matcher_type_combo_box_currentIndexChanged(int index);
 	void connect_matcher(matcher_qt_wrapper_base* matcher);
 
 };

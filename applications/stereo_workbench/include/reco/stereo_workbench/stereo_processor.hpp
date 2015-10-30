@@ -37,7 +37,7 @@ public:
 
 	stereo_processor(datapipe::frame_buffer_type input_frame_buffer,
 			datapipe::frame_buffer_type output_frame_buffer,
-			std::shared_ptr<matcher_qt_wrapper_base> matcher,
+			std::shared_ptr<matcher_qt_wrapper_base> matcher = std::shared_ptr<matcher_qt_wrapper_base>(),
 			std::shared_ptr<rectifier>  rectifier_instance = std::shared_ptr<rectifier>());
 	virtual ~stereo_processor();
 	bool is_rectification_enabled() const;

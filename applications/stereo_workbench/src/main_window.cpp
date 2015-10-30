@@ -48,11 +48,13 @@ main_window::main_window() :
 		//stereo_input_buffer(new utils::unbounded_queue<std::shared_ptr<hal::ImageArray>>()),
 		stereo_input_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 		stereo_output_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
-		processor(stereo_input_buffer,stereo_output_buffer,std::shared_ptr<matcher_qt_wrapper_base>(new matcher_qt_wrapper_sgbm()))
+		processor(stereo_input_buffer,stereo_output_buffer)
 {
 	using namespace boost::filesystem;
 	ui->setupUi(this);
 	ui->disparity_viewer->configure_for_pipe(1);
+
+	processor.set_matcher(ui->tuner_panel->matchers[stereo_matcher_tuning_panel::sgbm]);
 
 	//check default files
 	path calib_path(DEFAULT_CALIB_PATH CALIB_FILE);

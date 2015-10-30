@@ -48,7 +48,7 @@ void matcher_qt_wrapper_bm::tuning_panel_bm::connect_specialized_controls(const 
 	uniqueness_ratio_spin_box->     setValue(matcher.get_uniqueness_ratio());
 
 	connect(pre_filter_cap_slider, SIGNAL(valueChanged(int)), &matcher, SLOT(set_pre_filter_cap(int)));
-	connect(pre_filter_size_slider, SIGNAL(valueChanged(int)), &matcher, SLOT(set_filter_size(int)));
+	connect(pre_filter_size_slider, SIGNAL(valueChanged(int)), &matcher, SLOT(set_pre_filter_size(int)));
 	connect(smaller_block_size_slider, SIGNAL(valueChanged(int)), &matcher, SLOT(set_block_size(int)));
 	connect(texture_threshold_slider, SIGNAL(valueChanged(int)), &matcher, SLOT(set_texture_threshold(int)));
 	connect(uniqueness_ratio_slider, SIGNAL(valueChanged(int)), &matcher, SLOT(set_uniqueness_ratio(int)));

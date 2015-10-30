@@ -43,7 +43,9 @@ stereo_processor::stereo_processor(
 				right_v_offset(0),
 				_rectifier(rectifier)
 {
-	connect(matcher.get(), SIGNAL(parameters_changed()), this, SLOT(recompute_disparity()));
+	if(matcher){
+		connect(matcher.get(), SIGNAL(parameters_changed()), this, SLOT(recompute_disparity()));
+	}
 }
 
 stereo_processor::~stereo_processor() {
@@ -72,6 +74,7 @@ void stereo_processor::set_matcher(std::shared_ptr<matcher_qt_wrapper_base> matc
 	if (!matcher) {
 		err2(std::invalid_argument,"matcher contents cannot be null");
 	}
+	connect(matcher.get(), SIGNAL(parameters_changed()), this, SLOT(recompute_disparity()));
 	emit matcher_updated(matcher.get());
 	if (!last_left.empty()) {
 		if (rectification_enabled) {
@@ -123,7 +126,7 @@ bool stereo_processor::do_unit_of_work() {
 
 void stereo_processor::save_current_matcher_input() {
 	std::unique_lock<std::mutex> lck(this->input_guard);
-	if (rectification_enabled) {
+	if (rectification_enabled ) {
 		cv::imwrite("left.png", last_left_rectified);
 		cv::imwrite("right.png", last_right_rectified);
 	} else {
@@ -137,10 +140,12 @@ void stereo_processor::save_current_matcher_input() {
 
 void stereo_processor::recompute_disparity() {
 	std::unique_lock<std::mutex> lck(this->input_guard);
-	if (rectification_enabled) {
-		compute_disparity(last_left_rectified, last_right_rectified);
-	} else {
-		compute_disparity(last_left, last_right);
+	if(!last_left.empty()){
+		if (rectification_enabled) {
+			compute_disparity(last_left_rectified, last_right_rectified);
+		} else {
+			compute_disparity(last_left, last_right);
+		}
 	}
 }
 
@@ -154,6 +159,9 @@ bool stereo_processor::is_rectification_enabled() const {
  * @param right
  */
 void stereo_processor::compute_disparity(cv::Mat left, cv::Mat right) {
+	if(!matcher){
+		return;
+	}
 	cv::Mat disparity;
 
 	int offset = this->right_v_offset;

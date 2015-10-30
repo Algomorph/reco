@@ -9,6 +9,9 @@
 #include <reco/stereo_workbench/stereo_matcher_tuning_panel.hpp>
 #include <QVBoxLayout>
 #include <reco/utils/debug_util.h>
+#include <reco/utils/cpp_exception_util.h>
+#include <reco/stereo_workbench/matcher_qt_wrapper_bm.hpp>
+#include <reco/stereo_workbench/matcher_qt_wrapper_sgbm.hpp>
 
 namespace reco {
 namespace stereo_workbench {
@@ -16,7 +19,11 @@ namespace stereo_workbench {
 
 stereo_matcher_tuning_panel::stereo_matcher_tuning_panel(QWidget* parent):
 		tuning_panel(parent),
-		specialized_parameter_panel(NULL){
+		matchers({std::shared_ptr<matcher_qt_wrapper_base>(new matcher_qt_wrapper_sgbm()),
+				          std::shared_ptr<matcher_qt_wrapper_base>(new matcher_qt_wrapper_bm()),
+						  std::shared_ptr<matcher_qt_wrapper_base>()}),
+		specialized_parameter_panel(NULL)
+		{
 
 	other_controls_vlayout = new QVBoxLayout();
 	this->layout()->addItem(other_controls_vlayout);
@@ -25,7 +32,8 @@ stereo_matcher_tuning_panel::stereo_matcher_tuning_panel(QWidget* parent):
 }
 
 void stereo_matcher_tuning_panel
-	::connect_stereo_processor(const stereo_processor& processor){
+	::connect_stereo_processor(stereo_processor& processor){
+	this->processor = &processor;
 	std::shared_ptr<matcher_qt_wrapper_base> matcher = processor.get_matcher();
 	rectify_checkbox->setChecked(processor.is_rectification_enabled());
 
@@ -199,6 +207,24 @@ void stereo_matcher_tuning_panel::set_up_tuning_controls(){
 	save_current_button->setToolTip("save current stereo matcher input");
 
 	other_controls_vlayout->addWidget(save_current_button);
+
+	matcher_type_combo_box = new QComboBox(this);
+	matcher_type_combo_box->setObjectName(QStringLiteral("matcher_type_combo_box"));
+	other_controls_vlayout->addWidget(matcher_type_combo_box);
+	matcher_type_combo_box->clear();
+	matcher_type_combo_box->insertItems(0, QStringList()
+			<< QString("SGBM") << QString("BM") << QString("BP")
+	);
+
+	connect(matcher_type_combo_box, SIGNAL(currentIndexChanged(int)), this, SLOT(on_matcher_type_combo_box_currentIndexChanged(int)));
+
+
+}
+
+
+
+void stereo_matcher_tuning_panel::on_matcher_type_combo_box_currentIndexChanged(int index){
+	processor->set_matcher(matchers[index]);
 }
 
 stereo_matcher_tuning_panel::~stereo_matcher_tuning_panel(){
