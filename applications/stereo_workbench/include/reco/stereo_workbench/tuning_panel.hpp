@@ -52,14 +52,12 @@ protected:
 						QHBoxLayout*& layout,
 						QLabel*& label,
 						QDoubleSpinBox*& spin_box,
-						QSlider*& slider,
 						QString label_text,
 						QString layout_name,
 						QString label_name,
 						QString spin_box_name,
-						QString slider_name,
-						double min_val, double max_val, double step = 1, double val = 0, double page_step = 1,
-						QString slider_tooltip = "");
+						double min_val, double max_val, double step = 1.0, double val = 0.0, double page_step = 1.0,
+						QString tooltip = "");
 
 	QVBoxLayout* tuning_controls_vlayout;
 

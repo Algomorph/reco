@@ -5,7 +5,7 @@
 namespace reco{
 namespace stereo_workbench{
 
-}
+
 class QDoubleSlider : public QSlider
 {
   Q_OBJECT

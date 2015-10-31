@@ -10,6 +10,7 @@
 
 #include <reco/stereo_workbench/matcher_qt_wrapper.hpp>
 #include <reco/stereo_workbench/tuning_panel.hpp>
+#include <opencv2/cudastereo.hpp>
 #include <QComboBox>
 
 namespace reco {
@@ -34,32 +35,33 @@ private:
 		QSpinBox* block_size_spin_box;
 		QSlider* block_size_slider;
 
-		QHBoxLayout* pre_filter_cap_horizontal_layout;
-		QLabel* pre_filter_cap_label;
-		QSpinBox* pre_filter_cap_spin_box;
-		QSlider* pre_filter_cap_slider;
+		QHBoxLayout* data_weight_horizontal_layout;
+		QLabel* data_weight_label;
+		QDoubleSpinBox* data_weight_spin_box;
 
-		QHBoxLayout* pre_filter_size_horizontal_layout;
-		QLabel* pre_filter_size_label;
-		QSpinBox* pre_filter_size_spin_box;
-		QSlider* pre_filter_size_slider;
+		QHBoxLayout* disc_single_jump_horizontal_layout;
+		QLabel* disc_single_jump_label;
+		QDoubleSpinBox* disc_single_jump_spin_box;
 
-		QComboBox* pre_filter_type_combo_box;
+		QHBoxLayout* max_data_term_horizontal_layout;
+		QLabel* max_data_term_label;
+		QDoubleSpinBox* max_data_term_spin_box;
 
-		QHBoxLayout* smaller_block_size_horizontal_layout;
-		QLabel* smaller_block_size_label;
-		QSpinBox* smaller_block_size_spin_box;
-		QSlider* smaller_block_size_slider;
+		QHBoxLayout* max_disc_term_horizontal_layout;
+		QLabel* max_disc_term_label;
+		QDoubleSpinBox* max_disc_term_spin_box;
 
-		QHBoxLayout* texture_threshold_horizontal_layout;
-		QLabel* texture_threshold_label;
-		QSpinBox* texture_threshold_spin_box;
-		QSlider* texture_threshold_slider;
+		QComboBox* msg_type_combo_box;
 
-		QHBoxLayout* uniqueness_ratio_horizontal_layout;
-		QLabel* uniqueness_ratio_label;
-		QSpinBox* uniqueness_ratio_spin_box;
-		QSlider* uniqueness_ratio_slider;
+		QHBoxLayout* num_iters_horizontal_layout;
+		QLabel* num_iters_label;
+		QSpinBox* num_iters_spin_box;
+		QSlider* num_iters_slider;
+
+		QHBoxLayout* num_levels_horizontal_layout;
+		QLabel* num_levels_label;
+		QSpinBox* num_levels_spin_box;
+		QSlider* num_levels_slider;
 
 		void construct_specialized_controls();
 		void connect_specialized_controls(const matcher_qt_wrapper_bp& matcher);
@@ -84,7 +86,7 @@ public slots:
 	void set_disc_single_jump(double value);
 	void set_max_data_term(double value);
 	void set_max_disc_term(double value);
-	void set_msg_type(int value);
+	void set_msg_type(int combo_box_index);
 	void set_num_iters(int value);
 	void set_num_levels(int value);
 

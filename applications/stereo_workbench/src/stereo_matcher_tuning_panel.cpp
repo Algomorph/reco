@@ -10,8 +10,9 @@
 #include <QVBoxLayout>
 #include <reco/utils/debug_util.h>
 #include <reco/utils/cpp_exception_util.h>
-#include <reco/stereo_workbench/matcher_qt_wrapper_bm.hpp>
 #include <reco/stereo_workbench/matcher_qt_wrapper_sgbm.hpp>
+#include <reco/stereo_workbench/matcher_qt_wrapper_bm.hpp>
+#include <reco/stereo_workbench/matcher_qt_wrapper_bp.hpp>
 
 namespace reco {
 namespace stereo_workbench {
@@ -21,7 +22,7 @@ stereo_matcher_tuning_panel::stereo_matcher_tuning_panel(QWidget* parent):
 		tuning_panel(parent),
 		matchers({std::shared_ptr<matcher_qt_wrapper_base>(new matcher_qt_wrapper_sgbm()),
 				          std::shared_ptr<matcher_qt_wrapper_base>(new matcher_qt_wrapper_bm()),
-						  std::shared_ptr<matcher_qt_wrapper_base>()}),
+						  std::shared_ptr<matcher_qt_wrapper_base>(new matcher_qt_wrapper_bp())}),
 		processor(NULL),
 		matcher(NULL),
 		specialized_parameter_panel(NULL)
