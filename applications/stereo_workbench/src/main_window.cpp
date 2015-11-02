@@ -35,11 +35,22 @@ namespace stereo_workbench {
 #define DEFAULT_CAP_PATH DEFAULT_RECO_DATA_PATH "cap/yi/"
 #define DEFAULT_CALIB_PATH "/home/algomorph/Dropbox/calib/yi/"
 
-#define VIDEO_LEFT "sm03l_edit.mp4"
-#define VIDEO_RIGHT "sm03r_edit.mp4"
-//#define VIDEO_LEFT "s24l_edit.mp4"
-//#define VIDEO_RIGHT "s24r_edit.mp4"
+//uncomment to load images instead of videos by default
+#define DEFAULT_LOAD_IMAGES
+#define USE_CAGE_SCENE
+
+#ifdef USE_CAGE_SCENE
+	#define DEFAULT_VIDEO_LEFT DEFAULT_CAP_PATH "sm03l_edit.mp4"
+	#define DEFAULT_VIDEO_RIGHT DEFAULT_CAP_PATH "sm03r_edit.mp4"
+#else
+	#define DEFAULT_VIDEO_LEFT DEFAULT_CAP_PATH "s24l_edit.mp4"
+	#define DEFAULT_VIDEO_RIGHT DEFAULT_CAP_PATH "s24r_edit.mp4"
+#endif
 #define CALIB_FILE "s25cv12_BEST.xml"
+
+
+#define DEFAULT_IMAGE_LEFT DEFAULT_CAP_PATH "test_left.png"
+#define DEFAULT_IMAGE_RIGHT DEFAULT_CAP_PATH "test_right.png"
 
 main_window::main_window() :
 		ui(new Ui_main_window),
@@ -55,6 +66,9 @@ main_window::main_window() :
 	ui->disparity_viewer->configure_for_pipe(1);
 
 	processor.set_matcher(ui->tuner_panel->matchers[stereo_matcher_tuning_panel::sgbm]);
+	//TODO: processor should be a member of ui->tuner_panel from the get-go
+	ui->tuner_panel->connect_stereo_processor(this->processor);
+	connect_actions();
 
 	//check default files
 	path calib_path(DEFAULT_CALIB_PATH CALIB_FILE);
@@ -62,25 +76,37 @@ main_window::main_window() :
 		processor.set_rectifier(std::shared_ptr<rectifier>(new opencv_rectifier(calib_path.c_str())));
 		processor.toggle_rectification();
 	}
+	processor.run();
+	connect(&processor,SIGNAL(frame(std::shared_ptr<std::vector<cv::Mat>>)),
+			ui->disparity_viewer,SLOT(on_frame(std::shared_ptr<std::vector<cv::Mat>>)));
 
-	if(is_regular_file(path(DEFAULT_CAP_PATH VIDEO_LEFT)) && is_regular_file(path(DEFAULT_CAP_PATH VIDEO_RIGHT))){
+#ifdef DEFAULT_LOAD_IMAGES
+	if(is_regular_file(path(DEFAULT_IMAGE_LEFT)) && is_regular_file(path(DEFAULT_IMAGE_RIGHT))){
+		ui->stereo_feed_viewer->configure_for_pipe(2);
+		cv::Mat left = cv::imread(DEFAULT_IMAGE_LEFT);
+		cv::Mat right = cv::imread(DEFAULT_IMAGE_RIGHT);
+
+		std::vector<cv::Mat> matrices = {left,right};
+		std::shared_ptr<hal::ImageArray> images = datapipe::hal_array_from_cv(matrices);
+		ui->stereo_feed_viewer->on_frame(images);
+		stereo_input_buffer->push_back(images);
+	}
+#else
+	if(is_regular_file(path(DEFAULT_VIDEO_LEFT)) && is_regular_file(path(DEFAULT_VIDEO_RIGHT))){
 		pipe.reset(
 		new datapipe::hal_stereo_pipe(video_buffer,datapipe::hal_stereo_pipe::video_files,{
-							DEFAULT_CAP_PATH VIDEO_LEFT,
-							DEFAULT_CAP_PATH VIDEO_RIGHT
+							DEFAULT_VIDEO_LEFT,
+							DEFAULT_VIDEO_RIGHT
 						}
 		#ifdef UNDISTORT_ON_CAPTURE
 				,"/media/algomorph/Data/reco/calib/yi/" CALIB_FILE
 		#endif
 				));
 	}
-
-	connect_actions();
+#endif
 
 	hook_pipe();
-	processor.run();
-	connect(&processor,SIGNAL(frame(std::shared_ptr<std::vector<cv::Mat>>)),
-			ui->disparity_viewer,SLOT(on_frame(std::shared_ptr<std::vector<cv::Mat>>)));
+
 }
 
 main_window::~main_window() {
@@ -97,7 +123,7 @@ void main_window::connect_actions() {
 	connect(ui->action_open_calibration_file,SIGNAL(triggered()),this,SLOT(open_calibration_file()));
 	connect(ui->action_open_image_pair,SIGNAL(triggered()),this,SLOT(open_image_pair()));
 //==================================================================================================
-	ui->tuner_panel->connect_stereo_processor(this->processor);
+
 
 }
 
@@ -168,7 +194,9 @@ void main_window::open_image_pair(){
 
 	std::vector<cv::Mat> matrices = {left,right};
 	std::shared_ptr<hal::ImageArray> images = datapipe::hal_array_from_cv(matrices);
-	pipe->pause();//pause to avoid conflicts
+	if(pipe){
+		pipe->pause();//pause to avoid conflicts
+	}
 	ui->stereo_feed_viewer->on_frame(images);
 	stereo_input_buffer->push_back(images);
 
