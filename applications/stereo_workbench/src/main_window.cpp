@@ -63,6 +63,8 @@ main_window::main_window() :
 {
 	using namespace boost::filesystem;
 	ui->setupUi(this);
+	//TODO: these "configure_for_pipe" functions should be renamed to something more comprehensible
+	ui->stereo_feed_viewer->configure_for_pipe(2);
 	ui->disparity_viewer->configure_for_pipe(1);
 
 	processor.set_matcher(ui->tuner_panel->matchers[stereo_matcher_tuning_panel::sgbm]);
@@ -82,14 +84,14 @@ main_window::main_window() :
 
 #ifdef DEFAULT_LOAD_IMAGES
 	if(is_regular_file(path(DEFAULT_IMAGE_LEFT)) && is_regular_file(path(DEFAULT_IMAGE_RIGHT))){
-		ui->stereo_feed_viewer->configure_for_pipe(2);
+
 		cv::Mat left = cv::imread(DEFAULT_IMAGE_LEFT);
 		cv::Mat right = cv::imread(DEFAULT_IMAGE_RIGHT);
 
 		std::vector<cv::Mat> matrices = {left,right};
 		std::shared_ptr<hal::ImageArray> images = datapipe::hal_array_from_cv(matrices);
-		ui->stereo_feed_viewer->on_frame(images);
 		stereo_input_buffer->push_back(images);
+		ui->stereo_feed_viewer->on_frame(images);
 	}
 #else
 	if(is_regular_file(path(DEFAULT_VIDEO_LEFT)) && is_regular_file(path(DEFAULT_VIDEO_RIGHT))){

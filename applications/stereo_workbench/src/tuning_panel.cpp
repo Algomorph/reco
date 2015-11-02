@@ -26,8 +26,6 @@ namespace stereo_workbench{
 
 tuning_panel ::
 	tuning_panel(QWidget* parent): QWidget(parent){
-	this->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
-	this->setMinimumSize(100,100);
 	QVBoxLayout* layout = new QVBoxLayout();
 	this->setLayout(layout);
 	tuning_controls_vlayout = new QVBoxLayout();
