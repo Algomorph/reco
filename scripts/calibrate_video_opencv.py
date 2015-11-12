@@ -7,6 +7,7 @@ import numpy as np
 import argparse as ap
 from lxml import etree
 import re
+import time
 
 parser = ap.ArgumentParser(description='Traverse all .mp4 video files in the specified folder and'+
                            ' pick out frames to export as images.')
@@ -28,7 +29,7 @@ parser.add_argument("-bh", "--board_height", help="checkerboard inner corner hei
 parser.add_argument("-t", "--sharpness_threshold", help="sharpness threshold based on variance of "+
                     "Laplacian; used to filter out frames that are too blurry.", 
                     type=float, required = False, default=55.0)
-parser.add_argument("-d", "--difference_threshold", help="difference threshold: maximum average "
+parser.add_argument("-d", "--difference_threshold", help="difference threshold: minimum average "
                     +" per-pixel difference (in range [0,1.0]) between current and previous frames to "
                     +"filter out frames that are too much alike", type=float, required = False, default=0.4)
 parser.add_argument("-c", "--corners_file", required = False, default="corners.npz")
@@ -383,16 +384,23 @@ if __name__ == "__main__":
             flags += cv2.CALIB_RATIONAL_MODEL
         
         if(args.precalibrate_solo):
+            start = time.time()
             err1, K1, d1, rvecs, tvecs = cv2.calibrateCamera(objpoints, limgpoints, 
                                                        frame_dims, K1, d1, flags=flags,criteria = criteria)
+            end = time.time()
+            print "Time for camera 1 solo calibration (s): " + str(end - start)
             print "K1 solo:"
             print K1
             print "d1 solo:"
             print d1
             print "solo 1 err:"
             print err1
+            start = time.time()
             err2, K2, d2, rvecs, tvecs = cv2.calibrateCamera(objpoints, rimgpoints, 
                                                        frame_dims, K2, d2, flags=flags,criteria = criteria)
+            end = time.time()
+            print "Time for camera 2 solo calibration (s): " + str(end - start)
+            
             print "K2 solo:"
             print K2
             print "d2 solo:"
@@ -410,6 +418,7 @@ if __name__ == "__main__":
                                           flags = flags,
                                           criteria = criteria)
             else:
+                start = time.time()
                 error, K1, d1, K2, d2, R, T, E, F \
                         = cv2.stereoCalibrate(objpoints,limgpoints,rimgpoints, 
                                               cameraMatrix1 = K1, distCoeffs1 = d1, 
@@ -417,6 +426,8 @@ if __name__ == "__main__":
                                               imageSize = frame_dims,
                                               flags = flags,
                                               criteria = criteria)
+                end = time.time()
+                print "Time for stereo calibration with fixed intrinsics (s): " + str(end - start) 
         else:
             if(int(cv2.__version__ [0]) == 2):
                 error, K1, d1, K2, d2, R, T, E, F \

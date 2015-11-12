@@ -12,12 +12,14 @@
 #include <opencv2/imgproc.hpp>
 #include <opencv2/cudastereo.hpp>
 
+#include <reco/utils/debug_util.h>
+
 namespace reco {
 namespace stereo_workbench {
 
 
 matcher_qt_wrapper_bp::matcher_qt_wrapper_bp():
-		matcher_qt_wrapper(cv::cuda::createStereoBeliefPropagation()){
+		matcher_qt_wrapper(cv::cuda::createStereoBeliefPropagation(16)){
 	this->panel = new tuning_panel_bp(*this);
 
 }
@@ -73,7 +75,7 @@ void matcher_qt_wrapper_bp::tuning_panel_bp::construct_specialized_controls(){
 		QStringLiteral("block_size_label"),
 		QStringLiteral("block_size_spin_box"),
 		QStringLiteral("block_size_slider"),
-		5,65,2,1
+		1,65,2,1
 		);
 
 	construct_double_control_set(
@@ -161,16 +163,17 @@ void matcher_qt_wrapper_bp::tuning_panel_bp::construct_specialized_controls(){
 }
 
 void matcher_qt_wrapper_bp::compute(const cv::Mat& left,const cv::Mat& right, cv::Mat& disparity){
-	if(left.type() == CV_8UC3 && right.type() == CV_8UC3){
-		cv::Mat left_target,right_target;
-		cv::cvtColor(left,left_target,cv::COLOR_BGR2GRAY);
-		cv::cvtColor(right,right_target,cv::COLOR_BGR2GRAY);
-		this->stereo_matcher->compute(left_target,right_target,disparity);
-	}else if(left.type() == CV_8UC1 && right.type() == CV_8UC1){
-		this->stereo_matcher->compute(left,right,disparity);
-	}else{
-		err2(std::invalid_argument,"Expecting both left & right matrices both to have type CV_8UC3 or CV_8UC1.");
-	}
+	int rect_width = 1920;
+	int rect_height = 1080;
+	cv::cuda::GpuMat gpu_left(rect_height,rect_width,CV_8UC3);
+	gpu_left.download(left(cv::Rect(0,0,rect_width,rect_height)));
+	cv::cuda::GpuMat gpu_right(rect_height,rect_width,CV_8UC3);
+	gpu_right.download(right(cv::Rect(0,0,rect_width,rect_height)));
+	cv::cuda::GpuMat gpu_disparity(rect_height,rect_width,CV_8UC3);
+	this->stereo_matcher->compute(gpu_left,gpu_right,gpu_disparity);
+	disparity= cv::Mat(gpu_disparity.rows,gpu_disparity.cols,gpu_disparity.type());
+	gpu_disparity.upload(disparity);
+
 }
 
 matcher_qt_wrapper_bp::tuning_panel_bp::~tuning_panel_bp(){

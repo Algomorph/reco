@@ -39,6 +39,7 @@ Q_OBJECT
 	bool configured_for_pipe = false;
 	void add_video_widget(int ix_feed);
 
+
 protected:
 	std::vector<std::tuple<int, datapipe::image_widget*>> video_widgets;
 	/**
@@ -62,8 +63,13 @@ public:
 	 * @brief Hooks current object to show feed from the desired pipe
 	 * @param num_channels total number of channels in the feed
 	 */
-	void configure_for_pipe(int num_channels);
-
+	void set_channel_number(int num_channels);
+	/**
+	 * @brief Set all outputs to blank images of the specified width & height
+	 * @param width
+	 * @param height
+	 */
+	void set_blank(int width, int height);
 	/**
 	 * @brief Unhooks current object from the previously-connected pipe
 	 */

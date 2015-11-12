@@ -19,7 +19,7 @@ if __name__ == "__main__":
     
     rfiles = [f for f in files if "r_" in f]
     lfiles = [f for f in files if "l_" in f]
-    num_pattern = re.compile("\d{4}")
+    num_pattern = re.compile("\d{4}\d?")
     rnums = [int(re.findall(num_pattern,f)[0]) for f in rfiles]
     lnums = [int(re.findall(num_pattern,f)[0]) for f in lfiles]
     rdict = {}

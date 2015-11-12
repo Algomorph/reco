@@ -66,6 +66,8 @@ void image_widget::set_bgr_image_fast(const cv::Mat& mat) {
 	repaint();
 }
 
+
+
 /**
  * Fast version of setImage: assumes BGR mat (CV_8UC3), does not resize widget
  * @param mat matrix to use for current image

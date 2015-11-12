@@ -40,17 +40,18 @@ namespace stereo_workbench {
 #define USE_CAGE_SCENE
 
 #ifdef USE_CAGE_SCENE
-	#define DEFAULT_VIDEO_LEFT DEFAULT_CAP_PATH "sm03l_edit.mp4"
-	#define DEFAULT_VIDEO_RIGHT DEFAULT_CAP_PATH "sm03r_edit.mp4"
+	#define DEFAULT_VIDEO_LEFT DEFAULT_CAP_PATH "s27/s27l_flip.mp4"
+	#define DEFAULT_VIDEO_RIGHT DEFAULT_CAP_PATH "s27/s27r.mp4"
 #else
 	#define DEFAULT_VIDEO_LEFT DEFAULT_CAP_PATH "s24l_edit.mp4"
 	#define DEFAULT_VIDEO_RIGHT DEFAULT_CAP_PATH "s24r_edit.mp4"
 #endif
-#define CALIB_FILE "s25cv12_BEST.xml"
+//#define CALIB_FILE "s26_58_45.xml"
+#define CALIB_FILE "s26_58_45.xml"
 
 
-#define DEFAULT_IMAGE_LEFT DEFAULT_CAP_PATH "test_left.png"
-#define DEFAULT_IMAGE_RIGHT DEFAULT_CAP_PATH "test_right.png"
+#define DEFAULT_IMAGE_LEFT DEFAULT_CAP_PATH "s26_calib/test02_left_hm.png"
+#define DEFAULT_IMAGE_RIGHT DEFAULT_CAP_PATH "s26_calib/test02_right.png"
 
 main_window::main_window() :
 		ui(new Ui_main_window),
@@ -64,24 +65,28 @@ main_window::main_window() :
 	using namespace boost::filesystem;
 	ui->setupUi(this);
 	//TODO: these "configure_for_pipe" functions should be renamed to something more comprehensible
-	ui->stereo_feed_viewer->configure_for_pipe(2);
-	ui->disparity_viewer->configure_for_pipe(1);
+	ui->stereo_feed_viewer->set_channel_number(2);
+	ui->disparity_viewer->set_channel_number(1);
+	ui->disparity_viewer->set_blank(1920,1080);
 
-	processor.set_matcher(ui->tuner_panel->matchers[stereo_matcher_tuning_panel::sgbm]);
-	//TODO: processor should be a member of ui->tuner_panel from the get-go
-	ui->tuner_panel->connect_stereo_processor(this->processor);
-	connect_actions();
-
+	//----------SET UP STEREO PROCESSING
 	//check default files
 	path calib_path(DEFAULT_CALIB_PATH CALIB_FILE);
 	if(is_regular_file(calib_path)){
 		processor.set_rectifier(std::shared_ptr<rectifier>(new opencv_rectifier(calib_path.c_str())));
 		processor.toggle_rectification();
 	}
-	processor.run();
-	connect(&processor,SIGNAL(frame(std::shared_ptr<std::vector<cv::Mat>>)),
-			ui->disparity_viewer,SLOT(on_frame(std::shared_ptr<std::vector<cv::Mat>>)));
 
+
+	processor.set_matcher(ui->tuner_panel->matchers[stereo_matcher_tuning_panel::sgbm]);
+	connect(&processor,SIGNAL(frame(std::shared_ptr<std::vector<cv::Mat>>)),
+				ui->disparity_viewer,SLOT(on_frame(std::shared_ptr<std::vector<cv::Mat>>)));
+	//TODO: processor should be a member of ui->tuner_panel from the get-go
+	ui->tuner_panel->connect_stereo_processor(this->processor);
+	processor.run();
+	connect_actions();
+
+	//---------LOAD INPUT-------------
 #ifdef DEFAULT_LOAD_IMAGES
 	if(is_regular_file(path(DEFAULT_IMAGE_LEFT)) && is_regular_file(path(DEFAULT_IMAGE_RIGHT))){
 
@@ -134,7 +139,7 @@ void main_window::connect_actions() {
  */
 void main_window::hook_pipe(){
 	if(pipe){
-		ui->stereo_feed_viewer->configure_for_pipe(pipe->get_num_channels());
+		ui->stereo_feed_viewer->set_channel_number(pipe->get_num_channels());
 		connect(pipe.get(),SIGNAL(frame()), this, SLOT(handle_frame()));
 		connect(ui->capture_button, SIGNAL(released()), pipe.get(), SLOT(run()));
 		connect(ui->pause_button, SIGNAL(released()), pipe.get(), SLOT(pause()));

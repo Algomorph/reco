@@ -22,10 +22,10 @@ multichannel_viewer::multichannel_viewer(QWidget* parent, QString window_title):
 	//UI initial setup
 	this->setWindowTitle(window_title);
 	this->setMinimumSize(400,300);
-	this->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
+	this->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
 	this->setLayout(this->layout);
 	//re-show this whenever source is closed
-	this->no_source_connected_label->setText("No source connected.");
+	this->no_source_connected_label->setText("Not configured.");
 	this->layout->addWidget(this->no_source_connected_label);
 }
 
@@ -40,7 +40,7 @@ void multichannel_viewer::add_video_widget(int ix_channel){
 	this->video_widgets.emplace_back(ix_channel,vid_widget);
 }
 
-void multichannel_viewer::configure_for_pipe(int num_channels){
+void multichannel_viewer::set_channel_number(int num_channels){
 	if(this->configured_for_pipe){
 		//if already hooked to a pipe, unhook
 		this->clear_gui_configuration();
@@ -68,6 +68,13 @@ std::vector<int> multichannel_viewer::select_channels(int total_channels){
 	return selection;
 }
 
+void multichannel_viewer::set_blank(int width, int height){
+	if(configured_for_pipe){
+		for(std::tuple<int,datapipe::image_widget*> vid_widget_tuple : this->video_widgets){
+			std::get<1>(vid_widget_tuple)->set_blank(width, height);
+		}
+	}
+}
 
 void multichannel_viewer::clear_gui_configuration(){
 	if(this->configured_for_pipe){
