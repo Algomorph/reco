@@ -26,6 +26,8 @@ parser.add_argument("-bw", "--board_width", help="checkerboard inner corner widt
                     default= 15)
 parser.add_argument("-bh", "--board_height", help="checkerboard inner corner height",required = False,
                      default= 8)
+parser.add_argument("-bs", "--board_square_size", help="checkerboard square size, in meters", 
+                    required = False, default=0.0508)
 parser.add_argument("-t", "--sharpness_threshold", help="sharpness threshold based on variance of "+
                     "Laplacian; used to filter out frames that are too blurry.", 
                     type=float, required = False, default=55.0)
@@ -182,11 +184,25 @@ def automatic_filter(lframe,rframe,lframe_prev,rframe_prev,sharpness_threshold, 
     
     return True, lcorners, rcorners
 
+def calibrate_solo(objpoints,imgpoints,frame_dims, K, d, flags, criteria, ix_cam):
+    start = time.time()
+    err, K, d, rvecs, tvecs = cv2.calibrateCamera(objpoints, limgpoints, 
+                                               frame_dims, K, d, flags=flags,criteria = criteria)
+    end = time.time()
+    print "Camera {0:d} calibration.\n   Time (s): {1:f}".format(ix_cam,str(end - start))
+    print "K: "
+    print K1
+    print "d: "
+    print d1
+    print "Error: " + str(err)
+    return err, K, d
 
 if __name__ == "__main__":
     args = parser.parse_args()
     left_vid = args.folder + os.path.sep + args.videos[0]
     right_vid = args.folder + os.path.sep +  args.videos[1]
+    l_vid_name = args.videos[0][:-4] 
+    r_vid_name = args.videos[1][:-4]
     
     print "Calibrating based on files: "
     print(left_vid)
@@ -216,8 +232,8 @@ if __name__ == "__main__":
 
     objp = np.zeros((args.board_height*args.board_width,1,3), np.float32)
     objp[:,:,:2] = np.indices(board_dims).T.reshape(-1, 1, 2)
-    #convert inches to meters
-    objp *= 0.0508
+    #convert square sizes to meters
+    objp *= args.board_square_size
     
     lret, lframe = left_cap.read()
     rret, rframe = right_cap.read()
@@ -241,8 +257,8 @@ if __name__ == "__main__":
         files = [f for f in os.listdir(full_frame_folder_path) if osp.isfile(osp.join(full_frame_folder_path,f)) and f.endswith(".png")]
         files.sort()
         #assume matching numbers in corresponding left & right files
-        rfiles = [f for f in files if "r_" in f]
-        lfiles = [f for f in files if "l_" in f]
+        rfiles = [f for f in files if f.startswith(l_vid_name)]
+        lfiles = [f for f in files if f.startswith(r_vid_name)]
         #assume all are usable
         for ix_pair in xrange(min(len(lfiles),len(rfiles))):
             lframe = cv2.imread(osp.join(full_frame_folder_path,lfiles[ix_pair]))
@@ -282,7 +298,6 @@ if __name__ == "__main__":
                 add_corners, lcorners, rcorners = automatic_filter(lframe, rframe, lframe_prev, rframe_prev, 
                                                                    args.sharpness_threshold, args.difference_threshold)
                 
-                
                 if args.manual_filter:
                     combo = np.hstack((lframe, rframe))
                     cv2.imshow("frame", combo)
@@ -301,10 +316,12 @@ if __name__ == "__main__":
                     
                     #save frames if filtered frame folder was specified
                     if(args.save_frames):
-                        lfname =full_frame_folder_path + os.path.sep + args.videos[0][:-4] + "{0:04d}".format(i_frame) + ".png"
+                        lfname = (full_frame_folder_path + os.path.sep + l_vid_name
+                            + "{0:04d}".format(i_frame) + ".png")
+                        rfname = (full_frame_folder_path + os.path.sep + r_vid_name
+                            + "{0:04d}".format(i_frame) + ".png")
                         cv2.imwrite(lfname, lframe)
-                        cv2.imwrite(full_frame_folder_path + os.path.sep + args.videos[1][:-4] 
-                                    + "{0:04d}".format(i_frame) + ".png", rframe)
+                        cv2.imwrite(rfname, rframe)
                         
                     limgpoints.append(lcorners)
                     rimgpoints.append(rcorners) 
@@ -384,31 +401,11 @@ if __name__ == "__main__":
             flags += cv2.CALIB_RATIONAL_MODEL
         
         if(args.precalibrate_solo):
-            start = time.time()
-            err1, K1, d1, rvecs, tvecs = cv2.calibrateCamera(objpoints, limgpoints, 
-                                                       frame_dims, K1, d1, flags=flags,criteria = criteria)
-            end = time.time()
-            print "Time for camera 1 solo calibration (s): " + str(end - start)
-            print "K1 solo:"
-            print K1
-            print "d1 solo:"
-            print d1
-            print "solo 1 err:"
-            print err1
-            start = time.time()
-            err2, K2, d2, rvecs, tvecs = cv2.calibrateCamera(objpoints, rimgpoints, 
-                                                       frame_dims, K2, d2, flags=flags,criteria = criteria)
-            end = time.time()
-            print "Time for camera 2 solo calibration (s): " + str(end - start)
-            
-            print "K2 solo:"
-            print K2
-            print "d2 solo:"
-            print d2
-            print "solo 2 err:"
-            print err2
+            err1, K1, d1 = calibrate_solo(objpoints, limgpoints, frame_dims, K1, d1, flags, criteria, 1)
+            err2, K2, d2 = calibrate_solo(objpoints, rimgpoints, frame_dims, K2, d2, flags, criteria, 1)
+
             flags += cv2.CALIB_FIX_INTRINSIC
-            #flags += cv2.CALIB_USE_INTRINSIC_GUESS
+            
             if(int(cv2.__version__ [0]) == 2):
                 error, K1_2, d1, K2_2, d2, R, T, E, F \
                     = cv2.stereoCalibrate(objpoints,limgpoints,rimgpoints,  
