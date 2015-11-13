@@ -37,21 +37,15 @@ namespace stereo_workbench {
 
 //uncomment to load images instead of videos by default
 #define DEFAULT_LOAD_IMAGES
-#define USE_CAGE_SCENE
 
-#ifdef USE_CAGE_SCENE
-	#define DEFAULT_VIDEO_LEFT DEFAULT_CAP_PATH "s27/s27l_flip.mp4"
-	#define DEFAULT_VIDEO_RIGHT DEFAULT_CAP_PATH "s27/s27r.mp4"
-#else
-	#define DEFAULT_VIDEO_LEFT DEFAULT_CAP_PATH "s24l_edit.mp4"
-	#define DEFAULT_VIDEO_RIGHT DEFAULT_CAP_PATH "s24r_edit.mp4"
-#endif
-//#define CALIB_FILE "s26_58_45.xml"
-#define CALIB_FILE "s26_58_45.xml"
+#define DEFAULT_VIDEO_LEFT DEFAULT_CAP_PATH "0_1_calib01/1_sample_edit.mp4"
+#define DEFAULT_VIDEO_RIGHT DEFAULT_CAP_PATH "0_1_calib01/0_sample_edit.mp4"
+
+#define CALIB_FILE "0_1_frames_66_42_subset.xml"
 
 
-#define DEFAULT_IMAGE_LEFT DEFAULT_CAP_PATH "s26_calib/test02_left_hm.png"
-#define DEFAULT_IMAGE_RIGHT DEFAULT_CAP_PATH "s26_calib/test02_right.png"
+#define DEFAULT_IMAGE_LEFT DEFAULT_CAP_PATH "0_1_calib01/left.png"
+#define DEFAULT_IMAGE_RIGHT DEFAULT_CAP_PATH "0_1_calib01/right.png"
 
 main_window::main_window() :
 		ui(new Ui_main_window),

@@ -186,14 +186,14 @@ def automatic_filter(lframe,rframe,lframe_prev,rframe_prev,sharpness_threshold, 
 
 def calibrate_solo(objpoints,imgpoints,frame_dims, K, d, flags, criteria, ix_cam):
     start = time.time()
-    err, K, d, rvecs, tvecs = cv2.calibrateCamera(objpoints, limgpoints, 
+    err, K, d, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, 
                                                frame_dims, K, d, flags=flags,criteria = criteria)
     end = time.time()
-    print "Camera {0:d} calibration.\n   Time (s): {1:f}".format(ix_cam,str(end - start))
+    print "Camera {0:d} calibration.\n   Time (s): {1:f}".format(ix_cam,end - start)
     print "K: "
-    print K1
+    print K
     print "d: "
-    print d1
+    print d
     print "Error: " + str(err)
     return err, K, d
 
@@ -402,7 +402,7 @@ if __name__ == "__main__":
         
         if(args.precalibrate_solo):
             err1, K1, d1 = calibrate_solo(objpoints, limgpoints, frame_dims, K1, d1, flags, criteria, 1)
-            err2, K2, d2 = calibrate_solo(objpoints, rimgpoints, frame_dims, K2, d2, flags, criteria, 1)
+            err2, K2, d2 = calibrate_solo(objpoints, rimgpoints, frame_dims, K2, d2, flags, criteria, 2)
 
             flags += cv2.CALIB_FIX_INTRINSIC
             

@@ -12,16 +12,30 @@ parser.add_argument("-f", "--folder", help="Folder to work in",
                     required=False, default= ["./"])
 parser.add_argument("-s", "--save_frame_numbers", help="Save an array containing frame numbers of the remaining pairs.",
                     action="store_true",default = False)
+parser.add_argument("-p", "--prefixes", help="custom prefixes for the frames from left and right camera respectively",
+                    required=False, nargs=2, default = None)
+
 if __name__ == "__main__":
     args = parser.parse_args()
     files = [f for f in os.listdir(args.folder) if osp.isfile(osp.join(args.folder,f)) and f.endswith(".png")]
     files.sort()
     
-    rfiles = [f for f in files if "r_" in f]
-    lfiles = [f for f in files if "l_" in f]
+    if(args.prefixes == None):
+        rfiles = [f for f in files if "r_" in f]
+        lfiles = [f for f in files if "l_" in f]
+        rn_search = rfiles
+        ln_search = lfiles
+    else:
+        rfiles = [f for f in files if f.startswith(args.prefixes[0])]
+        lfiles = [f for f in files if f.startswith(args.prefixes[1])]
+        len_l_prefix = len(args.prefixes[0])
+        len_r_prefix = len(args.prefixes[1])
+        rn_search = [f[len_l_prefix:] for f in rfiles]
+        ln_search = [f[len_r_prefix:] for f in lfiles]
+        
     num_pattern = re.compile("\d{4}\d?")
-    rnums = [int(re.findall(num_pattern,f)[0]) for f in rfiles]
-    lnums = [int(re.findall(num_pattern,f)[0]) for f in lfiles]
+    rnums = [int(re.findall(num_pattern,f)[0]) for f in rn_search]
+    lnums = [int(re.findall(num_pattern,f)[0]) for f in ln_search]
     rdict = {}
     ldict = {}
     
