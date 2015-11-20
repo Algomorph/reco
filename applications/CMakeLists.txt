@@ -28,6 +28,11 @@ reco_add_subproject(tester
     SOURCES tester.cpp
     DEPENDENCIES OpenCV HAL utils
     LIGHTWEIGHT_APPLICATION)
+
+reco_add_subproject(ogale_example
+    SOURCES OpencvExample.cpp
+    DEPENDENCIES OpenCV stereo utils
+    LIGHTWEIGHT_APPLICATION)
     
 # Kinfu library
 #TODO: fix Alex's crude hack if necessary                                      
