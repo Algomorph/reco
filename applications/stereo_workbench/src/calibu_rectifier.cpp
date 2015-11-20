@@ -72,7 +72,4 @@ void calibu_rectifier::rectify(const cv::Mat& left, const cv::Mat& right, cv::Ma
 calibu_rectifier::~calibu_rectifier(){}
 
 } /* namespace stereo_workbench */
-
-
-
 } /* namespace reco */

@@ -41,17 +41,17 @@ namespace stereo_workbench {
 #define DEFAULT_VIDEO_LEFT DEFAULT_CAP_PATH "0_1_calib01/1_sample_edit.mp4"
 #define DEFAULT_VIDEO_RIGHT DEFAULT_CAP_PATH "0_1_calib01/0_sample_edit.mp4"
 
-#define CALIB_FILE "0_1_frames_66_42_subset.xml"
+#define CALIB_FILE "0_1_01_68_43.xml"
 
 
-#define DEFAULT_IMAGE_LEFT DEFAULT_CAP_PATH "0_1_calib01/left.png"
-#define DEFAULT_IMAGE_RIGHT DEFAULT_CAP_PATH "0_1_calib01/right.png"
+#define DEFAULT_IMAGE_LEFT DEFAULT_CAP_PATH "0_1_calib01/3_left.png"
+#define DEFAULT_IMAGE_RIGHT DEFAULT_CAP_PATH "0_1_calib01/3_right.png"
 
 main_window::main_window() :
 		ui(new Ui_main_window),
 		video_buffer(new utils::optimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 		pipe(),
-		//stereo_input_buffer(new utils::unbounded_queue<std::shared_ptr<hal::ImageArray>>()),
+		//stereo_input_buffer(new utils::unbounded_queue<std::shared_ptr<hal::Imag	eArray>>()),
 		stereo_input_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 		stereo_output_buffer(new utils::pessimistic_assignment_swap_buffer<std::shared_ptr<hal::ImageArray>>()),
 		processor(stereo_input_buffer,stereo_output_buffer)

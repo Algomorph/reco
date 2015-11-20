@@ -3,9 +3,12 @@
 import cv2
 import argparse as ap
 
-parser = ap.ArgumentParser(description='Check whether epipolar lines in two stereo images are horizontal and coincide')
+parser = ap.ArgumentParser(description='A utility that helps check whether epipolar lines in two stereo images are horizontal and coincide')
 parser.add_argument("-i", "--images", nargs=2, help="Input stereo image tuple (left, right)", 
                     required=False, default= ["left.png","right.png"])
+parser.add_argument("-o", "--output", help="path to the output file", 
+                    required=False, default= "epipolar_lines.png")
+
 
 if __name__ == "__main__":
     args = parser.parse_args()
@@ -23,4 +26,4 @@ if __name__ == "__main__":
         cv2.line(combined, (0,y_line),(combined.shape[1]-1,y_line),colors[i_line%3])
         i_line +=1
     
-    cv2.imwrite("epipolar_lines.png",combined);
+    cv2.imwrite(args.output,combined);
