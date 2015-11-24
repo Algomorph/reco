@@ -8,10 +8,10 @@
 
 #include <calibu/cam/stereo_rectify.h>
 #include <reco/utils/debug_util.h>
-#include <src/calibu_rectifier.hpp>
+#include <reco/stereo/calibu_rectifier.hpp>
 
 namespace reco {
-namespace stereo_workbench {
+namespace stereo {
 
 calibu_rectifier::calibu_rectifier(){}
 
@@ -71,5 +71,5 @@ void calibu_rectifier::rectify(const cv::Mat& left, const cv::Mat& right, cv::Ma
 
 calibu_rectifier::~calibu_rectifier(){}
 
-} /* namespace stereo_workbench */
+} /* namespace stereo */
 } /* namespace reco */

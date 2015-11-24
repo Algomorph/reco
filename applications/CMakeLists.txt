@@ -24,14 +24,14 @@ reco_add_subproject(playback
     DEPENDENCIES LibDL PCL Boost OpenCV Calibu HAL utils
     LIGHTWEIGHT_APPLICATION)
     
-reco_add_subproject(tester
-    SOURCES tester.cpp
-    DEPENDENCIES OpenCV HAL utils
+reco_add_subproject(stereo_rectify
+    SOURCES stereo_rectify.cpp
+    DEPENDENCIES OpenCV utils stereo
     LIGHTWEIGHT_APPLICATION)
 
 reco_add_subproject(ogale_example
     SOURCES ogale_stereo_test.cpp
-    DEPENDENCIES OpenCV stereo utils
+    DEPENDENCIES OpenCV utils stereo
     LIGHTWEIGHT_APPLICATION)
     
 # Kinfu library

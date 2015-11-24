@@ -204,8 +204,8 @@ if __name__ == "__main__":
         files = [f for f in os.listdir(full_frame_folder_path) if osp.isfile(osp.join(full_frame_folder_path,f)) and f.endswith(".png")]
         files.sort()
         #assume matching numbers in corresponding left & right files
-        rfiles = [f for f in files if f.startswith(l_vid_name)]
-        lfiles = [f for f in files if f.startswith(r_vid_name)]
+        lfiles = [f for f in files if f.startswith(l_vid_name)]
+        rfiles = [f for f in files if f.startswith(r_vid_name)]
         #assume all are usable
         for ix_pair in xrange(min(len(lfiles),len(rfiles))):
             lframe = cv2.imread(osp.join(full_frame_folder_path,lfiles[ix_pair]))
@@ -354,7 +354,7 @@ if __name__ == "__main__":
             flags += cv2.CALIB_FIX_INTRINSIC
             
             if(int(cv2.__version__ [0]) == 2):
-                error, K1_2, d1, K2_2, d2, R, T, E, F \
+                error, K1, d1, K2, d2, R, T, E, F \
                     = cv2.stereoCalibrate(objpoints,limgpoints,rimgpoints,  
                                           imageSize = frame_dims,
                                           cameraMatrix1 = K1, distCoeffs1 = d1, 

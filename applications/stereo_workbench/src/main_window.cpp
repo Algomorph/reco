@@ -23,8 +23,8 @@
 
 #include <boost/filesystem/path.hpp>
 #include <boost/filesystem/operations.hpp>
-#include <src/calibu_rectifier.hpp>
-#include <src/opencv_rectifier.hpp>
+#include <reco/stereo/calibu_rectifier.hpp>
+#include <reco/stereo/opencv_rectifier.hpp>
 #include <reco/stereo_workbench/matcher_qt_wrapper.hpp>
 #include <reco/stereo_workbench/matcher_qt_wrapper_sgbm.hpp>
 
@@ -41,11 +41,11 @@ namespace stereo_workbench {
 #define DEFAULT_VIDEO_LEFT DEFAULT_CAP_PATH "0_1_calib01/1_sample_edit.mp4"
 #define DEFAULT_VIDEO_RIGHT DEFAULT_CAP_PATH "0_1_calib01/0_sample_edit.mp4"
 
-#define CALIB_FILE "0_1_01_68_43.xml"
+#define CALIB_FILE "0_1_smallboard_inv.xml"
 
 
-#define DEFAULT_IMAGE_LEFT DEFAULT_CAP_PATH "0_1_calib01/3_left.png"
-#define DEFAULT_IMAGE_RIGHT DEFAULT_CAP_PATH "0_1_calib01/3_right.png"
+#define DEFAULT_IMAGE_LEFT DEFAULT_CAP_PATH "0_1_calib03/3_left.png"
+#define DEFAULT_IMAGE_RIGHT DEFAULT_CAP_PATH "0_1_calib03/3_right.png"
 
 main_window::main_window() :
 		ui(new Ui_main_window),
@@ -67,7 +67,7 @@ main_window::main_window() :
 	//check default files
 	path calib_path(DEFAULT_CALIB_PATH CALIB_FILE);
 	if(is_regular_file(calib_path)){
-		processor.set_rectifier(std::shared_ptr<rectifier>(new opencv_rectifier(calib_path.c_str())));
+		processor.set_rectifier(std::shared_ptr<stereo::rectifier>(new stereo::opencv_rectifier(calib_path.c_str())));
 		processor.toggle_rectification();
 	}
 
@@ -212,7 +212,7 @@ void main_window::open_calibration_file(){
 
 	if (!qfile_path.isEmpty()) {
 		std::string file_path = qfile_path.toStdString();
-		processor.set_rectifier(std::shared_ptr<rectifier>(new calibu_rectifier(calibu::ReadXmlRig(file_path))));
+		processor.set_rectifier(std::shared_ptr<stereo::rectifier>(new stereo::opencv_rectifier(calibu::ReadXmlRig(file_path))));
 	}
 }
 

@@ -12,7 +12,7 @@
 #include <opencv2/core/core.hpp>
 
 namespace reco{
-namespace stereo_workbench{
+namespace stereo{
 
 //abstract rectifier class
 
@@ -26,7 +26,7 @@ public:
 
 };
 
-}//stereo_workbench
+}//stereo
 }//reco
 
 

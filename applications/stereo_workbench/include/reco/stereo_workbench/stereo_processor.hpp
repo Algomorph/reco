@@ -23,7 +23,7 @@
 //std
 #include <mutex>
 
-#include <reco/stereo_workbench/rectifier.hpp>
+#include <reco/stereo/rectifier.hpp>
 #include <reco/stereo_workbench/matcher_qt_wrapper.hpp>
 
 namespace reco {
@@ -38,10 +38,10 @@ public:
 	stereo_processor(datapipe::frame_buffer_type input_frame_buffer,
 			datapipe::frame_buffer_type output_frame_buffer,
 			std::shared_ptr<matcher_qt_wrapper_base> matcher = std::shared_ptr<matcher_qt_wrapper_base>(),
-			std::shared_ptr<rectifier>  rectifier_instance = std::shared_ptr<rectifier>());
+			std::shared_ptr<stereo::rectifier>  rectifier_instance = std::shared_ptr<stereo::rectifier>());
 	virtual ~stereo_processor();
 	bool is_rectification_enabled() const;
-	void set_rectifier(std::shared_ptr<rectifier> _rectifier);
+	void set_rectifier(std::shared_ptr<stereo::rectifier> _rectifier);
 	void set_matcher(std::shared_ptr<matcher_qt_wrapper_base> matcher);
 	void toggle_rectification();
 	int get_v_offset() const;
@@ -69,7 +69,7 @@ private:
 	cv::Mat last_left_rectified;
 	cv::Mat last_right_rectified;
 	cv::Mat disparity_normalized;
-	std::shared_ptr<rectifier> _rectifier;
+	std::shared_ptr<stereo::rectifier> _rectifier;
 
 	void compute_disparity(cv::Mat left, cv::Mat right);
 

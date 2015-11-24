@@ -12,10 +12,10 @@
 #include <opencv2/core/core_c.h>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/calib3d/calib3d.hpp>
-#include <src/opencv_rectifier.hpp>
+#include <reco/stereo/opencv_rectifier.hpp>
 
 namespace reco {
-namespace stereo_workbench {
+namespace stereo {
 
 opencv_rectifier::opencv_rectifier(){}
 
@@ -62,6 +62,7 @@ void opencv_rectifier::set_calibration_opencv(const std::string& path){
 	fs["d2"] >> d2;
 	fs["R"] >> R;
 	fs["T"] >> T;
+
 	cv::Size im_size((int)fs["width"],(int)fs["height"]);
 
 	fs.release();
@@ -112,5 +113,5 @@ void opencv_rectifier::rectify(const cv::Mat& left, const cv::Mat& right, cv::Ma
 	}
 }
 
-} /* namespace stereo_workbench */
+} /* namespace stereo */
 } /* namespace reco */

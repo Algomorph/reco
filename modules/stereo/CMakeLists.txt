@@ -1,5 +1,5 @@
 set(_module stereo)
 
 reco_add_subproject(${_module}
-    DEPENDENCIES OpenCV utils
+    DEPENDENCIES OpenCV utils Calibu
     MODULE)

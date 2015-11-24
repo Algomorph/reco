@@ -32,7 +32,7 @@ stereo_processor::stereo_processor(
 		datapipe::frame_buffer_type input_frame_buffer,
 		datapipe::frame_buffer_type output_frame_buffer,
 		std::shared_ptr<matcher_qt_wrapper_base> matcher,
-		std::shared_ptr<rectifier> rectifier) :
+		std::shared_ptr<stereo::rectifier> rectifier) :
 				worker(),
 				matcher(matcher),
 				rectification_enabled((bool) rectifier),
@@ -52,7 +52,7 @@ stereo_processor::~stereo_processor() {
 
 }
 
-void stereo_processor::set_rectifier(std::shared_ptr<rectifier> _rectifier) {
+void stereo_processor::set_rectifier(std::shared_ptr<stereo::rectifier> _rectifier) {
 	std::unique_lock<std::mutex> lck(this->input_guard);
 	this->_rectifier = _rectifier;
 	if (!_rectifier) {

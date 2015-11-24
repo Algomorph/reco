@@ -8,10 +8,10 @@
 
 #pragma once
 
-#include <reco/stereo_workbench/rectifier.hpp>
+#include <reco/stereo/rectifier.hpp>
 
 namespace reco {
-namespace stereo_workbench {
+namespace stereo {
 
 class calibu_rectifier:
 		public rectifier {
@@ -28,5 +28,5 @@ private:
 
 };
 
-} /* namespace stereo_workbench */
+} /* namespace stereo */
 } /* namespace reco */
