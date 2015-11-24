@@ -30,7 +30,7 @@ reco_add_subproject(tester
     LIGHTWEIGHT_APPLICATION)
 
 reco_add_subproject(ogale_example
-    SOURCES OpencvExample.cpp
+    SOURCES ogale_stereo_test.cpp
     DEPENDENCIES OpenCV stereo utils
     LIGHTWEIGHT_APPLICATION)
     

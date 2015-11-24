@@ -46,7 +46,7 @@ public:
   virtual void   setPixel(double value, int row, int column, int channel);
 
 protected:
-  cv::Mat mat;	/**< saved pointer to OpenCV IplImage object */
+  cv::Mat mat;	/**< saved OpenCV matrix object */
 
   double (OpenCVImageAdapter::*getPixelfptr) (int row, int column, int channel) const; /**< function pointer used to store getpixel function appropriate for image datatype */
   void   (OpenCVImageAdapter::*setPixelfptr) (double value, int row, int column, int channel); /**< function pointer used to store setpixel function appropriate for image datatype */

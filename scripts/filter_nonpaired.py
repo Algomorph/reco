@@ -9,7 +9,7 @@ import re
 parser = ap.ArgumentParser(description='Delete all right frame files in folder based on which left frame files remain.')
 
 parser.add_argument("-f", "--folder", help="Folder to work in", 
-                    required=False, default= ["./"])
+                    required=False, default= "./")
 parser.add_argument("-s", "--save_frame_numbers", help="Save an array containing frame numbers of the remaining pairs.",
                     action="store_true",default = False)
 parser.add_argument("-p", "--prefixes", help="custom prefixes for the frames from left and right camera respectively",

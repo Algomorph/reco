@@ -1,8 +1,105 @@
 #include <reco/stereo/Openvis3d.h>
 #include <cv.h>
+#include <opencv2/core.hpp>
+#include <opencv2/imgcodecs.hpp>
+#include <opencv2/highgui.hpp>
 #include <highgui.h>
 #include <reco/stereo/LegacyOpenCVImageAdapter.h>
+#include <reco/stereo/OpenCVImageAdapter.h>
 #include <cstdio>
+
+#define SAVE_RESULTS
+
+void testStereo2(const char*imgfilename1, const char*imgfilename2, double minshift, double maxshift)
+		{
+	//read input images
+	cv::Mat img1 = cv::imread(imgfilename1);
+	cv::Mat img2 = cv::imread(imgfilename2);
+
+	//create output images
+	cv::Size sz(img1.cols,img1.rows);
+
+	cv::Mat imgLeftDisparity (sz, CV_64F, cv::Scalar_<double>(1.0));
+	cv::Mat imgRightDisparity (sz, CV_64F, cv::Scalar_<double>(1.0));
+	cv::Mat imgLeftOcclusions (sz, CV_64F, cv::Scalar_<double>(1.0));
+	cv::Mat imgRightOcclusions (sz, CV_64F, cv::Scalar_<double>(1.0));
+
+	//if all images are properly allocated, then proceed
+	if (!img1.empty() && !img2.empty()){
+		//wrap all the input and output images in OpenCVImageAdapter, so that they can be
+		//accessed by OpenVis3D
+		OpenCVImageAdapter*ovaImg1 = new OpenCVImageAdapter(img1);
+		OpenCVImageAdapter*ovaImg2 = new OpenCVImageAdapter(img2);
+		OpenCVImageAdapter*ovaLeftDisp = new OpenCVImageAdapter(imgLeftDisparity);
+		OpenCVImageAdapter*ovaRightDisp = new OpenCVImageAdapter(imgRightDisparity);
+		OpenCVImageAdapter*ovaLeftOcc = new OpenCVImageAdapter(imgLeftOcclusions);
+		OpenCVImageAdapter*ovaRightOcc = new OpenCVImageAdapter(imgRightOcclusions);
+
+		//create Birchfield-Tomasi local matcher and set its default parameter alpha to 20.0
+		BTLocalMatcherT<double> btmatcher;
+		double alpha[] = { 20.0 };
+		btmatcher.setParams(1, alpha);
+
+		//create global diffusion-based stereo algorithm instance
+		OvStereoDiffuseMatcherT<double> stereoDiffuseMatcher;
+
+		//create general stereo algorithm execution manager instance
+		OvStereoT<double> stereoManager;
+		stereoManager.setLocalImageMatcher(btmatcher); //set local matcher to Birchfield-Tomasi
+		stereoManager.setGlobalMatcher(stereoDiffuseMatcher); //set global stereo algorithm
+
+		printf("\nRunning stereo ...\n");
+
+		//EXECUTE stereo matching
+		stereoManager.doStereoMatching(*ovaImg1, *ovaImg2, minshift, maxshift, *ovaLeftDisp,
+				*ovaRightDisp, *ovaLeftOcc, *ovaRightOcc);
+
+		//DISPLAY/SAVE RESULTS
+
+		//BEGIN: rescale disparity maps to range (0,1) so that they can be displayed by OpenCV
+		OvImageT<double> ovtleftDisp, ovtrightDisp;
+		ovtleftDisp.copyFromAdapter(*ovaLeftDisp);
+		ovtrightDisp.copyFromAdapter(*ovaRightDisp);
+
+		ovtleftDisp = (ovtleftDisp - minshift) / (maxshift - minshift);
+		ovtrightDisp = (ovtrightDisp + maxshift) / (-minshift + maxshift);
+
+		ovtleftDisp.copyToAdapter(*ovaLeftDisp);
+		ovtrightDisp.copyToAdapter(*ovaRightDisp);
+
+		cv::Mat outLDisp, outRDisp, outLOcc, outROcc;
+
+		imgLeftDisparity.convertTo(outLDisp,CV_16UC1,65535);
+		imgRightDisparity.convertTo(outRDisp,CV_16UC1,65535);
+		imgLeftOcclusions.convertTo(outLOcc,CV_16UC1,65535);
+		imgRightOcclusions.convertTo(outROcc,CV_16UC1,65535);
+
+		//END: rescale disparity maps to range (0,1) so that they can be displayed by OpenCV
+#ifdef SAVE_RESULTS
+		cv::imwrite("LeftDisparity.png", outLDisp);
+		cv::imwrite("LeftOcclusions.png", outLOcc);
+		cv::imwrite("RightDisparity.png", outRDisp);
+		cv::imwrite("RightOcclusions.png", outROcc);
+#else
+		cv::imshow("Left Disparity", outLDisp);
+		cv::imshow("Left Occlusions", outLOcc);
+		cv::imshow("Right Disparity", outRDisp);
+		cv::imshow("Right Occlusions", outROcc);
+		//WAIT FOR KEYPRESS
+		printf("\nDone, press any key to continue ...\n");
+		cvWaitKey(0);
+#endif
+
+
+		//release adaptors
+		delete ovaImg1;
+		delete ovaImg2;
+		delete ovaLeftDisp;
+		delete ovaRightDisp;
+		delete ovaLeftOcc;
+		delete ovaRightOcc;
+	}
+}
 
 void testStereo(const char*imgfilename1, const char*imgfilename2, double minshift, double maxshift)
 		{
@@ -238,9 +335,11 @@ void testOpticalFlow(const char*imgfilename1, const char*imgfilename2, double mi
 
 int main()
 {
-	testStereo("tsukuba1color.png", "tsukuba2color.png", 5, 15);
+	//testStereo("tsukuba1color.png", "tsukuba2color.png", 5, 15);
+	testStereo2("3_uright.png", "3_uleft.png", 300, 700);
+	//testStereo2("tsukuba1color.png", "tsukuba2color.png", 5, 15);
 
-	testOpticalFlow("car1.png", "car0.png", 0, 18, -3, 0);
+	//testOpticalFlow("car1.png", "car0.png", 0, 18, -3, 0);
 
 	return 0;
 }

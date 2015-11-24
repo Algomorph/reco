@@ -44,8 +44,8 @@ namespace stereo_workbench {
 #define CALIB_FILE "0_1_01_68_43.xml"
 
 
-#define DEFAULT_IMAGE_LEFT DEFAULT_CAP_PATH "0_1_calib01/2_left.png"
-#define DEFAULT_IMAGE_RIGHT DEFAULT_CAP_PATH "0_1_calib01/2_right.png"
+#define DEFAULT_IMAGE_LEFT DEFAULT_CAP_PATH "0_1_calib01/3_left.png"
+#define DEFAULT_IMAGE_RIGHT DEFAULT_CAP_PATH "0_1_calib01/3_right.png"
 
 main_window::main_window() :
 		ui(new Ui_main_window),

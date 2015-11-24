@@ -1,6 +1,5 @@
 #!/usr/bin/python
 import os
-import sys
 import os.path as osp
 import cv2
 import numpy as np
@@ -8,11 +7,12 @@ import argparse as ap
 from lxml import etree
 import re
 import time
+import calib as cb
 
 parser = ap.ArgumentParser(description='Traverse all .mp4 video files in the specified folder and'+
                            ' pick out frames to export as images.')
 parser.add_argument("-f", "--folder", help="Folder to work in", 
-                    required=False, default= ["./"])
+                    required=False, default= "./")
 parser.add_argument("-fn", "--frame_numbers", help="Frame numbers .npz file with frame_numbers array."+
                     " If specified, program filters frame pairs based on these numbers instead of other"+
                     " criteria.",required=False, default=None)
@@ -23,11 +23,11 @@ parser.add_argument("-pf", "--preview_files", nargs=2, help="Input frames to tes
 parser.add_argument("-p", "--preview", help="Test calibration result on left/right frame pair", 
                     action = "store_true", required=False)
 parser.add_argument("-bw", "--board_width", help="checkerboard inner corner width",required = False, 
-                    default= 15)
+                    default= 15, type=int)
 parser.add_argument("-bh", "--board_height", help="checkerboard inner corner height",required = False,
-                     default= 8)
+                     default= 8, type=int)
 parser.add_argument("-bs", "--board_square_size", help="checkerboard square size, in meters", 
-                    required = False, default=0.0508)
+                    required = False, type=float, default=0.0508)
 parser.add_argument("-t", "--sharpness_threshold", help="sharpness threshold based on variance of "+
                     "Laplacian; used to filter out frames that are too blurry.", 
                     type=float, required = False, default=55.0)
@@ -61,6 +61,9 @@ parser.add_argument("-lf", "--load_frames", action='store_true', required = Fals
 parser.add_argument("-m", "--manual_filter", help="pick which (pre-filtered)frames to use manually"+
                     " one-by-one (use 'a' key to approve)", required = False, action='store_true', 
                     default=False)
+parser.add_argument("-fi", "--frame_interval", required=False, default=1, type=int,
+                    help="Minimal interval (in frames) between successive frames to consider for"
+                    +" calibration board extraction.")
 
 
 def print_output(error, K1, d1, K2, d2, R, T):
@@ -120,60 +123,12 @@ def save_output_opencv(error, K1, d1, K2, d2, R, T, dims, file_path):
     with open(file_path,'w') as f:
         f.write(s)
         f.flush()
-        
-def parse_xml_matrix(mat_element):
-    rows = int(mat_element.find("rows").text)
-    cols = int(mat_element.find("cols").text)
-    type_flag = mat_element.find("dt").text
-    if type_flag == "f":
-        dtype = np.float32
-    elif type_flag == "d":
-        dtype = np.float64
-    else:
-        raise ValueError("dtype flag " + type_flag + " not supported." )
-    data_string = mat_element.find("data").text
-    data = np.array([float(str) for str in data_string.strip().split(" ") if len(str) > 0])
-    return data.reshape((rows,cols)).astype(dtype)
-
-def generate_preview(K1, d1, K2, d2, R, T, test_im_left, test_im_right):
-    R1 = np.identity(3,np.float64)
-    R2 = np.identity(3,np.float64)
-    P1 = np.zeros((3,4),np.float64)
-    P2 = np.zeros((3,4),np.float64)
-    im_size = test_im_left.shape
-    new_size = (int(test_im_left.shape[0]*1.5),int(test_im_left.shape[1]*1.5))
-    R1, R2, P1, P2, Q = cv2.stereoRectify(cameraMatrix1=K1, 
-                            distCoeffs1=d1, 
-                            cameraMatrix2=K2, 
-                            distCoeffs2=d2, 
-                            imageSize=im_size, 
-                            R=R,T=T, flags=cv2.CALIB_ZERO_DISPARITY, 
-                            newImageSize=new_size)
-    map1x, map1y = cv2.initUndistortRectifyMap(K1, d1, R1, P1, new_size, cv2.CV_32FC1)
-    map2x, map2y = cv2.initUndistortRectifyMap(K2, d2, R2, P2, new_size, cv2.CV_32FC1)
-    
-    rect_left = cv2.remap(test_im_left, map1x, map1y, cv2.INTER_LINEAR)
-    rect_right = cv2.remap(test_im_right, map2x, map2y, cv2.INTER_LINEAR)
-    return rect_left, rect_right
-        
-def load_output_opencv(path):
-    tree = etree.parse(path)
-    error = float(tree.find("reprojection_error").text)
-    K1 = parse_xml_matrix(tree.find("K1"))
-    d1 = parse_xml_matrix(tree.find("d1"))
-    K2 = parse_xml_matrix(tree.find("K2"))
-    d2 = parse_xml_matrix(tree.find("d2"))
-    R = parse_xml_matrix(tree.find("R"))
-    T = parse_xml_matrix(tree.find("T"))
-    width = float(tree.find("width").text)
-    height = float(tree.find("height").text)
-    return error, K1, d1, K2, d2, R, T, (height,width)
-    
 
 def automatic_filter(lframe,rframe,lframe_prev,rframe_prev,sharpness_threshold, difference_threshold):
     sharpness = min(cv2.Laplacian(lframe, cv2.CV_64F).var(), cv2.Laplacian(rframe, cv2.CV_64F).var())
     #compare left frame to the previous left **filtered** one
     ldiff = np.sum(abs(lframe_prev - lframe)) / diff_div
+    
     if sharpness < args.sharpness_threshold or ldiff < args.difference_threshold:
         return False, None, None
     
@@ -224,12 +179,11 @@ if __name__ == "__main__":
     left_cap = cv2.VideoCapture(left_vid)
     right_cap = cv2.VideoCapture(right_vid)
     
-    board_dims = (args.board_width,args.board_height)
-    
     limgpoints = []
     rimgpoints = []
     objpoints = []
 
+    board_dims = (args.board_width,args.board_height)
     objp = np.zeros((args.board_height*args.board_width,1,3), np.float32)
     objp[:,:,:2] = np.indices(board_dims).T.reshape(-1, 1, 2)
     #convert square sizes to meters
@@ -243,16 +197,9 @@ if __name__ == "__main__":
     i_frame = 0
     criteria_subpix = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
     
-    if(args.load_corners):
-        path = args.folder + os.path.sep + args.corners_file
-        print "Loading corners from " + path 
-        npzfile = np.load(path)
-        limgpoints = npzfile['limgpoints']
-        rimgpoints = npzfile['rimgpoints']
-        usable_frame_ct = len(limgpoints)
-        for i_frame in xrange(usable_frame_ct):
-            objpoints.append(objp)
-        i_frame +=1
+    if(args.load_corners):    
+        limgpoints,rimgpoints,objpoints, usable_frame_ct = cb.load_corners(path)
+        i_frame = usable_frame_ct
     elif(args.load_frames):
         files = [f for f in os.listdir(full_frame_folder_path) if osp.isfile(osp.join(full_frame_folder_path,f)) and f.endswith(".png")]
         files.sort()
@@ -344,7 +291,7 @@ if __name__ == "__main__":
         if args.save_corners:
             path = args.folder + os.path.sep + args.corners_file
             print "Saving corners..."
-            np.savez_compressed(path,limgpoints=limgpoints,rimgpoints=rimgpoints)
+            np.savez_compressed(path,limgpoints=limgpoints,rimgpoints=rimgpoints, objpoints=objp)
         
     left_cap.release()
     right_cap.release()
@@ -355,7 +302,7 @@ if __name__ == "__main__":
     flags = 0
     
     if args.use_existing:
-        prev_error, K1, d1, K2, d2, R, T, prev_dims = load_output_opencv(osp.join(args.folder, args.output))
+        prev_error, K1, d1, K2, d2, R, T, prev_dims = cb.load_opencv_calibration(osp.join(args.folder, args.output))
         if(frame_dims != prev_dims):
             raise ValueError("Frame dimensions in specified calibration file (" + 
                              osp.join(args.folder, args.output) + " don't correspond to video files.")
@@ -448,7 +395,7 @@ if __name__ == "__main__":
     if args.preview:
         l_im = cv2.imread(osp.join(args.folder,args.preview_files[0]))
         r_im = cv2.imread(osp.join(args.folder,args.preview_files[1]))
-        l_im, r_im = generate_preview(K1, d1, K2, d2, R, T, l_im, r_im)
+        l_im, r_im = cb.generate_preview(K1, d1, K2, d2, R, T, l_im, r_im)
         path_l = osp.join(args.folder,args.preview_files[0][:-4] + "_rect.png")
         path_r = osp.join(args.folder,args.preview_files[1][:-4] + "_rect.png")
         cv2.imwrite(path_l, l_im)
