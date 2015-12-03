@@ -2,6 +2,7 @@
 #=====================LARGE APPS===================================================================#
 add_subdirectory("rgbd_workbench")
 add_subdirectory("stereo_tuner")
+add_subdirectory("stereo_workbench")
 
 #=====================LIGHTWEIGHT APPS=============================================================#
 reco_add_subproject(read_builtins 
