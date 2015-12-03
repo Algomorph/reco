@@ -17,7 +17,7 @@
    </sizepolicy>
   </property>
   <property name="windowTitle">
-   <string>Reco Workbench</string>
+   <string>Reco Stereo Tuner</string>
   </property>
   <property name="windowIcon">
    <iconset resource="application.qrc">
@@ -54,7 +54,7 @@
     <item>
      <layout class="QVBoxLayout" name="verticalLayout">
       <item>
-       <widget class="reco::stereo_workbench::stereo_matcher_tuning_panel" name="tuner_panel" native="true">
+       <widget class="reco::stereo_tuner::stereo_matcher_tuning_panel" name="tuner_panel" native="true">
         <property name="sizePolicy">
          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
           <horstretch>0</horstretch>
@@ -145,9 +145,9 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>reco::stereo_workbench::stereo_matcher_tuning_panel</class>
+   <class>reco::stereo_tuner::stereo_matcher_tuning_panel</class>
    <extends>QWidget</extends>
-   <header location="global">reco/stereo_workbench/stereo_matcher_tuning_panel.hpp</header>
+   <header location="global">reco/stereo_tuner/stereo_matcher_tuning_panel.hpp</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

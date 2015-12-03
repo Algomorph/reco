@@ -15,15 +15,13 @@
 //datapipe
 #include <reco/datapipe/hal_stereo_pipe.h>
 #include <reco/datapipe/typedefs.h>
-#include <reco/stereo_workbench/stereo_processor.hpp>
-
-//local
-#include <reco/stereo_workbench/stereo_matcher_tuning_panel.hpp>
+#include <reco/stereo_tuner/stereo_matcher_tuning_panel.hpp>
+#include <reco/stereo_tuner/stereo_processor.hpp>
 
 class Ui_main_window;
 
 namespace reco{
-namespace stereo_workbench{
+namespace stereo_tuner{
 
 class main_window: public QMainWindow {
 	Q_OBJECT

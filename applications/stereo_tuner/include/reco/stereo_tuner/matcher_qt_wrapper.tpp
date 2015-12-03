@@ -18,10 +18,10 @@
  *   limitations under the License.
  */
 
-#include <reco/stereo_workbench/matcher_qt_wrapper.hpp>
+#include <reco/stereo_tuner/matcher_qt_wrapper.hpp>
 
 namespace reco {
-namespace stereo_workbench {
+namespace stereo_tuner {
 
 template<class MATCHER>
 matcher_qt_wrapper<MATCHER>::matcher_qt_wrapper(cv::Ptr<MATCHER> matcher):

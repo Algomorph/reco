@@ -8,13 +8,13 @@
 
 #pragma once
 
-#include <reco/stereo_workbench/matcher_qt_wrapper.hpp>
-#include <reco/stereo_workbench/tuning_panel.hpp>
+#include <reco/stereo_tuner/matcher_qt_wrapper.hpp>
+#include <reco/stereo_tuner/tuning_panel.hpp>
 #include <opencv2/cudastereo.hpp>
 #include <QComboBox>
 
 namespace reco {
-namespace stereo_workbench {
+namespace stereo_tuner {
 
 class matcher_qt_wrapper_bp:
 		public matcher_qt_wrapper<cv::cuda::StereoBeliefPropagation> {
@@ -92,5 +92,5 @@ public slots:
 
 };
 
-} /* namespace stereo_workbench */
+} /* namespace stereo_tuner */
 } /* namespace reco */

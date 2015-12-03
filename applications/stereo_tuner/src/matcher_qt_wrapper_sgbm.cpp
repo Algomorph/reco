@@ -6,10 +6,10 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
-#include <reco/stereo_workbench/matcher_qt_wrapper_sgbm.hpp>
+#include <reco/stereo_tuner/matcher_qt_wrapper_sgbm.hpp>
 
 namespace reco {
-namespace stereo_workbench {
+namespace stereo_tuner {
 
 matcher_qt_wrapper_sgbm::matcher_qt_wrapper_sgbm() :
 		matcher_qt_wrapper(cv::StereoSGBM::create(0, 256, 3, 216, 864, -1, 48, 0, 0, 0,
@@ -161,5 +161,5 @@ void matcher_qt_wrapper_sgbm::set_uniqueness_ratio(int value) {
 	emit parameters_changed();
 }
 
-} /* namespace stereo_workbench */
+} /* namespace stereo_tuner */
 } /* namespace reco */

@@ -1,6 +1,6 @@
 reco_find_dependency(PythonLibs QUIET LIBRARIES PYTHON_LIBRARIES INCLUDE_DIRS PYTHON_INCLUDE_DIRS)
 reco_find_dependency(TinyXML QUIET)
-reco_find_dependency(OpenCV QUIET COMPONENTS core highgui calib3d imgproc cudastereo videoio video LIBRARIES OpenCV_LIBS)
+reco_find_dependency(OpenCV QUIET COMPONENTS core highgui calib3d imgproc  videoio video bgsegm cudastereo cudabgsegm LIBRARIES OpenCV_LIBS)
 reco_find_dependency(PCL QUIET)
 reco_find_dependency(Boost QUIET COMPONENTS system filesystem python regex program_options) #has to come after PCL, BECAUSE. 
 reco_find_dependency(freenect2 QUIET LIBRARIES freenect2_LIBRARY)

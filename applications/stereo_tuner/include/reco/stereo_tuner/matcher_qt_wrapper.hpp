@@ -21,10 +21,10 @@
 #pragma once
 #include <QObject>
 #include <opencv2/calib3d.hpp>
-#include <reco/stereo_workbench/tuning_panel.hpp>
+#include <reco/stereo_tuner/tuning_panel.hpp>
 
 namespace reco {
-namespace stereo_workbench {
+namespace stereo_tuner {
 
 class matcher_qt_wrapper_base: public QObject{
 	Q_OBJECT
@@ -85,7 +85,7 @@ protected:
 	cv::Ptr<MATCHER> stereo_matcher;
 };
 
-} /* namespace stereo_workbench */
+} /* namespace stereo_tuner */
 } /* namespace reco */
 
-#include <reco/stereo_workbench/matcher_qt_wrapper.tpp>
+#include <reco/stereo_tuner/matcher_qt_wrapper.tpp>

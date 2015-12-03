@@ -20,7 +20,7 @@
 #include "main_window.h"
 
 int main(int argc, char* argv[]){
-	using namespace reco::stereo_workbench;
+	using namespace reco::stereo_tuner;
 
 	Q_INIT_RESOURCE(application);
 	QApplication app(argc, argv);

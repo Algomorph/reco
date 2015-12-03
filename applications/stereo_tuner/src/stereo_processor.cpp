@@ -22,11 +22,11 @@
 #include <Eigen/Eigen>
 //opencv
 #include <opencv2/highgui/highgui.hpp>
-#include <reco/stereo_workbench/stereo_processor.hpp>
+#include <reco/stereo_tuner/stereo_processor.hpp>
 
 
 namespace reco {
-namespace stereo_workbench {
+namespace stereo_tuner {
 
 stereo_processor::stereo_processor(
 		datapipe::frame_buffer_type input_frame_buffer,
@@ -209,5 +209,5 @@ void stereo_processor::toggle_rectification() {
 	}
 }
 
-} /* namespace stereo_workbench */
+} /* namespace stereo_tuner */
 } /* namespace reco */

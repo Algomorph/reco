@@ -6,7 +6,7 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
-#include <reco/stereo_workbench/matcher_qt_wrapper_bp.hpp>
+#include <reco/stereo_tuner/matcher_qt_wrapper_bp.hpp>
 #include <QApplication>
 #include <reco/utils/cpp_exception_util.h>
 #include <opencv2/imgproc.hpp>
@@ -15,7 +15,7 @@
 #include <reco/utils/debug_util.h>
 
 namespace reco {
-namespace stereo_workbench {
+namespace stereo_tuner {
 
 
 matcher_qt_wrapper_bp::matcher_qt_wrapper_bp():
@@ -239,5 +239,5 @@ void matcher_qt_wrapper_bp::set_num_levels(int value) {
 
 
 
-} /* namespace stereo_workbench */
+} /* namespace stereo_tuner */
 } /* namespace reco */

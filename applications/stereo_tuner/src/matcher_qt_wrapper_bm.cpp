@@ -6,13 +6,13 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
-#include <reco/stereo_workbench/matcher_qt_wrapper_bm.hpp>
+#include <reco/stereo_tuner/matcher_qt_wrapper_bm.hpp>
 #include <QApplication>
 #include <reco/utils/cpp_exception_util.h>
 #include <opencv2/imgproc.hpp>
 
 namespace reco {
-namespace stereo_workbench {
+namespace stereo_tuner {
 
 
 matcher_qt_wrapper_bm::matcher_qt_wrapper_bm():
@@ -219,5 +219,5 @@ void matcher_qt_wrapper_bm::set_uniqueness_ratio(int value) {
 
 
 
-} /* namespace stereo_workbench */
+} /* namespace stereo_tuner */
 } /* namespace reco */

@@ -17,12 +17,12 @@
  *   limitations under the License.
  */
 
-#include <reco/stereo_workbench/tuning_panel.hpp>
+#include <reco/stereo_tuner/tuning_panel.hpp>
 
 
 namespace reco{
 
-namespace stereo_workbench{
+namespace stereo_tuner{
 
 tuning_panel ::
 	tuning_panel(QWidget* parent): QWidget(parent){
@@ -126,7 +126,7 @@ void tuning_panel::construct_double_control_set(
 }
 
 
-}//stereo_workbench
+}//stereo_tuner
 
 }//reco
 

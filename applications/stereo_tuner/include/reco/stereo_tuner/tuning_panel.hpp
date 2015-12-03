@@ -28,7 +28,7 @@
 
 namespace reco{
 
-namespace stereo_workbench{
+namespace stereo_tuner{
 
 class tuning_panel : public QWidget{
 public:
@@ -65,7 +65,7 @@ protected:
 };
 
 
-}//stereo_workbench
+}//stereo_tuner
 
 }//reco
 

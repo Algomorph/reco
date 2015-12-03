@@ -9,6 +9,9 @@
 #pragma once
 
 //qt
+#include <reco/stereo_tuner/matcher_qt_wrapper.hpp>
+#include <reco/stereo_tuner/stereo_processor.hpp>
+#include <reco/stereo_tuner/tuning_panel.hpp>
 #include <QWidget>
 #include <QHBoxLayout>
 #include <QtWidgets/QLabel>
@@ -25,12 +28,9 @@
 #include <memory>
 
 //local
-#include <reco/stereo_workbench/stereo_processor.hpp>
-#include <reco/stereo_workbench/matcher_qt_wrapper.hpp>
-#include <reco/stereo_workbench/tuning_panel.hpp>
 
 namespace reco {
-namespace stereo_workbench {
+namespace stereo_tuner {
 
 
 class stereo_matcher_tuning_panel:
@@ -105,5 +105,5 @@ private slots:
 };
 
 
-} /* namespace stereo_workbench */
+} /* namespace stereo_tuner */
 } /* namespace reco */

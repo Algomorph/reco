@@ -8,8 +8,6 @@
  */
 
 //local
-#include "../ui_main_window.h"
-#include "main_window.h"
 #include <reco/datapipe/hal_stereo_pipe.h>
 #include <reco/datapipe/hal_interop.h>
 
@@ -25,11 +23,13 @@
 #include <boost/filesystem/operations.hpp>
 #include <reco/stereo/calibu_rectifier.hpp>
 #include <reco/stereo/opencv_rectifier.hpp>
-#include <reco/stereo_workbench/matcher_qt_wrapper.hpp>
-#include <reco/stereo_workbench/matcher_qt_wrapper_sgbm.hpp>
+#include <reco/stereo_tuner/matcher_qt_wrapper.hpp>
+#include <reco/stereo_tuner/matcher_qt_wrapper_sgbm.hpp>
+#include <src/main_window.h>
+#include "ui_main_window.h"
 
 namespace reco {
-namespace stereo_workbench {
+namespace stereo_tuner {
 
 #define DEFAULT_RECO_DATA_PATH "/media/algomorph/Data/reco/"
 #define DEFAULT_CAP_PATH DEFAULT_RECO_DATA_PATH "cap/yi/"
@@ -233,5 +233,5 @@ void main_window::on_rectify_checkbox_clicked(){
 
 
 } //end namespace reco
-} //end namespace stereo_workbench
+} //end namespace stereo_tuner
 

@@ -6,16 +6,16 @@
  *   Copyright: 2015 Gregory Kramida
  */
 
-#include <reco/stereo_workbench/stereo_matcher_tuning_panel.hpp>
 #include <QVBoxLayout>
 #include <reco/utils/debug_util.h>
 #include <reco/utils/cpp_exception_util.h>
-#include <reco/stereo_workbench/matcher_qt_wrapper_sgbm.hpp>
-#include <reco/stereo_workbench/matcher_qt_wrapper_bm.hpp>
-#include <reco/stereo_workbench/matcher_qt_wrapper_bp.hpp>
+#include <reco/stereo_tuner/matcher_qt_wrapper_bm.hpp>
+#include <reco/stereo_tuner/matcher_qt_wrapper_bp.hpp>
+#include <reco/stereo_tuner/matcher_qt_wrapper_sgbm.hpp>
+#include <reco/stereo_tuner/stereo_matcher_tuning_panel.hpp>
 
 namespace reco {
-namespace stereo_workbench {
+namespace stereo_tuner {
 
 
 stereo_matcher_tuning_panel::stereo_matcher_tuning_panel(QWidget* parent):
@@ -223,5 +223,5 @@ stereo_matcher_tuning_panel::~stereo_matcher_tuning_panel(){
 
 
 
-} /* namespace stereo_workbench */
+} /* namespace stereo_tuner */
 } /* namespace reco */

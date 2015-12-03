@@ -23,6 +23,8 @@
 #include <opencv2/videoio.hpp>
 #include <opencv2/videoio/videoio_c.h>
 #include <opencv2/video.hpp>
+#include <opencv2/bgsegm.hpp>
+#include <opencv2/cudalegacy.hpp>
 
 #include <reco/utils/debug_util.h>
 #include <boost/program_options.hpp>
@@ -43,8 +45,7 @@ const size_t ERROR_UNHANDLED_EXCEPTION = 2;
 
 
 int main(int argc, char** argv) {
-	/** Define and parse the program options
-			 */
+	/** Define and parse the program options*/
 	namespace po = boost::program_options;
 	namespace fs = boost::filesystem;
 	using namespace std;
@@ -88,14 +89,15 @@ int main(int argc, char** argv) {
 
 
 	//cv::Ptr<cv::BackgroundSubtractorMOG2> background_model = cv::createBackgroundSubtractorMOG2();
-	//cv::Ptr<cv::BackgroundSubtractorMOG2> background_model = cv::createBackgroundSubtractorMOG2();
-	cv::Ptr<cv::BackgroundSubtractorMOG2> background_model = cv::createBackgroundSubtractorMOG2();
+	//cv::Ptr<cv::bgsegm::BackgroundSubtractorMOG> background_model = cv::bgsegm::createBackgroundSubtractorMOG();
+	cv::Ptr<cv::bgsegm::BackgroundSubtractorGMG> background_model = cv::bgsegm::createBackgroundSubtractorGMG();
+	//cv::Ptr<cv::BackgroundSubtractorKNN> background_model = cv::createBackgroundSubtractorKNN();
+	//cv::Ptr<cv::cuda::BackgroundSubtractorFGD> background_model = cv::cuda::BackgroundSubtractorFGD();
 
 	cv::VideoCapture cap(video_path.string());
 	cv::Mat frame;
 	cv::Mat mask;
 	cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE,cv::Size(3,3));
-
 
 	if(!cap.read(frame)){
 		dpt("Video is empty!");

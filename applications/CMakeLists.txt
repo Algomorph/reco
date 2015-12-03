@@ -1,7 +1,7 @@
 #Applications CMakeLists.txt
 #=====================LARGE APPS===================================================================#
 add_subdirectory("rgbd_workbench")
-add_subdirectory("stereo_workbench")
+add_subdirectory("stereo_tuner")
 
 #=====================LIGHTWEIGHT APPS=============================================================#
 reco_add_subproject(read_builtins 
@@ -37,4 +37,5 @@ reco_add_subproject(ogale_example
 reco_add_subproject(subtract_background
     SOURCES subtract_background.cpp
     DEPENDENCIES OpenCV utils Boost
+    ADDITIONAL_INCLUDE_DIRS /usr/local/cuda-7.5/targets/x86_64-linux/include
     LIGHTWEIGHT_APPLICATION)

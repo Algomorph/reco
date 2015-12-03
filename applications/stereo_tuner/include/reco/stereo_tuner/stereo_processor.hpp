@@ -24,10 +24,10 @@
 #include <mutex>
 
 #include <reco/stereo/rectifier.hpp>
-#include <reco/stereo_workbench/matcher_qt_wrapper.hpp>
+#include <reco/stereo_tuner/matcher_qt_wrapper.hpp>
 
 namespace reco {
-namespace stereo_workbench {
+namespace stereo_tuner {
 
 
 class stereo_processor: public QObject, public utils::worker {
@@ -90,5 +90,5 @@ signals:
 	void matcher_updated(matcher_qt_wrapper_base* matcher);
 };
 
-} /* namespace stereo_workbench */
+} /* namespace stereo_tuner */
 } /* namespace reco */
