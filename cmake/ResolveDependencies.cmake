@@ -1,8 +1,8 @@
 reco_find_dependency(PythonLibs QUIET LIBRARIES PYTHON_LIBRARIES INCLUDE_DIRS PYTHON_INCLUDE_DIRS)
 reco_find_dependency(TinyXML QUIET)
-reco_find_dependency(OpenCV QUIET COMPONENTS core highgui calib3d imgproc cudastereo LIBRARIES OpenCV_LIBS)
+reco_find_dependency(OpenCV QUIET COMPONENTS core highgui calib3d imgproc cudastereo videoio video LIBRARIES OpenCV_LIBS)
 reco_find_dependency(PCL QUIET)
-reco_find_dependency(Boost QUIET COMPONENTS system filesystem python regex) #has to come after PCL, because. 
+reco_find_dependency(Boost QUIET COMPONENTS system filesystem python regex program_options) #has to come after PCL, BECAUSE. 
 reco_find_dependency(freenect2 QUIET LIBRARIES freenect2_LIBRARY)
 reco_find_dependency(SceneGraph QUIET)
 reco_find_dependency(Pangolin QUIET)
@@ -12,6 +12,8 @@ reco_find_dependency(Calibu QUIET)
 reco_find_dependency(Kangaroo QUIET)
 reco_find_dependency(LibDL QUIET)
 reco_find_dependency(VTK QUIET)
+reco_find_dependency(x264 QUIET LIBRARIES X264_LIBRARIES)
+reco_find_dependency(FFMPEG QUIET)
 
 #find python, numpy
 include("DetectPython")

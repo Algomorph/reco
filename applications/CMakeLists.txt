@@ -33,14 +33,8 @@ reco_add_subproject(ogale_example
     SOURCES ogale_stereo_test.cpp
     DEPENDENCIES OpenCV utils stereo
     LIGHTWEIGHT_APPLICATION)
-    
-# Kinfu library
-#TODO: fix Alex's crude hack if necessary                                      
-#add_library(kinfu SHARED kinfu.cpp)
-#target_link_libraries(kinfu  ${PCL_LIBRARIES}
-#                             ${Boost_LIBRARIES}
-#                             ${OpenCV_LIBS}
-#                                kinfu)
-#TODO:fix Kinfu app
-#add_executable( kinfuapp kinfu_app.cpp )
-#target_link_libraries(kinfuapp  kinfu)
+
+reco_add_subproject(subtract_background
+    SOURCES subtract_background.cpp
+    DEPENDENCIES OpenCV utils Boost
+    LIGHTWEIGHT_APPLICATION)

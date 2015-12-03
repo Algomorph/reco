@@ -124,7 +124,7 @@ void stereo_matcher_tuning_panel::set_up_tuning_controls(){
 			QStringLiteral("minimum_disparity_label"),
 			QStringLiteral("minimum_disparity_spin_box"),
 			QStringLiteral("minimum_disparity_slider"),
-			0,256
+			0,512
 			);
 
 	construct_integer_control_set(

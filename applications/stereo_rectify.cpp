@@ -7,12 +7,11 @@
 
 int main(int argc, char* argv[]){
 	using namespace reco::stereo;
-	//opencv_rectifier rectifier(WORK_FOLDER "0_1_smallboard_inv.xml");
-	opencv_rectifier rectifier(WORK_FOLDER "0_1_smallboard.xml");
+	opencv_rectifier rectifier(WORK_FOLDER "0_1_smallboard_redux.xml");
 	cv::Mat im_l = cv::imread(WORK_FOLDER "3_left.png");
 	cv::Mat im_r = cv::imread(WORK_FOLDER "3_right.png");
 	cv::Mat rect_l, rect_r;
-	rectifier.rectify(im_r,im_l,rect_r,rect_l);
+	rectifier.rectify(im_l,im_r,rect_l,rect_r);
 	cv::imwrite(WORK_FOLDER "3_uleft.png", rect_l);
 	cv::imwrite(WORK_FOLDER "3_uright.png", rect_r);
 	return 0;

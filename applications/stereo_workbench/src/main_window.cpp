@@ -41,7 +41,7 @@ namespace stereo_workbench {
 #define DEFAULT_VIDEO_LEFT DEFAULT_CAP_PATH "0_1_calib01/1_sample_edit.mp4"
 #define DEFAULT_VIDEO_RIGHT DEFAULT_CAP_PATH "0_1_calib01/0_sample_edit.mp4"
 
-#define CALIB_FILE "0_1_smallboard_inv.xml"
+#define CALIB_FILE "0_1_smallboard_redux.xml"
 
 
 #define DEFAULT_IMAGE_LEFT DEFAULT_CAP_PATH "0_1_calib03/3_left.png"
