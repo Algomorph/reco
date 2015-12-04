@@ -79,7 +79,8 @@ endmacro()
 macro(reco_add_subproject _name)
     set(subproject_name ${global_project_name}_${_name})
     
-
+    #adjust verbocity level here to 1, 2 for debugging
+    set(verbose)
 
 #----------------------------------PARSE ARGUMENTS-------------------------------------------------#
 
@@ -227,13 +228,10 @@ macro(reco_add_subproject _name)
     set(${subproject_name}_sources)
     if(NOT ${_subproject_type} STREQUAL "${lightweight_app_type}")
         #search for all sources in the current source dir
-        file(GLOB ${subproject_name}_sources src/*.cpp)
-        file(GLOB ${subproject_name}_headers src/*.h src/*.h.in src/*.hpp src/*.tpp
-            ${${subproject_name}_top_include_dir}/*.h 
-            ${${subproject_name}_top_include_dir}/*.h.in 
-            ${${subproject_name}_top_include_dir}/*.hpp 
-            ${${subproject_name}_top_include_dir}/*.tpp)
-        file(GLOB ${subproject_name}_test_sources  tests/*.cpp)
+        file(GLOB_RECURSE ${subproject_name}_sources src/ *.cpp)
+        file(GLOB_RECURSE ${subproject_name}_headers src/ *.h *.h.in *.hpp *.tpp)
+        file(GLOB_RECURSE ${subproject_name}_headers ${${subproject_name}_top_include_dir}/ *.h *.h.in *.hpp *.tpp)
+        file(GLOB_RECURSE ${subproject_name}_test_sources tests/ *.cpp)
     endif()
     
     #append sources specified in the arguments
@@ -281,16 +279,43 @@ macro(reco_add_subproject _name)
     	${${subproject_name}_ui}
     	${${subproject_name}_ui_headers}
         ${${subproject_name}_generated_resources}
-    )
+    ) 
+    
+    set(${subproject_name}_target_files ${all_${subproject_name}_files})
+
+# TODO: target_files should really be set to all sources, nothing else. 
+# Unfortunately, with the current automoc config,
+# the header files which need .cpp moc files to be generated have to be included in the target_files for
+# the generated .cpp-s to be autmatically added to the makefiles.
+# The only possible solution I see right now is disabling automoc and moc-ing manually somehow.
+#    
+#    set(${subproject_name}_target_files  
+#        ${${subproject_name}_sources} 
+#        ${${subproject_name}_ui_headers} 
+#        ${${subproject_name}_generated_resources}
+#    )
+    
+    if(verbose EQUAL 1)
+        message(STATUS "Files for subproject ${subproject_name}: ${all_${subproject_name}_files}")
+    elseif(verbose EQUAL 2)
+        message(STATUS "Files for subproject ${subproject_name}:")
+        message(STATUS "     CMake: ${${subproject_name}_CMakeLists}")
+        message(STATUS "     Source Files: ${${subproject_name}_sources}")
+        message(STATUS "     Header Files: ${${subproject_name}_headers}")
+        message(STATUS "     Resource Files: ${${subproject_name}_resource_files}")
+        message(STATUS "     Ui Files: ${${subproject_name}_ui}")
+        message(STATUS "     Ui Generated Headers: ${${subproject_name}_ui_headers}")
+        message(STATUS "     Resource Generated Headers: ${${subproject_name}_generated_resources}")
+    endif()
 #---------------------------ADD TARGET-------------------------------------------------------------#
     if(${_subproject_type} STREQUAL "${app_type}" OR ${_subproject_type} STREQUAL "${lightweight_app_type}")
         #don't use the subproject name, but rather the briefer name suffix for the executables
         #this will make command-line invocation involve less typing
         set(_target_name ${_name})
-        add_executable(${_target_name} ${all_${subproject_name}_files})
+        add_executable(${_target_name} ${${subproject_name}_target_files})
     elseif(${_subproject_type} STREQUAL "${module_type}")
         set(_target_name ${subproject_name})
-        add_library(${_target_name} SHARED ${all_${subproject_name}_files})
+        add_library(${_target_name} SHARED ${${subproject_name}_target_files})
     endif()
        
     #exclude from build if necessary
