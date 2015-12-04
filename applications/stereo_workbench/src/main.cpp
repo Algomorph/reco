@@ -23,6 +23,7 @@
 
 #include <opencv2/highgui.hpp>
 #include <opencv2/videoio.hpp>
+#include <opencv2/imgproc.hpp>
 #include <opencv2/ximgproc.hpp>
 
 #include <boost/program_options.hpp>
@@ -42,7 +43,21 @@ const size_t SUCCESS = 0;
 } // namespace
 
 
-
+inline cv::Mat process_superpixels(const cv::Mat& frame, cv::Ptr<cv::ximgproc::SuperpixelSEEDS>& seeds, int num_iterations){
+	cv::Mat hsv, out_bg, out_fg, out;
+	const cv::Mat color(frame.size(), CV_8UC3, cv::Scalar(0,255,0));
+	cv::cvtColor(frame, hsv, cv::COLOR_BGR2HSV);
+	seeds->iterate(hsv, num_iterations);
+	cv::Mat labels;
+	seeds->getLabels(labels);
+	cv::Mat mask, mask_inv;
+	seeds->getLabelContourMask(mask, 2);
+	cv::bitwise_not(mask,mask_inv);
+	cv::bitwise_and(frame,frame,out_bg,mask_inv);
+	cv::bitwise_and(color,color,out_fg,mask);
+	cv::add(out_bg,out_fg,out);
+	return out;
+}
 
 int main(int argc, char** argv) {
 	/** Define and parse the program options*/
@@ -82,8 +97,7 @@ int main(int argc, char** argv) {
 						// there are any problems
 
 		if(videos.size() != 2){
-			dpt(videos.size());
-			err2(po::error,"Need at least two videos!");
+			err2(po::error,"Need at least two video paths! Got " << videos.size() << ".");
 		}
 	}catch (po::error& e){
 		std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
@@ -121,15 +135,18 @@ int main(int argc, char** argv) {
 	cv::Point window_l_pos(right_offset,top_offset);
 	cv::Point window_r_pos(right_offset+window_l_size.width+separation,top_offset);
 
+	const char* left_win_title = "Left";
+	const char* right_win_title = "Right";
 
-	cv::namedWindow("Left", cv::WINDOW_FREERATIO);
-	cv::namedWindow("Right", cv::WINDOW_FREERATIO);
-	cv::resizeWindow("Left", window_l_size.width, window_l_size.height);
-	cv::resizeWindow("Right", window_r_size.width, window_r_size.height);
-	cv::imshow("Left",frame_l);
-	cv::imshow("Right",frame_r);
-	cv::moveWindow("Left",window_l_pos.x,window_l_pos.y);
-	cv::moveWindow("Right",window_r_pos.x,window_r_pos.y);
+
+	cv::namedWindow(left_win_title, cv::WINDOW_FREERATIO);
+	cv::namedWindow(right_win_title, cv::WINDOW_FREERATIO);
+	cv::resizeWindow(left_win_title, window_l_size.width, window_l_size.height);
+	cv::resizeWindow(right_win_title, window_r_size.width, window_r_size.height);
+	cv::imshow(left_win_title,frame_l);
+	cv::imshow(right_win_title,frame_r);
+	cv::moveWindow(left_win_title,window_l_pos.x,window_l_pos.y);
+	cv::moveWindow(right_win_title,window_r_pos.x,window_r_pos.y);
 
 
 	//figure out appropriate window scaling
@@ -146,15 +163,15 @@ int main(int argc, char** argv) {
 	cv::Ptr<cvxip::SuperpixelSEEDS> seeds_r =
 				cvxip::createSuperpixelSEEDS(image_size.width, image_size.height, 3,
 				num_superpixels, num_levels, prior, num_histogram_bins);
-	cv::Mat hsv_l, hsv_r;
+
+
 	while(cap_l.read(frame_l) && cap_r.read(frame_r)){
-		cv::cvtColor(frame_l, hsv_l, cv::COLOR_BGR2HSV);
-		cv::cvtColor(frame_r, hsv_r, cv::COLOR_BGR2HSV);
-		seeds_l->iterate(hsv_l, num_iterations);
+		cv::Mat superpixel_demo_l = process_superpixels(frame_l, seeds_l, num_iterations);
+		cv::Mat superpixel_demo_r = process_superpixels(frame_r, seeds_r, num_iterations);
 		//seeds_l->getLabels()
 
-		cv::imshow("Left",frame_l);
-		cv::imshow("Right",frame_r);
+		cv::imshow(left_win_title,superpixel_demo_l);
+		cv::imshow(right_win_title,superpixel_demo_r);
 
 
 
