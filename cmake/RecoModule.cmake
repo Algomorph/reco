@@ -32,7 +32,7 @@ macro(reco_link_libraries_to_subproject _target_name verbose)
     endif() 
 endmacro()
 
-#add dependency preprocessor definitions to subproject
+#add dependency preprocessor definitions and compile flags to subproject
 macro(reco_add_depends_to_subproject _target_name)
     get_target_property(${_target_name}_definitions ${_target_name} COMPILE_DEFINITIONS)
     if(NOT "${${_target_name}_definitions}")
@@ -46,6 +46,12 @@ macro(reco_add_depends_to_subproject _target_name)
         endif()
     endforeach()
     set_target_properties(${_target_name} PROPERTIES COMPILE_DEFINITIONS "${${_target_name}_definitions}")
+    foreach(depend ${_depends})
+        if(DEFINED ${depend}_CXX_FLAGS)
+            message(STATUS "${depend}_CXX_FLAGS: ${${depend}_CXX_FLAGS}" )
+            add_compile_options(${_target_name} ${${depend}_CXX_FLAGS}) 
+        endif()
+    endforeach()
 endmacro()
 
 #report failure on repeatedly setting a parameter that can only be set once

@@ -160,8 +160,8 @@ void main_window::hook_pipe_signals() {
 	connect(ui->play_button, SIGNAL(released()), pipe.get(), SLOT(run()));
 	//connect the pipe output to viewer
 	connect(pipe.get(), SIGNAL(frame()), this, SLOT(on_frame()));
-	rgb_viewer.configure_for_pipe(pipe->get_num_channels());
-	depth_viewer.configure_for_pipe(pipe->get_num_channels());
+	rgb_viewer.set_channel_number(pipe->get_num_channels());
+	depth_viewer.set_channel_number(pipe->get_num_channels());
 
 	//colors have to be reinitialized per chance the number of kinects has changed
 	pipe_signals_hooked = true; //set flag

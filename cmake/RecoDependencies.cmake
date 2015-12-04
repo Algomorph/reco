@@ -21,7 +21,12 @@
 #  script to accommodate this.
 ####################################################################################################
 
-macro(reco_find_dependency _name)
+macro(reco_find_dependency _name verbosity)
+
+    if(${verbosity} EQUAL 1)
+        message(STATUS "Looking for package: ${_name}")        
+    endif()
+
     #parse arguments
     set(comps_keyword "COMPONENTS")
     set(libs_keyword "LIBRARIES")

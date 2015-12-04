@@ -6,7 +6,6 @@
 
 //freenect2
 #include <libfreenect2/libfreenect2.hpp>
-#include <libfreenect2/threading.h>
 #include <libfreenect2/frame_listener_impl.h>
 
 //opencv

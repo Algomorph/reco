@@ -18,6 +18,7 @@
 
 //calibu
 #include <calibu/Calibu.h>
+#include <calibu/cam/camera_models_crtp.h>
 #include <pcl/console/parse.h>
 
 //system
