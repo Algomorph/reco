@@ -21,7 +21,7 @@
 #include <HAL/Messages/ImageArray.h>
 
 //misc
-#include <reco/misc/calibration_parameters.h>
+#include <src/calibration_parameters.h>
 
 //local
 #include "point_cloud_buffer.h"

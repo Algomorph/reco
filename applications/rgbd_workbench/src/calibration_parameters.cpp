@@ -20,7 +20,7 @@
 #include <opencv2/core/eigen.hpp>
 
 //local
-#include <reco/misc/calibration_parameters.h>
+#include <src/calibration_parameters.h>
 
 namespace reco {
 namespace misc {

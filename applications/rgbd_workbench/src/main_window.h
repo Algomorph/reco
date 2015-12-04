@@ -51,7 +51,7 @@ class point_cloud_viewer;
 #include <vector>
 
 //misc
-#include <reco/misc/calibration_parameters.h>
+#include <src/calibration_parameters.h>
 
 //local
 #include "reconstructor.h"
