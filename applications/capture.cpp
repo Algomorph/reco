@@ -28,7 +28,7 @@
 
 //Alex's includes
 #include <reco/alex/cpp_utilities.hpp>
-#include <reco/alex/cv_depth_tools.hpp>
+
 
 #define APP_NAME "Capture"
 

@@ -40,3 +40,9 @@ reco_add_subproject(subtract_background
     DEPENDENCIES OpenCV utils Boost
     ADDITIONAL_INCLUDE_DIRS /usr/local/cuda-7.5/targets/x86_64-linux/include
     LIGHTWEIGHT_APPLICATION)
+    
+reco_add_subproject(optical_flow_contours
+    SOURCES optical_flow_contours.cpp
+    DEPENDENCIES OpenCV utils Boost
+    ADDITIONAL_INCLUDE_DIRS 
+    LIGHTWEIGHT_APPLICATION)
