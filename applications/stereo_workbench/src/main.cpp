@@ -29,6 +29,9 @@
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
 
+#include <GL/glew.h>
+#include <GL/glut.h>
+
 #include <iostream>
 #include <string>
 #include <thread>
@@ -60,6 +63,16 @@ inline cv::Mat process_superpixels(const cv::Mat& frame, cv::Ptr<cv::ximgproc::S
 }
 
 int main(int argc, char** argv) {
+	/**initialize OpenGL stuff**/
+	glewExperimental = GL_TRUE;
+
+	glutInit(&argc, argv);
+	GLenum glewError = glewInit();
+	if (glewError != GLEW_OK){
+		    exit(EXIT_FAILURE);
+	}
+
+
 	/** Define and parse the program options*/
 	namespace po = boost::program_options;
 	namespace fs = boost::filesystem;

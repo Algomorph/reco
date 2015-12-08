@@ -13,7 +13,7 @@ macro(reco_add_includes_to_subproject _target_name)
 endmacro()
 
 #link dependency libraries to subproject
-macro(reco_link_libraries_to_subproject _target_name verbose)
+macro(reco_link_libraries_to_subproject _target_name verbose link_plain)
     set(_depend_libs)
     set(_depends ${ARGN})
     #dependency libraries
@@ -22,11 +22,15 @@ macro(reco_link_libraries_to_subproject _target_name verbose)
             #by default, assume the libraries are also required by projects that use this module
             #hence PUBLIC (may brake in case of static libs?)
             #TODO: add functionality to specify whether libraries are PUBLIC/PRIVATE for each depend
-            target_link_libraries(${_target_name} PUBLIC ${${depend}_LIBRARIES})
+            if(${link_plain})
+                target_link_libraries(${_target_name} ${${depend}_LIBRARIES})
+            else()
+                target_link_libraries(${_target_name} PUBLIC ${${depend}_LIBRARIES})
+            endif()
             list(APPEND _depend_libs ${${depend}_LIBRARIES})
         endif()
     endforeach()
-    if(${verbose})
+    if(${verbose} EQUAL 1)
         get_target_property(${_target_name}_libs ${_target_name} LINK_INTERFACE_LIBRARIES)
         message(STATUS "Libraries linked to subproject '${_target_name}': ${${_target_name}_libs}")
     endif() 
@@ -48,8 +52,14 @@ macro(reco_add_depends_to_subproject _target_name)
     set_target_properties(${_target_name} PROPERTIES COMPILE_DEFINITIONS "${${_target_name}_definitions}")
     foreach(depend ${_depends})
         if(DEFINED ${depend}_CXX_FLAGS)
-            message(STATUS "${depend}_CXX_FLAGS: ${${depend}_CXX_FLAGS}" )
-            add_compile_options(${_target_name} ${${depend}_CXX_FLAGS}) 
+            get_target_property(${_target_name}_link_flags ${_target_name} LINK_FLAGS)
+            if(NOT "${${_target_name}_link_flags}")
+                #clear out the "...-NOTFOUND" value
+                set(${_target_name}_link_flags)
+            endif()
+            list(APPEND ${_target_name}_link_flags ${${depend}_CXX_FLAGS})
+            set_target_properties(${_target_name} PROPERTIES LINK_FLAGS "${${_target_name}_link_flags}")
+            target_compile_options(${_target_name} PUBLIC ${${depend}_CXX_FLAGS}) 
         endif()
     endforeach()
 endmacro()
@@ -176,13 +186,17 @@ macro(reco_add_subproject _name)
     endif()    
 #-----------------------------CHECK DEPENDENCIES AND REQUIREMENTS----------------------------------#
 
+ #scal for cuda in dependencies, since that changes the command to add target
+    set(cuda_subproject FALSE)
  #depends
     set(_have_depends TRUE)
     set(_unmet_depends)
-    foreach(dep ${_depends})
+    foreach(dep ${_depends}) 
         if(NOT HAVE_${dep})
             set(_have_depends FALSE)
             list(APPEND _unmet_depends ${dep})
+        elseif(${dep} STREQUAL CUDA)
+            set(cuda_subproject TRUE)
         endif()
     endforeach()
  #reqs
@@ -287,20 +301,10 @@ macro(reco_add_subproject _name)
         ${${subproject_name}_generated_resources}
     ) 
     
+    #${subproject_name}_target_files is an intermediate list in case not all project files
+    #need to be added to the target in the future
     set(${subproject_name}_target_files ${all_${subproject_name}_files})
 
-# TODO: target_files should really be set to all sources, nothing else. 
-# Unfortunately, with the current automoc config,
-# the header files which need .cpp moc files to be generated have to be included in the target_files for
-# the generated .cpp-s to be autmatically added to the makefiles.
-# The only possible solution I see right now is disabling automoc and moc-ing manually somehow.
-#    
-#    set(${subproject_name}_target_files  
-#        ${${subproject_name}_sources} 
-#        ${${subproject_name}_ui_headers} 
-#        ${${subproject_name}_generated_resources}
-#    )
-    
     if(verbose EQUAL 1)
         message(STATUS "Files for subproject ${subproject_name}: ${all_${subproject_name}_files}")
     elseif(verbose EQUAL 2)
@@ -318,10 +322,18 @@ macro(reco_add_subproject _name)
         #don't use the subproject name, but rather the briefer name suffix for the executables
         #this will make command-line invocation involve less typing
         set(_target_name ${_name})
-        add_executable(${_target_name} ${${subproject_name}_target_files})
+        if(cuda_subproject)
+            cuda_add_executable(${_target_name} ${${subproject_name}_target_files})
+        else()
+            add_executable(${_target_name} ${${subproject_name}_target_files})
+        endif()
     elseif(${_subproject_type} STREQUAL "${module_type}")
         set(_target_name ${subproject_name})
-        add_library(${_target_name} SHARED ${${subproject_name}_target_files})
+        if(cuda_subproject)
+            cuda_add_library(${_target_name} SHARED ${${subproject_name}_target_files})
+        else()
+            add_library(${_target_name} SHARED ${${subproject_name}_target_files})
+        endif()
     endif()
        
     #exclude from build if necessary
@@ -346,7 +358,7 @@ macro(reco_add_subproject _name)
     endif()
 #---------------------------LINK LIBRARIES --------------------------------------------------------#
 
-    reco_link_libraries_to_subproject(${_target_name} FALSE ${_depends})
+    reco_link_libraries_to_subproject(${_target_name} verbose ${cuda_subproject} ${_depends})
     
     #make a list of used libraries, for reuse in applications
     if(${_subproject_type} STREQUAL ${module_type} AND BUILD_${_name})

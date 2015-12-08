@@ -1,7 +1,7 @@
 #ifndef CALIBU_RECTIFY_MOD_HPP
 #define CALIBU_RECTIFY_MOD_HPP
 
-#include <calibu/cam/Rectify.h>
+#include <calibu/cam/rectify_crtp.h>
 #include <calibu/utils/Range.h>
 
 namespace alex

@@ -18,6 +18,11 @@ reco_find_dependency(VTK ${verbosity} QUIET)
 reco_find_dependency(x264 ${verbosity} QUIET LIBRARIES X264_LIBRARIES)
 reco_find_dependency(FFMPEG ${verbosity} QUIET)
 reco_find_dependency(OpenMP ${verbosity} QUIET)
+reco_find_dependency(CUDA ${verbosity} QUIET)
+reco_find_dependency(OpenCL ${verbosity} QUIET)
+reco_find_dependency(OpenGL ${verbosity} QUIET)
+reco_find_dependency(GLUT ${verbosity} QUIET)
+reco_find_dependency(GLEW ${verbosity} QUIET)
 
 #find python, numpy
 include("DetectPython")

@@ -1,17 +1,35 @@
 #include <reco/stereo_workbench/color_structure.hpp>
 
 namespace gpxa {
-const double amplThresh[] = { 0.0, 0.000000000001, 0.037, 0.08, 0.195, 0.32 };
-const int nAmplLevels[] = { 1, 25, 20, 35, 35, 140 };
-static int nTotalLevels = 0;
 
-void precomputeTotalLevels(){
-	const int nAmplLinearRegions = sizeof(nAmplLevels) / sizeof(nAmplLevels[0]);
+const double amplification_thresholds[] = { 0.0, 0.000000000001, 0.037, 0.08, 0.195, 0.32 };
+const int numbers_of_amplification_levels[] = { 1, 25, 20, 35, 35, 140 };
+const int total_number_of_levels = []() -> int {
+	const int nAmplLinearRegions = sizeof(numbers_of_amplification_levels) / sizeof(numbers_of_amplification_levels[0]);
+	int num_levels = 0;
 	// Calculate total levels
 	for (int iQuant = 0; iQuant < nAmplLinearRegions; iQuant++) {
-		nTotalLevels += nAmplLevels[iQuant];
+		num_levels += numbers_of_amplification_levels[iQuant];
 	}
+	return num_levels;
+}();
+
+const std::string color_structure_extractor::compile_string = "-D REGION_SIZE={0:d} -D REGION_CLIP={1:d} -D WINDOW_SIZE={2:d} -D BASE_QUANT_SPACE={3:d}";
+
+/**
+ * Routine that mimics how window & subsample size are is calculated in the libMPEG7
+ * @param cell_size (lateral) size of each cell
+ * @param window_size (out) size of each window
+ * @param subsample_size (out) size of each subsample
+ */
+inline void calculate_window_sizes(int cell_size, int& window_size, int& subsample_size){
+	double log_area = std::log2(static_cast<double>(cell_size*cell_size));
+	//TODO: describe magic numbers
+	int scale_power = std::max(static_cast<int>(std::floor(0.5*log_area - 8.0 + 0.5)), 0);
+	subsample_size = 1 << scale_power;
+	window_size = 8 * subsample_size;
 }
+
 
 void bitstrings_to_histogram(uint64_t* arr, uint16_t* hist, int width, int x,
 		int y) {
@@ -44,7 +62,7 @@ void bitstrings_to_histogram(uint64_t* arr, uint16_t* hist, int width, int x,
 }
 void quantize_and_ampify(uint16_t* hist, uint8_t* histOut) {
 	unsigned long iBin, iQuant;
-	const int nAmplLinearRegions = sizeof(nAmplLevels) / sizeof(nAmplLevels[0]);
+	const int nAmplLinearRegions = sizeof(numbers_of_amplification_levels) / sizeof(numbers_of_amplification_levels[0]);
 
 	// Loop through bins
 	for (iBin = 0; iBin < BASE_QUANT_SPACE; iBin++) {
@@ -57,24 +75,24 @@ void quantize_and_ampify(uint16_t* hist, uint8_t* histOut) {
 		// Find quantization boundary and base value
 		int quantValue = 0;
 		for (iQuant = 0; iQuant + 1 < nAmplLinearRegions; iQuant++) {
-			if (val < amplThresh[iQuant + 1])
+			if (val < amplification_thresholds[iQuant + 1])
 				break;
-			quantValue += nAmplLevels[iQuant];
+			quantValue += numbers_of_amplification_levels[iQuant];
 		}
 
 		// Quantize
 		double nextThresh =
 				(iQuant + 1 < nAmplLinearRegions) ?
-						amplThresh[iQuant + 1] : 1.0;
+						amplification_thresholds[iQuant + 1] : 1.0;
 		val = floor(
 				quantValue
-						+ (val - amplThresh[iQuant])
-								* (nAmplLevels[iQuant]
-										/ (nextThresh - amplThresh[iQuant])));
+						+ (val - amplification_thresholds[iQuant])
+								* (numbers_of_amplification_levels[iQuant]
+										/ (nextThresh - amplification_thresholds[iQuant])));
 
 		// Limit (and alert), one bin contains all of histogram
-		if (val == nTotalLevels) {
-			val = nTotalLevels - 1;
+		if (val == total_number_of_levels) {
+			val = total_number_of_levels - 1;
 		}
 
 		// Set value into histogram
