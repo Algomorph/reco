@@ -44,8 +44,8 @@ namespace stereo_tuner {
 #define CALIB_FILE "0_1_smallboard_redux.xml"
 
 
-#define DEFAULT_IMAGE_LEFT DEFAULT_CAP_PATH "0_1_calib03/3_left.png"
-#define DEFAULT_IMAGE_RIGHT DEFAULT_CAP_PATH "0_1_calib03/3_right.png"
+#define DEFAULT_IMAGE_LEFT DEFAULT_CAP_PATH "0_1_stills/01_L.png"
+#define DEFAULT_IMAGE_RIGHT DEFAULT_CAP_PATH "0_1_stills/01_R.png"
 
 main_window::main_window() :
 		ui(new Ui_main_window),

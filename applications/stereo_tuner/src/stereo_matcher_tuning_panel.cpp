@@ -137,7 +137,7 @@ void stereo_matcher_tuning_panel::set_up_tuning_controls(){
 			QStringLiteral("number_of_disparities_label"),
 			QStringLiteral("number_of_disparities_spin_box"),
 			QStringLiteral("number_of_disparities_slider"),
-			16,256,16,16
+			16,656,16,16
 			);
 
 	construct_integer_control_set(

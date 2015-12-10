@@ -162,8 +162,6 @@ int main(int argc, char** argv) {
 	cv::moveWindow(right_win_title,window_r_pos.x,window_r_pos.y);
 
 
-	//figure out appropriate window scaling
-
 	int num_superpixels = 200;
 	int num_iterations = 5;
 	int num_levels = 4;

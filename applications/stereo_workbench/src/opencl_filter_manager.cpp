@@ -151,15 +151,14 @@ cl::Device opencl_filter_manager::select_device(std::string platform_keyword,
 				return device;
 			}
 		}
-	}else{
-		if(device_index > (int)devices.size()){
-			err2(std::runtime_error, "OpenCL device index out of range. Got " << device_index
-					<< ", acceptable values should be in [0, " << devices.size() << "] for platform "
-					<< selected_platform.getInfo<CL_PLATFORM_NAME>());
-		}else{
-			return devices[device_index];
-		}
 	}
+	if(device_index > (int)devices.size()){
+		err2(std::runtime_error, "OpenCL device index out of range. Got " << device_index
+				<< ", acceptable values should be in [0, " << devices.size() << "] for platform "
+				<< selected_platform.getInfo<CL_PLATFORM_NAME>());
+	}
+	return devices[device_index];
+
 }
 
 bool opencl_filter_manager::have_opengl_extension(std::string extension){

@@ -89,8 +89,8 @@ int main(int argc, char** argv) {
 	//cv::Ptr<cv::BackgroundSubtractorMOG2> background_model = cv::createBackgroundSubtractorMOG2();
 	//cv::Ptr<cv::bgsegm::BackgroundSubtractorMOG> background_model = cv::bgsegm::createBackgroundSubtractorMOG();
 	//cv::Ptr<cv::bgsegm::BackgroundSubtractorGMG> background_model = cv::bgsegm::createBackgroundSubtractorGMG();
-	cv::Ptr<cv::BackgroundSubtractorKNN> background_model = cv::createBackgroundSubtractorKNN();
-	//cv::Ptr<cv::cuda::BackgroundSubtractorFGD> background_model = cv::cuda::BackgroundSubtractorFGD();
+	//cv::Ptr<cv::BackgroundSubtractorKNN> background_model = cv::createBackgroundSubtractorKNN();
+	cv::Ptr<cv::cuda::BackgroundSubtractorFGD> background_model = cv::cuda::createBackgroundSubtractorFGD();
 
 	cv::VideoCapture cap(video_path.string());
 	cv::Mat frame;
