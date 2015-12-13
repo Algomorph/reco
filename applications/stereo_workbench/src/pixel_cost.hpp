@@ -98,7 +98,8 @@ private:
 
 };
 
-
+std::unique_ptr<abstract_stereo_cost_calculator> build_stereo_cost_calculator(pixel_cost_type type,
+		const cv::Mat& img1, const cv::Mat& img2,const semiglobal_matcher_parameters& params);
 
 }//stereo_workbench
 }//reco

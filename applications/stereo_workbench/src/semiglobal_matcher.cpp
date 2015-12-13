@@ -107,8 +107,8 @@ struct stereo_cost_calculator{
  */
 static void computeDisparitySGBM( const Mat& img1, const Mat& img2,
                                  Mat& disp1, const semiglobal_matcher_parameters& params,
-                                 Mat& buffer, const stereo_cost_calculator cost_calculator =
-                                		 stereo_cost_calculator(pixel_cost_type::BIRCHFIELD_TOMASI))
+                                 Mat& buffer, pixel_cost_type cost_type =
+                                		 pixel_cost_type::BIRCHFIELD_TOMASI)
 {
 #if CV_SSE2
     static const uchar LSBTab[] =
@@ -150,7 +150,8 @@ static void computeDisparitySGBM( const Mat& img1, const Mat& img2,
 
     //precomputation for faster cost computation
     Mat descriptor_img1, descriptor_img2;
-    cost_calculator.precompute_cost(img1, img2, descriptor_img1, descriptor_img2);
+    std::unique_ptr<abstract_stereo_cost_calculator> cost_calculator
+		= build_stereo_cost_calculator(cost_type, img1, img2, params);
 
     //1024, 2304
     const int clip_table_offset = 256*4, clip_table_size = 256 + clip_table_offset*2;
@@ -257,8 +258,7 @@ static void computeDisparitySGBM( const Mat& img1, const Mat& img2,
 
                     if( k < height )
                     {
-                    	cost_calculator.compute_row_pixel_cost(descriptor_img1, descriptor_img2, k,
-                    			minD, maxD, pixDiff, tempBuf, clip_table, clip_table_offset, ftzero);
+                    	cost_calculator->compute(k,pixDiff);
 
                         memset(hsumAdd, 0, D*sizeof(CostType));
                         for( x = 0; x <= SW2*D; x += D )
@@ -668,11 +668,12 @@ struct SGBM3WayMainLoop : public ParallelLoopBody{
     int TAB_OFS, ftzero;
 
     PixType* clip_table;
-    stereo_cost_calculator cost_calculator;
+    std::unique_ptr<abstract_stereo_cost_calculator> cost_calculator;
 
     SGBM3WayMainLoop(Mat *_buffers, const Mat& _img1, const Mat& _img2, Mat* _dst_disp,
     		const semiglobal_matcher_parameters& params, PixType* clip_table, int _nstripes, int _stripe_overlap,
-			const stereo_cost_calculator cost_calculator = stereo_cost_calculator(pixel_cost_type::BIRCHFIELD_TOMASI));
+			pixel_cost_type cost_type = pixel_cost_type::BIRCHFIELD_TOMASI);
+
     void getRawMatchingCost(CostType* C, CostType* hsumBuf, CostType* pixDiff, PixType* tmpBuf,
     		int y, int src_start_idx) const;
     void operator () (const Range& range) const;
@@ -680,9 +681,9 @@ struct SGBM3WayMainLoop : public ParallelLoopBody{
 
 SGBM3WayMainLoop::SGBM3WayMainLoop(Mat *_buffers, const Mat& _img1, const Mat& _img2, Mat* _dst_disp,
 		const semiglobal_matcher_parameters& params, PixType* clip_table, int _nstripes, int _stripe_overlap,
-		const stereo_cost_calculator cost_calculator):
+		pixel_cost_type cost_type):
 		buffers(_buffers), img1(&_img1), img2(&_img2), dst_disp(_dst_disp), clip_table(clip_table),
-		cost_calculator(cost_calculator){
+		cost_calculator(build_stereo_cost_calculator(cost_type,_img1,_img2,params)){
 
     nstripes = _nstripes;
     stripe_overlap = _stripe_overlap;
@@ -704,7 +705,6 @@ SGBM3WayMainLoop::SGBM3WayMainLoop(Mat *_buffers, const Mat& _img1, const Mat& _
     TAB_OFS = 256*4;
     ftzero = std::max(params.preFilterCap, 15) | 1;
 
-    cost_calculator.precompute_cost(_img1,_img2,descriptors_img1,descriptors_img2);
 }
 
 void getBufferPointers(Mat& buffer, int width, int width1, int D, int num_ch, int SH2, int P2,
@@ -782,8 +782,7 @@ void SGBM3WayMainLoop::getRawMatchingCost(CostType* C, // target cost-volume row
         CostType* hsumAdd = hsumBuf + (std::min(k, height-1) % hsumBufNRows)*costBufSize;
         if( k < height )
         {
-            cost_calculator.compute_row_pixel_cost( descriptors_img1, descriptors_img2, k,
-            		minD, maxD, pixDiff, tmpBuf, clip_table, TAB_OFS, ftzero );
+            cost_calculator->compute(k,pixDiff);
 
             memset(hsumAdd, 0, D*sizeof(CostType));
             for(x = 0; x <= SW2*D; x += D )
@@ -1230,7 +1229,7 @@ void SGBM3WayMainLoop::operator () (const Range& range) const
 
 static void computeDisparity3WaySGBM( const Mat& img1, const Mat& img2,
                                       Mat& disp1, const semiglobal_matcher_parameters& params,
-                                      Mat* buffers, int nstripes, const stereo_cost_calculator& cost_calculator)
+                                      Mat* buffers, int nstripes, pixel_cost_type cost_type = pixel_cost_type::BIRCHFIELD_TOMASI)
 {
     // precompute a lookup table for the raw matching cost computation:
     const int TAB_OFS = 256*4, TAB_SIZE = 256 + TAB_OFS*2;
@@ -1249,7 +1248,7 @@ static void computeDisparity3WaySGBM( const Mat& img1, const Mat& img2,
     for(int i=0;i<nstripes;i++)
         dst_disp[i].create(stripe_sz+stripe_overlap,img1.cols,CV_16S);
 
-    parallel_for_(Range(0,nstripes),SGBM3WayMainLoop(buffers,img1,img2,dst_disp,params,clip_table,nstripes,stripe_overlap, cost_calculator));
+    parallel_for_(Range(0,nstripes),SGBM3WayMainLoop(buffers,img1,img2,dst_disp,params,clip_table,nstripes,stripe_overlap, cost_type));
 
     //assemble disp1 from dst_disp:
     short* dst_row;
@@ -1268,15 +1267,15 @@ static void computeDisparity3WaySGBM( const Mat& img1, const Mat& img2,
 class semiglobal_matcher_implementation : public StereoSGBM
 {
 private:
-	stereo_cost_calculator cost_calculator;
+	pixel_cost_type cost_type;
 
 public:
-    semiglobal_matcher_implementation(): cost_calculator(), params() {}
+    semiglobal_matcher_implementation(): cost_type(pixel_cost_type::BIRCHFIELD_TOMASI), params() {}
 
     semiglobal_matcher_implementation( int _minDisparity, int _numDisparities, int _SADWindowSize,
                     int _P1, int _P2, int _disp12MaxDiff, int _preFilterCap,
                     int _uniquenessRatio, int _speckleWindowSize, int _speckleRange,
-                    int _mode ):params( _minDisparity, _numDisparities, _SADWindowSize,
+                    int _mode ):cost_type(pixel_cost_type::BIRCHFIELD_TOMASI),params( _minDisparity, _numDisparities, _SADWindowSize,
                                    _P1, _P2, _disp12MaxDiff, _preFilterCap,
                                    _uniquenessRatio, _speckleWindowSize, _speckleRange,
                                    _mode ){}
@@ -1285,7 +1284,7 @@ public:
                         int _P1, int _P2, int _disp12MaxDiff, int _preFilterCap,
                         int _uniquenessRatio, int _speckleWindowSize, int _speckleRange,
                         int _mode, pixel_cost_type cost_type):
-                        	cost_calculator(cost_type),
+                        	cost_type(cost_type),
                         	params( _minDisparity, _numDisparities, _SADWindowSize,
 								   _P1, _P2, _disp12MaxDiff, _preFilterCap,
 								   _uniquenessRatio, _speckleWindowSize, _speckleRange,
@@ -1301,9 +1300,9 @@ public:
         Mat disp = disparr.getMat();
 
         if(params.mode==MODE_SGBM_3WAY){
-        	computeDisparity3WaySGBM( left, right, disp, params, buffers, num_stripes, cost_calculator );
+        	computeDisparity3WaySGBM( left, right, disp, params, buffers, num_stripes, cost_type );
         }else{
-        	computeDisparitySGBM( left, right, disp, params, buffer, cost_calculator );
+        	computeDisparitySGBM( left, right, disp, params, buffer, cost_type );
         }
 
         medianBlur(disp, disp, 3);
