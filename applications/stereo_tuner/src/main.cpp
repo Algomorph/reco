@@ -25,7 +25,7 @@ int main(int argc, char* argv[]){
 	Q_INIT_RESOURCE(application);
 	QApplication app(argc, argv);
 	app.setOrganizationName("Reco");
-	app.setApplicationName("Stereo Workbench");
+	app.setApplicationName("Stereo Tuner");
 	main_window main_window;
 	main_window.show();
 	return app.exec();

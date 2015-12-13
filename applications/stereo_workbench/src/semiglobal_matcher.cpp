@@ -18,12 +18,11 @@
  *   limitations under the License.
  */
 #include <opencv2/cvconfig.h>
-#include <opencv2/calib3d.hpp>
 #include <opencv2/imgproc.hpp>
 #include <opencv2/features2d.hpp>
 #include <opencv2/core/utility.hpp>
 #include <opencv2/hal/intrin.hpp>
-#include <opencv2/xfeatures2d.hpp>
+
 
 
 //#include <opencv2/core/private.hpp>
@@ -32,15 +31,14 @@
 
 #include <functional>
 
+#include <reco/stereo_workbench/semiglobal_matcher.hpp>
+#include <reco/utils/cpp_exception_util.h>
+#include "pixel_cost.hpp"
+
 
 namespace reco{
 namespace stereo_workbench{
 
-
-
-typedef uchar PixType;
-typedef short CostType;
-typedef short DispType;
 
 
 enum { NR = 16, NR2 = NR/2 };
@@ -48,14 +46,46 @@ enum { NR = 16, NR2 = NR/2 };
 
 using namespace cv;
 
-typedef std::function<void (const Mat&, const Mat&, int, int, int, CostType*, PixType*, const PixType*, int, int)> cost_function;
 
-struct StereoSGBMParams
-{
-    StereoSGBMParams()
-    {
+
+struct stereo_cost_calculator{
+
+	stereo_cost_calculator(row_cost_function compute_row_pixel_cost,
+			cost_precomputation_function precompute_cost){
+		this->compute_row_pixel_cost = compute_row_pixel_cost;
+		this->precompute_cost = precompute_cost;
+	}
+	stereo_cost_calculator(pixel_cost_type type){
+		switch(type){
+		case BIRCHFIELD_TOMASI:
+			this->compute_row_pixel_cost = calculate_row_cost_BT;
+			this->precompute_cost = precompute_nothing;
+			break;
+		case DAISY:
+			this->compute_row_pixel_cost = calculate_row_cost_DAISY;
+			this->precompute_cost = precompute_DAISY;
+			break;
+		case NORM_L2:
+			this->compute_row_pixel_cost = calculate_row_cost_L2;
+			this->precompute_cost = precompute_nothing;
+			break;
+		default:
+			err2(std::runtime_error, "Unknown semiglobal matcher cost type: " << static_cast<int>(type));
+			break;
+		}
+	}
+	stereo_cost_calculator()
+		: stereo_cost_calculator(pixel_cost_type::BIRCHFIELD_TOMASI){}
+	row_cost_function compute_row_pixel_cost;
+	cost_precomputation_function precompute_cost;
+};
+
+
+
+struct semiglobal_matcher_parameters{
+    semiglobal_matcher_parameters(){
         minDisparity = numDisparities = 0;
-        SADWindowSize = 0;
+        block_size = 0;
         P1 = P2 = 0;
         disp12MaxDiff = 0;
         preFilterCap = 0;
@@ -65,14 +95,13 @@ struct StereoSGBMParams
         mode = StereoSGBM::MODE_SGBM;
     }
 
-    StereoSGBMParams( int _minDisparity, int _numDisparities, int _SADWindowSize,
+    semiglobal_matcher_parameters( int _minDisparity, int _numDisparities, int block_window_size,
                       int _P1, int _P2, int _disp12MaxDiff, int _preFilterCap,
                       int _uniquenessRatio, int _speckleWindowSize, int _speckleRange,
-                      int _mode )
-    {
+                      int _mode ){
         minDisparity = _minDisparity;
         numDisparities = _numDisparities;
-        SADWindowSize = _SADWindowSize;
+        this->block_size = block_window_size;
         P1 = _P1;
         P2 = _P2;
         disp12MaxDiff = _disp12MaxDiff;
@@ -85,7 +114,7 @@ struct StereoSGBMParams
 
     int minDisparity;
     int numDisparities;
-    int SADWindowSize;
+    int block_size;
     int preFilterCap;
     int uniquenessRatio;
     int P1;
@@ -94,315 +123,10 @@ struct StereoSGBMParams
     int speckleRange;
     int disp12MaxDiff;
     int mode;
+
 };
 
 
-
-
-
-/*
- For each pixel row1[x], max(maxD, 0) <= minX <= x < maxX <= width - max(0, -minD),
- and for each disparity minD<=d<maxD the function
- computes the cost (cost[(x-minX)*(maxD - minD) + (d - minD)]), depending on the difference between
- row1[x] and row2[x-d].
-
- */
-static void calcPixelCostDAISY( const Mat& img1, const Mat& img2, int y,
-                            int minD, int maxD, CostType* cost,
-                            PixType* buffer, const PixType* tab,
-                            int tabOfs, int )
-{
-    int x, c, width = img1.cols, channel_number = img1.channels();
-    int minX1 = std::max(maxD, 0), maxX1 = width + std::min(minD, 0);
-    int minX2 = std::max(minX1 - maxD, 0), maxX2 = std::min(maxX1 - minD, width);
-    int D = maxD - minD;
-    int width1 = maxX1 - minX1;
-    int width2 = maxX2 - minX2; //image width
-
-    const PixType* row1 = img1.ptr<PixType>(y);
-	const PixType* row2 = img2.ptr<PixType>(y);
-
-    PixType* prow1 = buffer + width2*2;
-    PixType* prow2 = prow1 + width*channel_number*2;
-
-    //const int TAB_OFS = 256*4, TAB_SIZE = 256 + TAB_OFS*2;
-    tab += tabOfs;
-
-    for( c = 0; c < channel_number*2; c++ ){
-        prow1[width*c] = prow1[width*c + width-1] =
-        prow2[width*c] = prow2[width*c + width-1] = tab[0];
-    }
-
-    int n1 = y > 0 ? -(int)img1.step : 0, s1 = y < img1.rows-1 ? (int)img1.step : 0;
-    int n2 = y > 0 ? -(int)img2.step : 0, s2 = y < img2.rows-1 ? (int)img2.step : 0;
-
-    if( channel_number == 1 ){
-        for( x = 1; x < width-1; x++ ){
-            prow1[x] = tab[(row1[x+1] - row1[x-1])*2 + row1[x+n1+1] - row1[x+n1-1] + row1[x+s1+1] - row1[x+s1-1]];
-            prow2[width-1-x] = tab[(row2[x+1] - row2[x-1])*2 + row2[x+n2+1] - row2[x+n2-1] + row2[x+s2+1] - row2[x+s2-1]];
-
-            prow1[x+width] = row1[x];
-            prow2[width-1-x+width] = row2[x];
-        }
-    }else{
-        for( x = 1; x < width-1; x++ ){
-            prow1[x] = tab[(row1[x*3+3] - row1[x*3-3])*2 + row1[x*3+n1+3] - row1[x*3+n1-3] + row1[x*3+s1+3] - row1[x*3+s1-3]];
-            prow1[x+width] = tab[(row1[x*3+4] - row1[x*3-2])*2 + row1[x*3+n1+4] - row1[x*3+n1-2] + row1[x*3+s1+4] - row1[x*3+s1-2]];
-            prow1[x+width*2] = tab[(row1[x*3+5] - row1[x*3-1])*2 + row1[x*3+n1+5] - row1[x*3+n1-1] + row1[x*3+s1+5] - row1[x*3+s1-1]];
-
-            prow2[width-1-x] = tab[(row2[x*3+3] - row2[x*3-3])*2 + row2[x*3+n2+3] - row2[x*3+n2-3] + row2[x*3+s2+3] - row2[x*3+s2-3]];
-            prow2[width-1-x+width] = tab[(row2[x*3+4] - row2[x*3-2])*2 + row2[x*3+n2+4] - row2[x*3+n2-2] + row2[x*3+s2+4] - row2[x*3+s2-2]];
-            prow2[width-1-x+width*2] = tab[(row2[x*3+5] - row2[x*3-1])*2 + row2[x*3+n2+5] - row2[x*3+n2-1] + row2[x*3+s2+5] - row2[x*3+s2-1]];
-
-            prow1[x+width*3] = row1[x*3];
-            prow1[x+width*4] = row1[x*3+1];
-            prow1[x+width*5] = row1[x*3+2];
-
-            prow2[width-1-x+width*3] = row2[x*3];
-            prow2[width-1-x+width*4] = row2[x*3+1];
-            prow2[width-1-x+width*5] = row2[x*3+2];
-        }
-    }
-
-    memset( cost, 0, width1*D*sizeof(cost[0]) );
-
-    buffer -= minX2;
-    cost -= minX1*D + minD; // simplify the cost indices inside the loop
-
-    for( c = 0; c < channel_number*2; c++, prow1 += width, prow2 += width )
-    {
-        int diff_scale = c < channel_number ? 0 : 2;
-
-        // precompute
-        //   v0 = min(row2[x-1/2], row2[x], row2[x+1/2]) and
-        //   v1 = max(row2[x-1/2], row2[x], row2[x+1/2]) and
-        for( x = minX2; x < maxX2; x++ )
-        {
-            int v = prow2[x];
-            int vl = x > 0 ? (v + prow2[x-1])/2 : v;
-            int vr = x < width-1 ? (v + prow2[x+1])/2 : v;
-            int v0 = std::min(vl, vr); v0 = std::min(v0, v);
-            int v1 = std::max(vl, vr); v1 = std::max(v1, v);
-            buffer[x] = (PixType)v0;
-            buffer[x + width2] = (PixType)v1;
-        }
-
-        for( x = minX1; x < maxX1; x++ )
-        {
-            int u = prow1[x];
-            int ul = x > 0 ? (u + prow1[x-1])/2 : u;
-            int ur = x < width-1 ? (u + prow1[x+1])/2 : u;
-            int u0 = std::min(ul, ur); u0 = std::min(u0, u);
-            int u1 = std::max(ul, ur); u1 = std::max(u1, u);
-
-        #if CV_SIMD128
-            v_uint8x16 _u  = v_setall_u8((uchar)u), _u0 = v_setall_u8((uchar)u0);
-            v_uint8x16 _u1 = v_setall_u8((uchar)u1);
-
-            for( int d = minD; d < maxD; d += 16 )
-            {
-                v_uint8x16 _v  = v_load(prow2  + width-x-1 + d);
-                v_uint8x16 _v0 = v_load(buffer + width-x-1 + d);
-                v_uint8x16 _v1 = v_load(buffer + width-x-1 + d + width2);
-                v_uint8x16 c0 = v_max(_u - _v1, _v0 - _u);
-                v_uint8x16 c1 = v_max(_v - _u1, _u0 - _v);
-                v_uint8x16 diff = v_min(c0, c1);
-
-                v_int16x8 _c0 = v_load_aligned(cost + x*D + d);
-                v_int16x8 _c1 = v_load_aligned(cost + x*D + d + 8);
-
-                v_uint16x8 diff1,diff2;
-                v_expand(diff,diff1,diff2);
-                v_store_aligned(cost + x*D + d,     _c0 + v_reinterpret_as_s16(diff1 >> diff_scale));
-                v_store_aligned(cost + x*D + d + 8, _c1 + v_reinterpret_as_s16(diff2 >> diff_scale));
-            }
-        #else
-            for( int d = minD; d < maxD; d++ )
-            {
-                int v = prow2[width-x-1 + d];
-                int v0 = buffer[width-x-1 + d];
-                int v1 = buffer[width-x-1 + d + width2];
-                int c0 = std::max(0, u - v1); c0 = std::max(c0, v0 - u);
-                int c1 = std::max(0, v - u1); c1 = std::max(c1, u0 - v);
-
-                cost[x*D + d] = (CostType)(cost[x*D+d] + (std::min(c0, c1) >> diff_scale));
-            }
-        #endif
-        }
-    }
-}
-
-/*
- For each pixel row1[x], max(maxD, 0) <= minX <= x < maxX <= width - max(0, -minD),
- and for each disparity minD<=d<maxD the function
- computes the cost (cost[(x-minX)*(maxD - minD) + (d - minD)]), depending on the difference between
- row1[x] and row2[x-d]. The subpixel algorithm from
- "Depth Discontinuities by Pixel-to-Pixel Stereo" by Stan Birchfield and C. Tomasi
- is used, hence the suffix BT.
-
- the temporary buffer should contain width2*2 elements
- */
-static void calcPixelCostBT( const Mat& img1, const Mat& img2, int y,
-                            int minD, int maxD, CostType* cost,
-                            PixType* buffer, const PixType* tab,
-                            int tabOfs, int )
-{
-    int x, c, width = img1.cols, cn = img1.channels();
-
-    int minX1 = std::max(maxD, 0), maxX1 = width + std::min(minD, 0);
-    //this line makes no sense when minX1 & maxX1 are non-negative integers. It will result in (0, width) every time.
-    int minX2 = std::max(minX1 - maxD, 0), maxX2 = std::min(maxX1 - minD, width);
-
-    int disparity_range = maxD - minD, width1 = maxX1 - minX1, width2 = maxX2 - minX2;
-    const PixType *row1 = img1.ptr<PixType>(y), *row2 = img2.ptr<PixType>(y);
-    PixType *prow1 = buffer + width2*2, *prow2 = prow1 + width*cn*2;
-
-    tab += tabOfs;
-
-    for( c = 0; c < cn*2; c++ )
-    {
-        prow1[width*c] = prow1[width*c + width-1] =
-        prow2[width*c] = prow2[width*c + width-1] = tab[0];
-    }
-
-    int n1 = y > 0 ? -(int)img1.step : 0, s1 = y < img1.rows-1 ? (int)img1.step : 0;
-    int n2 = y > 0 ? -(int)img2.step : 0, s2 = y < img2.rows-1 ? (int)img2.step : 0;
-
-    if( cn == 1 )
-    {
-        for( x = 1; x < width-1; x++ )
-        {
-            prow1[x] = tab[(row1[x+1] - row1[x-1])*2 + row1[x+n1+1] - row1[x+n1-1] + row1[x+s1+1] - row1[x+s1-1]];
-            prow2[width-1-x] = tab[(row2[x+1] - row2[x-1])*2 + row2[x+n2+1] - row2[x+n2-1] + row2[x+s2+1] - row2[x+s2-1]];
-
-            prow1[x+width] = row1[x];
-            prow2[width-1-x+width] = row2[x];
-        }
-    }
-    else
-    {
-        for( x = 1; x < width-1; x++ )
-        {
-            prow1[x] = tab[(row1[x*3+3] - row1[x*3-3])*2 + row1[x*3+n1+3] - row1[x*3+n1-3] + row1[x*3+s1+3] - row1[x*3+s1-3]];
-            prow1[x+width] = tab[(row1[x*3+4] - row1[x*3-2])*2 + row1[x*3+n1+4] - row1[x*3+n1-2] + row1[x*3+s1+4] - row1[x*3+s1-2]];
-            prow1[x+width*2] = tab[(row1[x*3+5] - row1[x*3-1])*2 + row1[x*3+n1+5] - row1[x*3+n1-1] + row1[x*3+s1+5] - row1[x*3+s1-1]];
-
-            prow2[width-1-x] = tab[(row2[x*3+3] - row2[x*3-3])*2 + row2[x*3+n2+3] - row2[x*3+n2-3] + row2[x*3+s2+3] - row2[x*3+s2-3]];
-            prow2[width-1-x+width] = tab[(row2[x*3+4] - row2[x*3-2])*2 + row2[x*3+n2+4] - row2[x*3+n2-2] + row2[x*3+s2+4] - row2[x*3+s2-2]];
-            prow2[width-1-x+width*2] = tab[(row2[x*3+5] - row2[x*3-1])*2 + row2[x*3+n2+5] - row2[x*3+n2-1] + row2[x*3+s2+5] - row2[x*3+s2-1]];
-
-            prow1[x+width*3] = row1[x*3];
-            prow1[x+width*4] = row1[x*3+1];
-            prow1[x+width*5] = row1[x*3+2];
-
-            prow2[width-1-x+width*3] = row2[x*3];
-            prow2[width-1-x+width*4] = row2[x*3+1];
-            prow2[width-1-x+width*5] = row2[x*3+2];
-        }
-    }
-
-    memset( cost, 0, width1*disparity_range*sizeof(cost[0]) );
-
-    buffer -= minX2;
-    cost -= minX1*disparity_range + minD; // simplify the cost indices inside the loop
-
-#if 1
-    for( c = 0; c < cn*2; c++, prow1 += width, prow2 += width )
-    {
-        int diff_scale = c < cn ? 0 : 2;
-
-        // precompute
-        //   v0 = min(row2[x-1/2], row2[x], row2[x+1/2]) and
-        //   v1 = max(row2[x-1/2], row2[x], row2[x+1/2]) and
-        for( x = minX2; x < maxX2; x++ )
-        {
-            int v = prow2[x];
-            int vl = x > 0 ? (v + prow2[x-1])/2 : v;
-            int vr = x < width-1 ? (v + prow2[x+1])/2 : v;
-            int v0 = std::min(vl, vr); v0 = std::min(v0, v);
-            int v1 = std::max(vl, vr); v1 = std::max(v1, v);
-            buffer[x] = (PixType)v0;
-            buffer[x + width2] = (PixType)v1;
-        }
-
-        for( x = minX1; x < maxX1; x++ )
-        {
-            int u = prow1[x];
-            int ul = x > 0 ? (u + prow1[x-1])/2 : u;
-            int ur = x < width-1 ? (u + prow1[x+1])/2 : u;
-            int u0 = std::min(ul, ur); u0 = std::min(u0, u);
-            int u1 = std::max(ul, ur); u1 = std::max(u1, u);
-
-        #if CV_SIMD128
-            v_uint8x16 _u  = v_setall_u8((uchar)u), _u0 = v_setall_u8((uchar)u0);
-            v_uint8x16 _u1 = v_setall_u8((uchar)u1);
-
-            for( int d = minD; d < maxD; d += 16 )
-            {
-                v_uint8x16 _v  = v_load(prow2  + width-x-1 + d);
-                v_uint8x16 _v0 = v_load(buffer + width-x-1 + d);
-                v_uint8x16 _v1 = v_load(buffer + width-x-1 + d + width2);
-                v_uint8x16 c0 = v_max(_u - _v1, _v0 - _u);
-                v_uint8x16 c1 = v_max(_v - _u1, _u0 - _v);
-                v_uint8x16 diff = v_min(c0, c1);
-
-                v_int16x8 _c0 = v_load_aligned(cost + x*disparity_range + d);
-                v_int16x8 _c1 = v_load_aligned(cost + x*disparity_range + d + 8);
-
-                v_uint16x8 diff1,diff2;
-                v_expand(diff,diff1,diff2);
-                v_store_aligned(cost + x*disparity_range + d,     _c0 + v_reinterpret_as_s16(diff1 >> diff_scale));
-                v_store_aligned(cost + x*disparity_range + d + 8, _c1 + v_reinterpret_as_s16(diff2 >> diff_scale));
-            }
-        #else
-            for( int d = minD; d < maxD; d++ )
-            {
-                int v = prow2[width-x-1 + d];
-                int v0 = buffer[width-x-1 + d];
-                int v1 = buffer[width-x-1 + d + width2];
-                int c0 = std::max(0, u - v1); c0 = std::max(c0, v0 - u);
-                int c1 = std::max(0, v - u1); c1 = std::max(c1, u0 - v);
-
-                cost[x*disparity_range + d] = (CostType)(cost[x*disparity_range+d] + (std::min(c0, c1) >> diff_scale));
-            }
-        #endif
-        }
-    }
-#else
-    for( c = 0; c < cn*2; c++, prow1 += width, prow2 += width )
-    {
-        for( x = minX1; x < maxX1; x++ )
-        {
-            int u = prow1[x];
-        #if CV_SSE2
-            if( useSIMD )
-            {
-                __m128i _u = _mm_set1_epi8(u), z = _mm_setzero_si128();
-
-                for( int d = minD; d < maxD; d += 16 )
-                {
-                    __m128i _v = _mm_loadu_si128((const __m128i*)(prow2 + width-1-x + d));
-                    __m128i diff = _mm_adds_epu8(_mm_subs_epu8(_u,_v), _mm_subs_epu8(_v,_u));
-                    __m128i c0 = _mm_load_si128((__m128i*)(cost + x*disparity_range + d));
-                    __m128i c1 = _mm_load_si128((__m128i*)(cost + x*disparity_range + d + 8));
-
-                    _mm_store_si128((__m128i*)(cost + x*disparity_range + d), _mm_adds_epi16(c0, _mm_unpacklo_epi8(diff,z)));
-                    _mm_store_si128((__m128i*)(cost + x*disparity_range + d + 8), _mm_adds_epi16(c1, _mm_unpackhi_epi8(diff,z)));
-                }
-            }
-            else
-        #endif
-            {
-                for( int d = minD; d < maxD; d++ )
-                {
-                    int v = prow2[width-1-x + d];
-                    cost[x*disparity_range + d] = (CostType)(cost[x*disparity_range + d] + (CostType)std::abs(u - v));
-                }
-            }
-        }
-    }
-#endif
-}
 
 
 /*
@@ -426,8 +150,9 @@ static void calcPixelCostBT( const Mat& img1, const Mat& img2, int y,
  It contains the minimum current cost, used to find the best disparity, corresponding to the minimal cost.
  */
 static void computeDisparitySGBM( const Mat& img1, const Mat& img2,
-                                 Mat& disp1, const StereoSGBMParams& params,
-                                 Mat& buffer )
+                                 Mat& disp1, const semiglobal_matcher_parameters& params,
+                                 Mat& buffer, const stereo_cost_calculator cost_calculator =
+                                		 stereo_cost_calculator(pixel_cost_type::BIRCHFIELD_TOMASI))
 {
 #if CV_SSE2
     static const uchar LSBTab[] =
@@ -452,7 +177,7 @@ static void computeDisparitySGBM( const Mat& img1, const Mat& img2,
 
     int minD = params.minDisparity, maxD = minD + params.numDisparities;
     Size SADWindowSize;
-    SADWindowSize.width = SADWindowSize.height = params.SADWindowSize > 0 ? params.SADWindowSize : 5;
+    SADWindowSize.width = SADWindowSize.height = params.block_size > 0 ? params.block_size : 5;
 
     int ftzero = std::max(params.preFilterCap, 15) | 1;
 
@@ -466,6 +191,10 @@ static void computeDisparitySGBM( const Mat& img1, const Mat& img2,
     int SW2 = SADWindowSize.width/2, SH2 = SADWindowSize.height/2;
     bool fullDP = params.mode == StereoSGBM::MODE_HH;
     int npasses = fullDP ? 2 : 1;
+
+    //precomputation for faster cost computation
+    Mat descriptor_img1, descriptor_img2;
+    cost_calculator.precompute_cost(img1, img2, descriptor_img1, descriptor_img2);
 
     //1024, 2304
     const int clip_table_offset = 256*4, clip_table_size = 256 + clip_table_offset*2;
@@ -572,7 +301,8 @@ static void computeDisparitySGBM( const Mat& img1, const Mat& img2,
 
                     if( k < height )
                     {
-                        calcPixelCostBT( img1, img2, k, minD, maxD, pixDiff, tempBuf, clip_table, clip_table_offset, ftzero );
+                    	cost_calculator.compute_row_pixel_cost(descriptor_img1, descriptor_img2, k,
+                    			minD, maxD, pixDiff, tempBuf, clip_table, clip_table_offset, ftzero);
 
                         memset(hsumAdd, 0, D*sizeof(CostType));
                         for( x = 0; x <= SW2*D; x += D )
@@ -961,10 +691,10 @@ void getBufferPointers(Mat& buffer, int width, int width1, int D, int num_ch, in
                        CostType*& vertPassCostVolume, CostType*& vertPassMin, CostType*& rightPassBuf,
                        CostType*& disp2CostBuf, short*& disp2Buf);
 
-struct SGBM3WayMainLoop : public ParallelLoopBody
-{
+struct SGBM3WayMainLoop : public ParallelLoopBody{
     Mat* buffers;
     const Mat *img1, *img2;
+    Mat descriptors_img1, descriptors_img2;
     Mat* dst_disp;
 
     int nstripes, stripe_sz;
@@ -982,16 +712,22 @@ struct SGBM3WayMainLoop : public ParallelLoopBody
     int TAB_OFS, ftzero;
 
     PixType* clip_table;
+    stereo_cost_calculator cost_calculator;
 
     SGBM3WayMainLoop(Mat *_buffers, const Mat& _img1, const Mat& _img2, Mat* _dst_disp,
-    		const StereoSGBMParams& params, PixType* _clipTab, int _nstripes, int _stripe_overlap);
-    void getRawMatchingCost(CostType* C, CostType* hsumBuf, CostType* pixDiff, PixType* tmpBuf, int y, int src_start_idx) const;
+    		const semiglobal_matcher_parameters& params, PixType* clip_table, int _nstripes, int _stripe_overlap,
+			const stereo_cost_calculator cost_calculator = stereo_cost_calculator(pixel_cost_type::BIRCHFIELD_TOMASI));
+    void getRawMatchingCost(CostType* C, CostType* hsumBuf, CostType* pixDiff, PixType* tmpBuf,
+    		int y, int src_start_idx) const;
     void operator () (const Range& range) const;
 };
 
 SGBM3WayMainLoop::SGBM3WayMainLoop(Mat *_buffers, const Mat& _img1, const Mat& _img2, Mat* _dst_disp,
-		const StereoSGBMParams& params, PixType* _clipTab, int _nstripes, int _stripe_overlap):
-		buffers(_buffers), img1(&_img1), img2(&_img2), dst_disp(_dst_disp), clip_table(_clipTab){
+		const semiglobal_matcher_parameters& params, PixType* clip_table, int _nstripes, int _stripe_overlap,
+		const stereo_cost_calculator cost_calculator):
+		buffers(_buffers), img1(&_img1), img2(&_img2), dst_disp(_dst_disp), clip_table(clip_table),
+		cost_calculator(cost_calculator){
+
     nstripes = _nstripes;
     stripe_overlap = _stripe_overlap;
     stripe_sz = (int)ceil(img1->rows/(double)nstripes);
@@ -1001,7 +737,7 @@ SGBM3WayMainLoop::SGBM3WayMainLoop(Mat *_buffers, const Mat& _img1, const Mat& _
     minX1 = std::max(maxD, 0); maxX1 = width + std::min(minD, 0); width1 = maxX1 - minX1;
     CV_Assert( D % 16 == 0 );
 
-    SW2 = SH2 = params.SADWindowSize > 0 ? params.SADWindowSize/2 : 1;
+    SW2 = SH2 = params.block_size > 0 ? params.block_size/2 : 1;
 
     P1 = params.P1 > 0 ? params.P1 : 2; P2 = std::max(params.P2 > 0 ? params.P2 : 5, P1+1);
     uniquenessRatio = params.uniquenessRatio >= 0 ? params.uniquenessRatio : 10;
@@ -1011,14 +747,15 @@ SGBM3WayMainLoop::SGBM3WayMainLoop(Mat *_buffers, const Mat& _img1, const Mat& _
     hsumBufNRows = SH2*2 + 2;
     TAB_OFS = 256*4;
     ftzero = std::max(params.preFilterCap, 15) | 1;
+
+    cost_calculator.precompute_cost(_img1,_img2,descriptors_img1,descriptors_img2);
 }
 
 void getBufferPointers(Mat& buffer, int width, int width1, int D, int num_ch, int SH2, int P2,
                        CostType*& curCostVolumeLine, CostType*& hsumBuf, CostType*& pixDiff,
                        PixType*& tmpBuf, CostType*& horPassCostVolume,
                        CostType*& vertPassCostVolume, CostType*& vertPassMin, CostType*& rightPassBuf,
-                       CostType*& disp2CostBuf, short*& disp2Buf)
-{
+                       CostType*& disp2CostBuf, short*& disp2Buf){
     // allocating all the required memory:
     int costVolumeLineSize = width1*D;
     int width1_ext = width1+2;
@@ -1080,8 +817,7 @@ void getBufferPointers(Mat& buffer, int width, int width1, int D, int num_ch, in
 // performing block matching and building raw cost-volume for the current row
 void SGBM3WayMainLoop::getRawMatchingCost(CostType* C, // target cost-volume row
                                           CostType* hsumBuf, CostType* pixDiff, PixType* tmpBuf, //buffers
-                                          int y, int src_start_idx) const
-{
+                                          int y, int src_start_idx) const{
     int x, d;
     int dy1 = (y == src_start_idx) ? src_start_idx : y + SH2, dy2 = (y == src_start_idx) ? src_start_idx+SH2 : dy1;
 
@@ -1090,7 +826,8 @@ void SGBM3WayMainLoop::getRawMatchingCost(CostType* C, // target cost-volume row
         CostType* hsumAdd = hsumBuf + (std::min(k, height-1) % hsumBufNRows)*costBufSize;
         if( k < height )
         {
-            calcPixelCostBT( *img1, *img2, k, minD, maxD, pixDiff, tmpBuf, clip_table, TAB_OFS, ftzero );
+            cost_calculator.compute_row_pixel_cost( descriptors_img1, descriptors_img2, k,
+            		minD, maxD, pixDiff, tmpBuf, clip_table, TAB_OFS, ftzero );
 
             memset(hsumAdd, 0, D*sizeof(CostType));
             for(x = 0; x <= SW2*D; x += D )
@@ -1536,24 +1273,27 @@ void SGBM3WayMainLoop::operator () (const Range& range) const
 }
 
 static void computeDisparity3WaySGBM( const Mat& img1, const Mat& img2,
-                                      Mat& disp1, const StereoSGBMParams& params,
-                                      Mat* buffers, int nstripes )
+                                      Mat& disp1, const semiglobal_matcher_parameters& params,
+                                      Mat* buffers, int nstripes, const stereo_cost_calculator& cost_calculator)
 {
     // precompute a lookup table for the raw matching cost computation:
     const int TAB_OFS = 256*4, TAB_SIZE = 256 + TAB_OFS*2;
-    PixType* clipTab = new PixType[TAB_SIZE];
+
+    PixType* clip_table = new PixType[TAB_SIZE];
     int ftzero = std::max(params.preFilterCap, 15) | 1;
+    //value at TAB_OFS = ftzero
+    //values beyond that grow for ftzero up to 2*ftzero, then keep at 2*ftzero
     for(int k = 0; k < TAB_SIZE; k++ )
-        clipTab[k] = (PixType)(std::min(std::max(k - TAB_OFS, -ftzero), ftzero) + ftzero);
+        clip_table[k] = (PixType)(std::min(std::max(k - TAB_OFS, -ftzero), ftzero) + ftzero);
 
     // allocate separate dst_disp arrays to avoid conflicts due to stripe overlap:
     int stripe_sz = (int)ceil(img1.rows/(double)nstripes);
-    int stripe_overlap = (params.SADWindowSize/2+1) + (int)ceil(0.1*stripe_sz);
+    int stripe_overlap = (params.block_size/2+1) + (int)ceil(0.1*stripe_sz);
     Mat* dst_disp = new Mat[nstripes];
     for(int i=0;i<nstripes;i++)
         dst_disp[i].create(stripe_sz+stripe_overlap,img1.cols,CV_16S);
 
-    parallel_for_(Range(0,nstripes),SGBM3WayMainLoop(buffers,img1,img2,dst_disp,params,clipTab,nstripes,stripe_overlap));
+    parallel_for_(Range(0,nstripes),SGBM3WayMainLoop(buffers,img1,img2,dst_disp,params,clip_table,nstripes,stripe_overlap, cost_calculator));
 
     //assemble disp1 from dst_disp:
     short* dst_row;
@@ -1565,31 +1305,38 @@ static void computeDisparity3WaySGBM( const Mat& img1, const Mat& img2,
         memcpy(dst_row,src_row,disp1.cols*sizeof(short));
     }
 
-    delete[] clipTab;
+    delete[] clip_table;
     delete[] dst_disp;
 }
 
-class StereoSGBMImpl : public StereoSGBM
+class semiglobal_matcher_implementation : public StereoSGBM
 {
-public:
-    StereoSGBMImpl()
-    {
-        params = StereoSGBMParams();
-    }
+private:
+	stereo_cost_calculator cost_calculator;
 
-    StereoSGBMImpl( int _minDisparity, int _numDisparities, int _SADWindowSize,
+public:
+    semiglobal_matcher_implementation(): cost_calculator(), params() {}
+
+    semiglobal_matcher_implementation( int _minDisparity, int _numDisparities, int _SADWindowSize,
                     int _P1, int _P2, int _disp12MaxDiff, int _preFilterCap,
                     int _uniquenessRatio, int _speckleWindowSize, int _speckleRange,
-                    int _mode )
-    {
-        params = StereoSGBMParams( _minDisparity, _numDisparities, _SADWindowSize,
+                    int _mode ):params( _minDisparity, _numDisparities, _SADWindowSize,
                                    _P1, _P2, _disp12MaxDiff, _preFilterCap,
                                    _uniquenessRatio, _speckleWindowSize, _speckleRange,
-                                   _mode );
-    }
+                                   _mode ){}
 
-    void compute( InputArray leftarr, InputArray rightarr, OutputArray disparr )
-    {
+    semiglobal_matcher_implementation( int _minDisparity, int _numDisparities, int _SADWindowSize,
+                        int _P1, int _P2, int _disp12MaxDiff, int _preFilterCap,
+                        int _uniquenessRatio, int _speckleWindowSize, int _speckleRange,
+                        int _mode, pixel_cost_type cost_type):
+                        	cost_calculator(cost_type),
+                        	params( _minDisparity, _numDisparities, _SADWindowSize,
+								   _P1, _P2, _disp12MaxDiff, _preFilterCap,
+								   _uniquenessRatio, _speckleWindowSize, _speckleRange,
+								   _mode )
+						    {}
+
+    void compute( InputArray leftarr, InputArray rightarr, OutputArray disparr ){
         Mat left = leftarr.getMat(), right = rightarr.getMat();
         CV_Assert( left.size() == right.size() && left.type() == right.type() &&
                    left.depth() == CV_8U );
@@ -1597,16 +1344,18 @@ public:
         disparr.create( left.size(), CV_16S );
         Mat disp = disparr.getMat();
 
-        if(params.mode==MODE_SGBM_3WAY)
-            computeDisparity3WaySGBM( left, right, disp, params, buffers, num_stripes );
-        else
-            computeDisparitySGBM( left, right, disp, params, buffer );
+        if(params.mode==MODE_SGBM_3WAY){
+        	computeDisparity3WaySGBM( left, right, disp, params, buffers, num_stripes, cost_calculator );
+        }else{
+        	computeDisparitySGBM( left, right, disp, params, buffer, cost_calculator );
+        }
 
         medianBlur(disp, disp, 3);
 
-        if( params.speckleWindowSize > 0 )
+        if( params.speckleWindowSize > 0 ){
             filterSpeckles(disp, (params.minDisparity - 1)*StereoMatcher::DISP_SCALE, params.speckleWindowSize,
                            StereoMatcher::DISP_SCALE*params.speckleRange, buffer);
+        }
     }
 
     int getMinDisparity() const { return params.minDisparity; }
@@ -1615,8 +1364,8 @@ public:
     int getNumDisparities() const { return params.numDisparities; }
     void setNumDisparities(int numDisparities) { params.numDisparities = numDisparities; }
 
-    int getBlockSize() const { return params.SADWindowSize; }
-    void setBlockSize(int blockSize) { params.SADWindowSize = blockSize; }
+    int getBlockSize() const { return params.block_size; }
+    void setBlockSize(int blockSize) { params.block_size = blockSize; }
 
     int getSpeckleWindowSize() const { return params.speckleWindowSize; }
     void setSpeckleWindowSize(int speckleWindowSize) { params.speckleWindowSize = speckleWindowSize; }
@@ -1647,7 +1396,7 @@ public:
         fs << "name" << name_
         << "minDisparity" << params.minDisparity
         << "numDisparities" << params.numDisparities
-        << "blockSize" << params.SADWindowSize
+        << "blockSize" << params.block_size
         << "speckleWindowSize" << params.speckleWindowSize
         << "speckleRange" << params.speckleRange
         << "disp12MaxDiff" << params.disp12MaxDiff
@@ -1664,7 +1413,7 @@ public:
         CV_Assert( n.isString() && String(n) == name_ );
         params.minDisparity = (int)fn["minDisparity"];
         params.numDisparities = (int)fn["numDisparities"];
-        params.SADWindowSize = (int)fn["blockSize"];
+        params.block_size = (int)fn["blockSize"];
         params.speckleWindowSize = (int)fn["speckleWindowSize"];
         params.speckleRange = (int)fn["speckleRange"];
         params.disp12MaxDiff = (int)fn["disp12MaxDiff"];
@@ -1675,7 +1424,7 @@ public:
         params.mode = (int)fn["mode"];
     }
 
-    StereoSGBMParams params;
+    semiglobal_matcher_parameters params;
     Mat buffer;
 
     // the number of stripes is fixed, disregarding the number of threads/processors
@@ -1686,21 +1435,20 @@ public:
     static const char* name_;
 };
 
-const char* StereoSGBMImpl::name_ = "StereoMatcher.SGBM";
+const char* semiglobal_matcher_implementation::name_ = "StereoMatcher.SGBM";
 
 
-Ptr<StereoSGBM> createStereoSGBM(int minDisparity, int numDisparities, int SADWindowSize,
+Ptr<StereoSGBM> create_semiglobal_matcher(int minDisparity, int numDisparities, int block_size,
                                  int P1, int P2, int disp12MaxDiff,
                                  int preFilterCap, int uniquenessRatio,
                                  int speckleWindowSize, int speckleRange,
-                                 int mode)
-{
+                                 int mode, pixel_cost_type cost_type){
     return Ptr<StereoSGBM>(
-        new reco::stereo_workbench::StereoSGBMImpl(minDisparity, numDisparities, SADWindowSize,
+        new reco::stereo_workbench::semiglobal_matcher_implementation(minDisparity, numDisparities, block_size,
                            P1, P2, disp12MaxDiff,
                            preFilterCap, uniquenessRatio,
                            speckleWindowSize, speckleRange,
-                           mode));
+                           mode, cost_type));
 }
 
 Rect getValidDisparityROI( Rect roi1, Rect roi2,

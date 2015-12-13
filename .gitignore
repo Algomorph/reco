@@ -1,8 +1,5 @@
 #image samples/work files
-left.png
-right.png
-output.png
-epipolar_lines.png
+/output/
 
 # Files marked as links
 *-lk

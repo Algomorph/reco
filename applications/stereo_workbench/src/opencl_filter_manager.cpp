@@ -260,9 +260,19 @@ int opencl_filter_manager::estimate_available_cl_device_memory(cl::Device device
 	case CL_DEVICE_TYPE_GPU:
 		{
 			int vendor_id = device.getInfo<CL_DEVICE_VENDOR_ID>();
+
 			if(std::find(nvidia_vendor_ids.begin(),nvidia_vendor_ids.end(), vendor_id) !=
 					nvidia_vendor_ids.end() && have_opengl_extension("GL_NVX_gpu_memory_info")){
+				char *fake_argv [1];
+				int fake_argc=1;
+				fake_argv[0] = strdup ("dummy_app_name");
+				glutInit(&fake_argc, fake_argv);
+				glewExperimental = GL_TRUE;
 				int win = glutCreateWindow("test");
+				GLenum glewError = glewInit();
+				if(glewError != GLEW_OK){
+					err2(std::runtime_error,"Was unable to initialize glew in order to retrieve available GPU memory.");
+				}
 				GLint available_memory_in_kb = 0;
 				glGetIntegerv(GL_GPU_MEMORY_INFO_CURRENT_AVAILABLE_VIDMEM_NVX,
 									   &available_memory_in_kb);
