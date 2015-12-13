@@ -40,7 +40,7 @@
 #include <reco/stereo/opencv_rectifier.hpp>
 #include <reco/stereo_workbench/semiglobal_matcher.hpp>
 
-#define CALIB_FOLDER "/home/algomorph/cap/0_1_calib03/"
+#define CALIB_FOLDER "/home/algomorph/Dropbox/calib/yi/"
 
 namespace
 {
@@ -144,23 +144,22 @@ private:
 
 	void set_up_matcher(int channel_number = 3, int penalty_factor = 8, int penalty_over_1_factor =4){
 		const int max_disparity = 160;
-		const int block_size = 5;
-//		matcher = cv::StereoSGBM::create(0,max_disparity,block_size,
-//				penalty_factor*channel_number*block_size*block_size,
-//				penalty_factor*penalty_over_1_factor*channel_number*block_size*block_size,
-//				-1, 15,5,0,0,cv::StereoSGBM::MODE_SGBM);
+		const int block_size = 1;
+		const int gradient_influence = 15;
+		const int uniqueness_margin = 15;//%
 
 		matcher = create_semiglobal_matcher(0,max_disparity,block_size,
 				penalty_factor*channel_number*block_size*block_size,
 				penalty_factor*penalty_over_1_factor*channel_number*block_size*block_size,
-				-1, 15,5,0,0,cv::StereoSGBM::MODE_SGBM, pixel_cost_type::DAISY);
+				-1, gradient_influence,uniqueness_margin,0,0,
+				cv::StereoSGBM::MODE_SGBM, pixel_cost_type::DAISY);
 	}
 
 
 	void set_up_windows(cv::Size image_size){
 
 		const int screen_width = 1920;
-		//const int screen_height = 1200;
+		const int screen_height = 1080;
 		const int right_offset = 70;//approx launcher width
 		const int separation = 8;
 		const int top_offset = 30;
@@ -170,15 +169,19 @@ private:
 
 		cv::Size window_l_size(frame_l.cols*factor, frame_l.rows*factor);
 		cv::Size window_r_size(frame_r.cols*factor, frame_r.rows*factor);
+		cv::Size window_big_size(screen_height - top_offset,screen_width);
 		cv::Point window_l_pos(right_offset,top_offset);
 		cv::Point window_r_pos(right_offset+window_l_size.width+separation,top_offset);
 		cv::Point window_big_pos(screen_width,top_offset);
 
+
 		cv::namedWindow(left_win_title, cv::WINDOW_FREERATIO);
 		cv::namedWindow(right_win_title, cv::WINDOW_FREERATIO);
-		cv::namedWindow(big_win_title, cv::WINDOW_KEEPRATIO);
+		cv::namedWindow(big_win_title, cv::WINDOW_AUTOSIZE);
+		//cv::namedWindow(big_win_title, cv::WINDOW_KEEPRATIO);
 		cv::resizeWindow(left_win_title, window_l_size.width, window_l_size.height);
 		cv::resizeWindow(right_win_title, window_r_size.width, window_r_size.height);
+		//cv::resizeWindow(big_win_title, window_big_size.width, window_big_size.height);
 //		cv::imshow(left_win_title,frame_l);
 //		cv::imshow(right_win_title,frame_r);
 		cv::moveWindow(left_win_title,window_l_pos.x,window_l_pos.y);

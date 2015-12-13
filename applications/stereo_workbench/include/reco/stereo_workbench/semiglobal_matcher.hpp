@@ -37,6 +37,49 @@ cv::Ptr<cv::StereoSGBM> create_semiglobal_matcher(int minDisparity, int numDispa
                                  int mode,
 								 pixel_cost_type cost_type = pixel_cost_type::BIRCHFIELD_TOMASI);
 
+struct semiglobal_matcher_parameters{
+    semiglobal_matcher_parameters(){
+        minDisparity = numDisparities = 0;
+        block_size = 0;
+        P1 = P2 = 0;
+        disp12MaxDiff = 0;
+        preFilterCap = 0;
+        uniquenessRatio = 0;
+        speckleWindowSize = 0;
+        speckleRange = 0;
+        mode = cv::StereoSGBM::MODE_SGBM;
+    }
+
+    semiglobal_matcher_parameters( int _minDisparity, int _numDisparities, int block_window_size,
+                      int _P1, int _P2, int _disp12MaxDiff, int _preFilterCap,
+                      int _uniquenessRatio, int _speckleWindowSize, int _speckleRange,
+                      int _mode ){
+        minDisparity = _minDisparity;
+        numDisparities = _numDisparities;
+        this->block_size = block_window_size;
+        P1 = _P1;
+        P2 = _P2;
+        disp12MaxDiff = _disp12MaxDiff;
+        preFilterCap = _preFilterCap;
+        uniquenessRatio = _uniquenessRatio;
+        speckleWindowSize = _speckleWindowSize;
+        speckleRange = _speckleRange;
+        mode = _mode;
+    }
+
+    int minDisparity;
+    int numDisparities;
+    int block_size;
+    int preFilterCap;
+    int uniquenessRatio;
+    int P1;
+    int P2;
+    int speckleWindowSize;
+    int speckleRange;
+    int disp12MaxDiff;
+    int mode;
+
+};
 }//stereo_workbench
 }//reco
 
