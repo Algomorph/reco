@@ -29,33 +29,14 @@
 namespace reco{
 namespace stereo_workbench{
 
-
-
 typedef uchar PixType;
 typedef short CostType;
 typedef short DispType;
 
-typedef std::function<void (const cv::Mat&, const cv::Mat&, int, int, int,
-		CostType*, PixType*, const PixType*, int, int)> row_cost_function;
-
-typedef std::function<void (const cv::Mat&, const cv::Mat&, cv::Mat&, cv::Mat&)> cost_precomputation_function;
-
-void calculate_row_cost_DAISY( const cv::Mat& img1, const cv::Mat& img2, int y,
-                            int minD, int maxD, CostType* cost,
-                            PixType* buffer, const PixType* tab,
-                            int tabOfs, int);
-
-void calculate_row_cost_BT( const cv::Mat& img1, const cv::Mat& img2, int y,
-                            int minD, int maxD, CostType* cost,
-                            PixType* buffer, const PixType* tab,
-                            int tabOfs, int );
 void calculate_row_cost_L2( const cv::Mat& img1, const cv::Mat& img2, int y,
         int minD, int maxD, CostType* cost,
         PixType* buffer, const PixType* lookup_table,
         int tabOfs, int);
-
-void precompute_nothing(const cv::Mat& img1, const cv::Mat& img2, cv::Mat& out_img1, cv::Mat& out_img2);
-void precompute_DAISY(const cv::Mat& img1, const cv::Mat& img2, cv::Mat& out_img1, cv::Mat& out_img2);
 
 
 class abstract_stereo_cost_calculator{
