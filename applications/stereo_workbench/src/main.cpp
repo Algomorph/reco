@@ -152,7 +152,7 @@ private:
 				penalty_factor*channel_number*block_size*block_size,
 				penalty_factor*penalty_over_1_factor*channel_number*block_size*block_size,
 				-1, gradient_influence,uniqueness_margin,0,0,
-				cv::StereoSGBM::MODE_SGBM, pixel_cost_type::BIRCHFIELD_TOMASI);
+				cv::StereoSGBM::MODE_SGBM, pixel_cost_type::DAISY);
 	}
 
 

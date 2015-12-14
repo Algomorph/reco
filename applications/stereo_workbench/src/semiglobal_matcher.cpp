@@ -48,6 +48,7 @@ using namespace cv;
 
 
 
+//TODO remove this and clean code up from redundancies
 struct stereo_cost_calculator{
 
 	stereo_cost_calculator(row_cost_function compute_row_pixel_cost,
