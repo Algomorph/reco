@@ -62,22 +62,29 @@ DAISY_stereo_cost_calculator::DAISY_stereo_cost_calculator(const cv::Mat& img1, 
 	this->minD = params.minDisparity;
 	this->maxD = params.minDisparity + params.numDisparities;
 	this->image_width = img1.cols;
-	Ptr<xfeatures2d::DAISY> daisy = cv::xfeatures2d::DAISY::create(15,3,8,8,cv::xfeatures2d::DAISY::NRM_PARTIAL,cv::noArray(),true,false);
+	Ptr<xfeatures2d::DAISY> daisy = cv::xfeatures2d::DAISY::create(15,3,8,8,cv::xfeatures2d::DAISY::NRM_PARTIAL,
+			cv::noArray(),true,false);
 	daisy->compute(img1,descriptors1);
 	daisy->compute(img2,descriptors2);
 };
 
+static int max = 0;
 void DAISY_stereo_cost_calculator::compute(int y,CostType* cost){
 	const int minX1 = std::max(maxD, 0), maxX1 = image_width + std::min(minD, 0);
 	int D = maxD - minD;
 	const int y_offset = y*image_width;
-	const double norm_factor = 30.0D;
+	const double norm_factor = 100.0D;
 
+	//#pragma omp parallel for
 	for( int x = y_offset + minX1, xd = 0; x < y_offset + maxX1; x++, xd++ ){
 		Mat desc1 = descriptors1.row(x);
 		for( int d = minD; d < maxD; d++ ){
 			Mat desc2 = descriptors2.row(x - d);
 			double nrm = cv::norm(desc1,desc2,cv::NormTypes::NORM_L2SQR);
+//			if((int)(nrm*norm_factor) > max){
+//				max = nrm*norm_factor;
+//				dpt(max);
+//			}
 			cost[xd*D + d] = (CostType)(nrm * norm_factor);
 		}
 	}

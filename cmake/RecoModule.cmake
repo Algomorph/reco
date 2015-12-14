@@ -96,7 +96,7 @@ macro(reco_add_subproject _name)
     set(subproject_name ${global_project_name}_${_name})
     
     #adjust verbocity level here to 1, 2 for debugging
-    set(verbose)
+    set(verbose 0)
 
 #----------------------------------PARSE ARGUMENTS-------------------------------------------------#
 
@@ -248,7 +248,7 @@ macro(reco_add_subproject _name)
     set(${subproject_name}_sources)
     if(NOT ${_subproject_type} STREQUAL "${lightweight_app_type}")
         #search for all sources in the current source dir
-        file(GLOB_RECURSE ${subproject_name}_sources src/ *.cpp)
+        file(GLOB_RECURSE ${subproject_name}_sources src/ *.cpp *.cu)
         file(GLOB_RECURSE ${subproject_name}_headers src/ *.h *.h.in *.hpp *.tpp)
         file(GLOB_RECURSE ${subproject_name}_headers ${${subproject_name}_top_include_dir}/ *.h *.h.in *.hpp *.tpp)
         file(GLOB_RECURSE ${subproject_name}_test_sources tests/ *.cpp)
@@ -355,6 +355,11 @@ macro(reco_add_subproject _name)
     
     if(_incls)
         target_include_directories(${_target_name} PUBLIC ${_incls})
+    endif()
+    
+    if(verbose EQUAL 2)
+    get_target_property(${_target_name}_INCLUDE_DIRS ${_target_name} INCLUDE_DIRECTORIES)
+    message(STATUS "Include directories: ${${_target_name}_INCLUDE_DIRS}")
     endif()
 #---------------------------LINK LIBRARIES --------------------------------------------------------#
 

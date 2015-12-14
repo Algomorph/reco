@@ -58,12 +58,12 @@ using namespace cv;
  disp2cost also has the same size as img1 (or img2).
  It contains the minimum current cost, used to find the best disparity, corresponding to the minimal cost.
  */
-static void computeDisparitySGBM(const Mat& img1, const Mat& img2,
+static void compute_disparity_SGBM(const Mat& img1, const Mat& img2,
 		Mat& disp1, const semiglobal_matcher_parameters& params,
 		Mat& buffer, pixel_cost_type cost_type =
 				pixel_cost_type::BIRCHFIELD_TOMASI){
 #if CV_SSE2
-	static const uchar LSBTab[] =
+	static const uchar bit_reverse_table[] =
 			{
 					0, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 0, 1, 0, 4, 0, 1, 0, 2, 0, 1, 0, 3, 0, 1,
 					0, 2, 0, 1, 0,
@@ -85,6 +85,8 @@ static void computeDisparitySGBM(const Mat& img1, const Mat& img2,
 
 	volatile bool use_SIMD = checkHardwareSupport(CV_CPU_SSE2);
 #endif
+	//TODO: use allocate_buffers command instead of redoing the work here (first reorder commands so
+	//that allocations all happen continuously in one place)
 
 	const int ALIGN = 16;
 	const int DISP_SHIFT = StereoMatcher::DISP_SHIFT;
@@ -111,8 +113,7 @@ static void computeDisparitySGBM(const Mat& img1, const Mat& img2,
 	std::unique_ptr<abstract_stereo_cost_calculator> cost_calculator
 	= build_stereo_cost_calculator(cost_type, img1, img2, params);
 
-	if (minX1 >= maxX1)
-			{
+	if (minX1 >= maxX1){
 		disp1 = Scalar::all(INVALID_DISP_SCALED);
 		return;
 	}
@@ -165,14 +166,14 @@ static void computeDisparitySGBM(const Mat& img1, const Mat& img2,
 		if (pass == 1){
 			y1 = 0;
 			y2 = height;
-			dy = 1;
+			dy = 1;//go top down
 			x1 = 0;
 			x2 = width1;
 			dx = 1;
 		}else{
 			y1 = height - 1;
 			y2 = -1;
-			dy = -1;
+			dy = -1;//go bottom up
 			x1 = width1 - 1;
 			x2 = -1;
 			dx = -1;
@@ -198,35 +199,30 @@ static void computeDisparitySGBM(const Mat& img1, const Mat& img2,
 			CostType* C = Cbuf + (!fullDP ? 0 : y * costBufSize);
 			CostType* S = Sbuf + (!fullDP ? 0 : y * costBufSize);
 
-			if (pass == 1) // compute C on the first pass, and reuse it on the second pass, if any.
-					{
+			// compute cost on the first pass, and reuse it on the second pass, if any.
+			if (pass == 1) {
 				int dy1 = y == 0 ? 0 : y + SH2, dy2 = y == 0 ? SH2 : dy1;
 
-				for (k = dy1; k <= dy2; k++)
-						{
+				for (k = dy1; k <= dy2; k++){
 					CostType* hsumAdd = hsumBuf
 							+ (std::min(k, height - 1) % hsumBufNRows) * costBufSize;
 
-					if (k < height)
-							{
+					if (k < height){
 						cost_calculator->compute(k, pixDiff);
 
 						memset(hsumAdd, 0, D * sizeof(CostType));
-						for (x = 0; x <= SW2 * D; x += D)
-								{
+						for (x = 0; x <= SW2 * D; x += D){
 							int scale = x == 0 ? SW2 + 1 : 1;
 							for (d = 0; d < D; d++)
 								hsumAdd[d] = (CostType) (hsumAdd[d] + pixDiff[x + d] * scale);
 						}
 
-						if (y > 0)
-								{
+						if (y > 0){
 							const CostType* hsumSub = hsumBuf
 									+ (std::max(y - SH2 - 1, 0) % hsumBufNRows) * costBufSize;
 							const CostType* Cprev = !fullDP || y == 0 ? C : C - costBufSize;
 
-							for (x = D; x < width1 * D; x += D)
-									{
+							for (x = D; x < width1 * D; x += D){
 								const CostType* pixAdd = pixDiff
 										+ std::min(x + SW2 * D, (width1 - 1) * D);
 								const CostType* pixSub = pixDiff + std::max(x - (SW2 + 1) * D, 0);
@@ -254,19 +250,15 @@ static void computeDisparitySGBM(const Mat& img1, const Mat& img2,
 								} else
 								#endif
 								{
-									for (d = 0; d < D; d++)
-											{
+									for (d = 0; d < D; d++){
 										int hv = hsumAdd[x + d] = (CostType) (hsumAdd[x - D + d]
 												+ pixAdd[d] - pixSub[d]);
 										C[x + d] = (CostType) (Cprev[x + d] + hv - hsumSub[x + d]);
 									}
 								}
 							}
-						}
-						else
-						{
-							for (x = D; x < width1 * D; x += D)
-									{
+						}else{
+							for (x = D; x < width1 * D; x += D){
 								const CostType* pixAdd = pixDiff
 										+ std::min(x + SW2 * D, (width1 - 1) * D);
 								const CostType* pixSub = pixDiff + std::max(x - (SW2 + 1) * D, 0);
@@ -278,17 +270,18 @@ static void computeDisparitySGBM(const Mat& img1, const Mat& img2,
 						}
 					}
 
-					if (y == 0)
-							{
+					if (y == 0){
 						int scale = k == 0 ? SH2 + 1 : 1;
-						for (x = 0; x < width1 * D; x++)
+						for (x = 0; x < width1 * D; x++){
 							C[x] = (CostType) (C[x] + hsumAdd[x] * scale);
+						}
 					}
 				}
 
 				// also, clear the S buffer
-				for (k = 0; k < width1 * D; k++)
+				for (k = 0; k < width1 * D; k++){
 					S[k] = 0;
+				}
 			}
 
 			// clear the left and the right borders
@@ -542,7 +535,7 @@ static void computeDisparitySGBM(const Mat& img1, const Mat& img2,
 							qS = _mm_cmpeq_epi16(_minS, qS);
 							int idx = _mm_movemask_epi8(_mm_packs_epi16(qS, qS)) & 255;
 
-							bestDisp = bestDispBuf[LSBTab[idx]];
+							bestDisp = bestDispBuf[bit_reverse_table[idx]];
 						} else
 						#endif
 						{
@@ -769,36 +762,30 @@ void SGBM3WayMainLoop::getRawMatchingCost(CostType* C, // target cost-volume row
 	int dy1 = (y == src_start_idx) ? src_start_idx : y + SH2, dy2 =
 			(y == src_start_idx) ? src_start_idx + SH2 : dy1;
 
-	for (int k = dy1; k <= dy2; k++)
-			{
+	for (int k = dy1; k <= dy2; k++){
 		CostType* hsumAdd = hsumBuf + (std::min(k, height - 1) % hsumBufNRows) * costBufSize;
-		if (k < height)
-				{
+		if (k < height){
 			cost_calculator->compute(k, pixDiff);
 
 			memset(hsumAdd, 0, D * sizeof(CostType));
-			for (x = 0; x <= SW2 * D; x += D)
-					{
+			for (x = 0; x <= SW2 * D; x += D){
 				int scale = x == 0 ? SW2 + 1 : 1;
 
 				for (d = 0; d < D; d++)
 					hsumAdd[d] = (CostType) (hsumAdd[d] + pixDiff[x + d] * scale);
 			}
 
-			if (y > src_start_idx)
-					{
+			if (y > src_start_idx){
 				const CostType* hsumSub = hsumBuf
 						+ (std::max(y - SH2 - 1, src_start_idx) % hsumBufNRows) * costBufSize;
 
-				for (x = D; x < width1 * D; x += D)
-						{
+				for (x = D; x < width1 * D; x += D){
 					const CostType* pixAdd = pixDiff + std::min(x + SW2 * D, (width1 - 1) * D);
 					const CostType* pixSub = pixDiff + std::max(x - (SW2 + 1) * D, 0);
 
 #if CV_SIMD128
 					v_int16x8 hv_reg;
-					for (d = 0; d < D; d += 8)
-							{
+					for (d = 0; d < D; d += 8){
 						hv_reg = v_load_aligned(hsumAdd + x - D + d)
 								+ (v_load_aligned(pixAdd + d) - v_load_aligned(pixSub + d));
 						v_store_aligned(hsumAdd + x + d, hv_reg);
@@ -814,9 +801,7 @@ void SGBM3WayMainLoop::getRawMatchingCost(CostType* C, // target cost-volume row
 					}
 #endif
 				}
-			}
-			else
-			{
+			}else{
 				for (x = D; x < width1 * D; x += D)
 						{
 					const CostType* pixAdd = pixDiff + std::min(x + SW2 * D, (width1 - 1) * D);
@@ -1343,7 +1328,7 @@ public:
 		if (params.mode == MODE_SGBM_3WAY) {
 			computeDisparity3WaySGBM(left, right, disp, params, buffers, num_stripes, cost_type);
 		} else {
-			computeDisparitySGBM(left, right, disp, params, buffer, cost_type);
+			compute_disparity_SGBM(left, right, disp, params, buffer, cost_type);
 		}
 
 		medianBlur(disp, disp, 3);
@@ -1539,18 +1524,16 @@ void filterSpecklesImpl(cv::Mat& img, int newVal, int maxSpeckleSize, int maxDif
 		T* ds = img.ptr<T>(i);
 		int* ls = labels + width * i;
 
-		for (j = 0; j < width; j++)
-				{
-			if (ds[j] != newVal)   // not a bad disparity
-					{
-				if (ls[j])     // has a label, check for bad label
-				{
-					if (rtype[ls[j]]) // small region, zero out disparity
+		for (j = 0; j < width; j++){
+			// not a bad disparity
+			if (ds[j] != newVal){
+				// has a label, check for bad label
+				if (ls[j]){
+					if (rtype[ls[j]]){
+						// small region, zero out disparity
 						ds[j] = (T) newVal;
-				}
-				// no label, assign and propagate
-				else
-				{
+					}
+				}else{// no label, assign and propagate
 					Point2s* ws = wbuf; // initialize wavefront
 					Point2s p((short) j, (short) i);  // current pixel
 					curlabel++; // next label
@@ -1558,8 +1541,7 @@ void filterSpecklesImpl(cv::Mat& img, int newVal, int maxSpeckleSize, int maxDif
 					ls[j] = curlabel;
 
 					// wavefront propagation
-					while (ws >= wbuf) // wavefront not empty
-					{
+					while (ws >= wbuf) {// wavefront not empty
 						count++;
 						// put neighbors onto wavefront
 						T* dpp = &img.at<T>(p.y, p.x);
@@ -1567,29 +1549,25 @@ void filterSpecklesImpl(cv::Mat& img, int newVal, int maxSpeckleSize, int maxDif
 						int* lpp = labels + width * p.y + p.x;
 
 						if (p.y < height - 1 && !lpp[+width] && dpp[+dstep] != newVal
-								&& std::abs(dp - dpp[+dstep]) <= maxDiff)
-										{
+								&& std::abs(dp - dpp[+dstep]) <= maxDiff){
 							lpp[+width] = curlabel;
 							*ws++ = Point2s(p.x, p.y + 1);
 						}
 
 						if (p.y > 0 && !lpp[-width] && dpp[-dstep] != newVal
-								&& std::abs(dp - dpp[-dstep]) <= maxDiff)
-										{
+								&& std::abs(dp - dpp[-dstep]) <= maxDiff){
 							lpp[-width] = curlabel;
 							*ws++ = Point2s(p.x, p.y - 1);
 						}
 
 						if (p.x < width - 1 && !lpp[+1] && dpp[+1] != newVal
-								&& std::abs(dp - dpp[+1]) <= maxDiff)
-										{
+								&& std::abs(dp - dpp[+1]) <= maxDiff){
 							lpp[+1] = curlabel;
 							*ws++ = Point2s(p.x + 1, p.y);
 						}
 
 						if (p.x > 0 && !lpp[-1] && dpp[-1] != newVal
-								&& std::abs(dp - dpp[-1]) <= maxDiff)
-										{
+								&& std::abs(dp - dpp[-1]) <= maxDiff){
 							lpp[-1] = curlabel;
 							*ws++ = Point2s(p.x - 1, p.y);
 						}
@@ -1600,59 +1578,17 @@ void filterSpecklesImpl(cv::Mat& img, int newVal, int maxSpeckleSize, int maxDif
 					}
 
 					// assign label type
-					if (count <= maxSpeckleSize)   // speckle region
-							{
+					if (count <= maxSpeckleSize){// speckle region
 						rtype[ls[j]] = 1;   // small region label
 						ds[j] = (T) newVal;
-					}
-					else
+					}else{
 						rtype[ls[j]] = 0;   // large region label
+					}
 				}
 			}
 		}
 	}
 }
 
-#ifdef HAVE_IPP
-static bool ipp_filterSpeckles(Mat &img, int maxSpeckleSize, int newVal, int maxDiff)
-		{
-#if IPP_VERSION_X100 >= 810
-	int type = img.type();
-	Ipp32s bufsize = 0;
-	IppiSize roisize = {img.cols, img.rows};
-	IppDataType datatype = type == CV_8UC1 ? ipp8u : ipp16s;
-	Ipp8u *pBuffer = NULL;
-	IppStatus status = ippStsNoErr;
-
-	if(ippiMarkSpecklesGetBufferSize(roisize, datatype, CV_MAT_CN(type), &bufsize) < 0)
-	return false;
-
-	pBuffer = (Ipp8u*)ippMalloc(bufsize);
-	if(!pBuffer && bufsize)
-	return false;
-
-	if (type == CV_8UC1)
-	{
-		status = ippiMarkSpeckles_8u_C1IR(img.ptr<Ipp8u>(), (int)img.step, roisize,
-				(Ipp8u)newVal, maxSpeckleSize, (Ipp8u)maxDiff, ippiNormL1, pBuffer);
-	}
-	else
-	{
-		status = ippiMarkSpeckles_16s_C1IR(img.ptr<Ipp16s>(), (int)img.step, roisize,
-				(Ipp16s)newVal, maxSpeckleSize, (Ipp16s)maxDiff, ippiNormL1, pBuffer);
-	}
-	if(pBuffer) ippFree(pBuffer);
-
-	if (status >= 0)
-	return true;
-#else
-	CV_UNUSED(img);
-	CV_UNUSED(maxSpeckleSize);
-	CV_UNUSED(newVal);
-	CV_UNUSED(maxDiff);
-#endif
-	return false;
-}
-#endif
 } //stereo_workbench
 } //reco

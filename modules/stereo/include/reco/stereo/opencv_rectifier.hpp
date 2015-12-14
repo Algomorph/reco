@@ -17,11 +17,11 @@ class opencv_rectifier:
 		public rectifier {
 public:
 	opencv_rectifier();
-	opencv_rectifier(const std::string& opencv_calibration_path);
+	opencv_rectifier(const std::string& opencv_calibration_path, double scale_factor = 1.0);
 	opencv_rectifier(std::shared_ptr<calibu::Rigd> calibration);
 	virtual ~opencv_rectifier();
 	virtual void set_calibration(std::shared_ptr<calibu::Rigd> calibration);
-	void set_calibration_opencv(const std::string& path);
+	virtual void set_calibration(const std::string& path,  double scale_factor = 1.0);
 	virtual void rectify(const cv::Mat& left,const cv::Mat& right,
 				cv::Mat& rect_left, cv::Mat& rect_right);
 private:

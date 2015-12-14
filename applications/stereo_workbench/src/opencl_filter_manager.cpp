@@ -46,8 +46,8 @@ opencl_filter_manager::opencl_filter_manager(
 		cv::Size image_size, cv::Size cell_size, int num_channels,
 		std::string platform_keyword,
 		cl_device_type device_type, std::string device_keyword, int device_index) :
-				image_size(image_size),
 				cell_size(cell_size),
+				image_size(image_size),
 				num_channels(num_channels){
 
 	this->device = opencl_filter_manager::select_device(platform_keyword, device_type,
@@ -248,7 +248,7 @@ int opencl_filter_manager::estimate_available_cl_device_memory(cl::Device device
 	int b_in_mb = 1048576; //2^20
 	int b_in_kb = 1024; //2^10
 	int bytes_estimated = b_in_mb * mb_estimated;
-	bool success = false;
+	//bool success = false;
 
 	switch(device.getInfo<CL_DEVICE_TYPE>()){
 	case CL_DEVICE_TYPE_CPU:
@@ -309,8 +309,7 @@ int opencl_filter_manager::determine_warp_size(cl::Device device, cl::Context co
 	std::vector<cl::Kernel> kernels;
 	program.createKernels(&kernels);
 	cl::Kernel test_kernel = kernels[0];
-	test_kernel.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(device);
-
+	return static_cast<int>(test_kernel.getWorkGroupInfo<CL_KERNEL_PREFERRED_WORK_GROUP_SIZE_MULTIPLE>(device));
 }
 
 

@@ -23,8 +23,8 @@ opencv_rectifier::opencv_rectifier(){}
  * Loads calibration from opencv xml formatted file.
  * @param opencv_calibration_path path to the said file.
  */
-opencv_rectifier::opencv_rectifier(const std::string& opencv_calibration_path){
-	set_calibration_opencv(opencv_calibration_path);
+opencv_rectifier::opencv_rectifier(const std::string& opencv_calibration_path,double scale_factor){
+	set_calibration(opencv_calibration_path, scale_factor);
 }
 
 opencv_rectifier::opencv_rectifier(std::shared_ptr<calibu::Rigd> calibration){
@@ -53,7 +53,7 @@ void opencv_rectifier::set_calibration(std::shared_ptr<calibu::Rigd> calibration
  * Loads calibration from opencv xml formatted file.
  * @param path path to the said file.
  */
-void opencv_rectifier::set_calibration_opencv(const std::string& path){
+void opencv_rectifier::set_calibration(const std::string& path, double scale_factor){
 	cv::FileStorage fs(path, cv::FileStorage::READ);
 	cv::Mat T, R, K1, K2, d1, d2;
 	fs["K1"] >> K1;
@@ -63,7 +63,13 @@ void opencv_rectifier::set_calibration_opencv(const std::string& path){
 	fs["R"] >> R;
 	fs["T"] >> T;
 
-	cv::Size im_size((int)fs["width"],(int)fs["height"]);
+	K1 *= scale_factor;
+	K2 *= scale_factor;
+	K1.at<double>(2,2) = 1.0;
+	K2.at<double>(2,2) = 1.0;
+
+	cv::Size im_size(static_cast<int>(scale_factor*(int)fs["width"]),
+			static_cast<int>(scale_factor*(int)fs["height"]));
 
 	fs.release();
 	compute_maps(T,R,K1,d1,K2,d2,im_size);

@@ -44,8 +44,8 @@
 
 namespace
 {
-const size_t ERROR_IN_COMMAND_LINE = 1;
-const size_t SUCCESS = 0;
+const size_t error_in_command_line = -2;
+const size_t success = 0;
 
 } // namespace
 
@@ -58,7 +58,7 @@ class workbench{
 
 public:
 	workbench(fs::path path_left, fs::path path_right, int max_frames = std::numeric_limits<int>::max()):
-		path_l(path_left),path_r(path_right), rectifier(CALIB_FOLDER "0_1_smallboard_redux.xml"){
+		path_l(path_left),path_r(path_right), rectifier(CALIB_FOLDER "0_1_smallboard.xml", 1.0){
 
 		if(!fs::is_regular_file(path_l)){
 			err2(std::invalid_argument,"Cannot find file at this path: " << path_l.string());
@@ -108,7 +108,8 @@ public:
 				cv::waitKey(1);
 			}
 		}else{
-			process_frame(result_l, result_r, result_big);
+			rectifier.rectify(frame_l,frame_r,result_l,result_r);
+			get_frame_depth(result_l, result_r, result_big);
 			cv::imshow(left_win_title,result_l);
 			cv::imshow(right_win_title,result_r);
 			cv::imshow(big_win_title,result_big);
@@ -143,15 +144,15 @@ private:
 	}
 
 	void set_up_matcher(int channel_number = 3, int penalty_factor = 8, int penalty_over_1_factor =4){
-		const int max_disparity = 160;
+		const int max_disparity = 160*4;
 		const int block_size = 1;
-		const int gradient_influence = 15;
+		const int gradient_cost_influence = 15;
 		const int uniqueness_margin = 15;//%
 
 		matcher = create_semiglobal_matcher(0,max_disparity,block_size,
 				penalty_factor*channel_number*block_size*block_size,
 				penalty_factor*penalty_over_1_factor*channel_number*block_size*block_size,
-				-1, gradient_influence,uniqueness_margin,0,0,
+				-1, gradient_cost_influence,uniqueness_margin,0,0,
 				cv::StereoSGBM::MODE_SGBM, pixel_cost_type::DAISY);
 	}
 
@@ -206,16 +207,13 @@ private:
 		return out;
 	}
 
-	inline void process_frame(cv::Mat& result_l, cv::Mat& result_r, cv::Mat& result_big){
+	inline void get_frame_depth(cv::Mat& result_l, cv::Mat& result_r, cv::Mat& result_big){
 
-		//rectifier.rectify(frame_l,frame_r,result_l,result_r);
-		result_l = frame_l;
-		result_r = frame_r;
 		cv::Mat temp;
 		matcher->compute(result_l,result_r,temp);
 
 		cv::normalize(temp, result_big, 0, 255, cv::NORM_MINMAX, CV_8U);
-		//matcher->compute(result_l,result_r,result_big);
+
 	}
 
 
@@ -253,7 +251,7 @@ int main(int argc, char** argv) {
 		if (vm.count("help")){
 			std::cout << "Stereo workbench." << std::endl
 					<< regular_options << std::endl;
-			return SUCCESS;
+			return success;
 		}
 
 		po::notify(vm); // throws on error, so do after help in case
@@ -265,7 +263,7 @@ int main(int argc, char** argv) {
 	}catch (po::error& e){
 		std::cerr << "ERROR: " << e.what() << std::endl << std::endl;
 		std::cerr << regular_options << std::endl;
-		return ERROR_IN_COMMAND_LINE;
+		return error_in_command_line;
 	}
 
 
@@ -275,7 +273,7 @@ int main(int argc, char** argv) {
 	reco::stereo_workbench::workbench workbench(path_l, path_r);
 	workbench.run();
 
-	return SUCCESS;
+	return success;
 }
 
 
