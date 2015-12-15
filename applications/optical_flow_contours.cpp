@@ -23,6 +23,8 @@
 #include <opencv2/videoio.hpp>
 #include <opencv2/videoio/videoio_c.h>
 #include <opencv2/imgproc.hpp>
+#include <opencv2/optflow.hpp>
+#include <opencv2/cudaoptflow.hpp>
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
@@ -30,6 +32,7 @@
 #include <reco/utils/debug_util.h>
 #include <iostream>
 #include <thread>
+#include <chrono>
 
 namespace
 {
@@ -53,7 +56,7 @@ int main(int argc, char** argv) {
 			("help,h", "Print help messages")
 			 ("input-video-path,i", po::value<std::vector<std::string>>(&videos)->required(), "Path to input video")
 			 ("max-frames,m", po::value<int>(&max_frames),"Maximum frames in the output file.")
-			 ("output,o", po::value<string>(&output_filename)->default_value("output.mp4"), "Output file name.");
+			 ("output,o", po::value<string>(&output_filename)->default_value("opt_flow.mp4"), "Output file name.");
 
 
 	po::positional_options_description positional_options;
@@ -95,25 +98,41 @@ int main(int argc, char** argv) {
 	int num_frames = cap.get(cv::CAP_PROP_FRAME_COUNT);
 	int i_frame = 0;
 	int report_interval = num_frames / 20;
-	//std::vector<cv::Point2f> prev_corners;
-	//std::vector<cv::Point2f> corners;
+
 	std::vector<int> status;
 	std::vector<double> err;
 
 	cv::VideoWriter writer(output_path.string(), CV_FOURCC('X','2','6','4'), cap.get(cv::CAP_PROP_FPS), frame.size(), true);
 	writer.set(cv::VIDEOWRITER_PROP_NSTRIPES, std::thread::hardware_concurrency());
 	cv::cvtColor(frame,prev_grey_frame,cv::COLOR_BGR2GRAY);
-	//cv::goodFeaturesToTrack(prev_grey_frame,prev_corners,100,0.3,7,7);
+
 
 	cv::TermCriteria term_criteria(cv::TermCriteria::Type::EPS | cv::TermCriteria::Type::COUNT, 10, 0.03);
 	saturation_channel = cv::Mat(frame.size(), CV_8UC1,cv::Scalar(255));
 
+
+	cv::Ptr<cv::cuda::BroxOpticalFlow> brox = cv::cuda::BroxOpticalFlow::create(0.197f, 50.0f, 0.8f, 10, 77, 10);
+
+	cv::cuda::GpuMat prev_gpu_frame;
+	cv::cuda::GpuMat gpu_frame;
+	prev_grey_frame.convertTo(prev_grey_frame, CV_32F, 1.0 / 255.0);
+	prev_gpu_frame.upload(prev_grey_frame);
+	cv::cuda::GpuMat gpu_flow(frame.size(), CV_32FC2);
+	cv::Mat out;
+
+	std::chrono::time_point<std::chrono::system_clock> start, end;
+	start = std::chrono::system_clock::now();
 	while(cap.read(frame) && i_frame < max_frames){
 
 		cv::cvtColor(frame,grey_frame,cv::COLOR_BGR2GRAY);
-		//cv::calcOpticalFlowPyrLK(prev_grey_frame, grey_frame, prev_corners, corners, status, err, cv::Size(15,15), 2, term_criteria);
+		grey_frame.convertTo(grey_frame, CV_32F, 1.0 / 255.0);
+		gpu_frame.upload(grey_frame);
+
+		//brox->calc(prev_gpu_frame, gpu_frame, gpu_flow);
+		//gpu_flow.download(out);
+
 		cv::calcOpticalFlowFarneback(prev_grey_frame, grey_frame, flow, 0.5, 3, 15, 3, 5, 1.2, 0);
-		//cv::morphologyEx(mask,mask,cv::MORPH_OPEN,kernel);
+
 		std::vector<cv::Mat> flow_channels;
 		cv::split(flow,flow_channels);
 		cv::cartToPolar(flow_channels[0],flow_channels[1], mag, ang, true);
@@ -135,8 +154,15 @@ int main(int argc, char** argv) {
 			dpt("Progress: " << i_frame << "/" << num_frames);
 		}
 		i_frame++;
-	}
+		prev_gpu_frame = gpu_frame;
+		prev_grey_frame = grey_frame;
 
+	}
+	end = std::chrono::system_clock::now();
+	std::chrono::duration<double> elapsed_seconds = end-start;
+	std::time_t end_time = std::chrono::system_clock::to_time_t(end);
+	std::cout << "finished computation at " << std::ctime(&end_time)
+	              << "elapsed time: " << elapsed_seconds.count() << "s\n";
 
 	cap.release();
 	writer.release();

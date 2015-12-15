@@ -68,7 +68,7 @@ DAISY_stereo_cost_calculator::DAISY_stereo_cost_calculator(const cv::Mat& img1, 
 	daisy->compute(img2,descriptors2);
 };
 
-static int max = 0;
+//static int max = 0;
 void DAISY_stereo_cost_calculator::compute(int y,CostType* cost){
 	const int minX1 = std::max(maxD, 0), maxX1 = image_width + std::min(minD, 0);
 	int D = maxD - minD;

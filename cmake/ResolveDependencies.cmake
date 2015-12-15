@@ -4,8 +4,8 @@ set(verbosity 0)
 reco_find_dependency(PythonLibs ${verbosity} QUIET LIBRARIES PYTHON_LIBRARIES INCLUDE_DIRS PYTHON_INCLUDE_DIRS)
 reco_find_dependency(TinyXML ${verbosity} QUIET)
 reco_find_dependency(OpenCV ${verbosity} QUIET
-     COMPONENTS core highgui calib3d imgproc ximgproc xfeatures2d videoio video bgsegm 
-     cudastereo cudabgsegm cudalegacy LIBRARIES OpenCV_LIBS)
+     COMPONENTS core highgui calib3d imgproc ximgproc xfeatures2d videoio video bgsegm optflow 
+     cudastereo cudabgsegm cudalegacy cudaoptflow LIBRARIES OpenCV_LIBS)
 reco_find_dependency(PCL ${verbosity} QUIET)
 reco_find_dependency(Boost ${verbosity} QUIET COMPONENTS system filesystem python regex program_options) #has to come after PCL, BECAUSE.
 reco_find_dependency(freenect2 ${verbosity} QUIET LIBRARIES freenect2_LIBRARY)
@@ -31,4 +31,4 @@ include("DetectPython")
 include("DetectQt")
 
 #temp fix for OpenKinect/libfreenect2 issue #217
-set(freenect2_INCLUDE_DIRS ${freenect2_INCLUDE_DIR} ${freenect2_INCLUDE_DIR}/libfreenect2/tinythread)
+#set(freenect2_INCLUDE_DIRS ${freenect2_INCLUDE_DIR} ${freenect2_INCLUDE_DIR}/libfreenect2/tinythread)

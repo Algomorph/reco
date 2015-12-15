@@ -37,8 +37,7 @@ macro(reco_link_libraries_to_subproject _target_name verbose link_plain)
 endmacro()
 
 #add dependency preprocessor definitions and compile flags to subproject
-macro(reco_add_depends_to_subproject _target_name)
-    get_target_property(${_target_name}_definitions ${_target_name} COMPILE_DEFINITIONS)
+macro(reco_add_depends_to_subproject _target_name verbose)
     if(NOT "${${_target_name}_definitions}")
         #clear out the "...-NOTFOUND" value
         set(${_target_name}_definitions)
@@ -46,10 +45,14 @@ macro(reco_add_depends_to_subproject _target_name)
     foreach(depend ${_depends})
         if(DEFINED ${depend}_DEFINITIONS)
             string(REPLACE "-D" "" filtered_defs ${${depend}_DEFINITIONS})
-            list(APPEND ${_target_name}_definitions filtered_defs)
+            list(APPEND ${_target_name}_definitions ${filtered_defs})
         endif()
     endforeach()
     set_target_properties(${_target_name} PROPERTIES COMPILE_DEFINITIONS "${${_target_name}_definitions}")
+    if(${verbose} EQUAL 1)
+        get_target_property(${_target_name}_definitions ${_target_name} COMPILE_DEFINITIONS)
+        message(STATUS "${_target_name} defs: ${${_target_name}_definitions}")
+    endif()
     foreach(depend ${_depends})
         if(DEFINED ${depend}_CXX_FLAGS)
             get_target_property(${_target_name}_link_flags ${_target_name} LINK_FLAGS)
@@ -363,7 +366,7 @@ macro(reco_add_subproject _name)
     endif()
 #---------------------------LINK LIBRARIES --------------------------------------------------------#
 
-    reco_link_libraries_to_subproject(${_target_name} verbose ${cuda_subproject} ${_depends})
+    reco_link_libraries_to_subproject(${_target_name} ${verbose} ${cuda_subproject} ${_depends})
     
     #make a list of used libraries, for reuse in applications
     if(${_subproject_type} STREQUAL ${module_type} AND BUILD_${_name})
@@ -375,5 +378,5 @@ macro(reco_add_subproject _name)
     
 #---------------------------ADD PREPROCESSOR DEFINES-----------------------------------------------#
 #TODO: add support for user-specified defines
-    reco_add_depends_to_subproject(${_target_name} ${_depends})
+    reco_add_depends_to_subproject(${_target_name} ${verbose} ${_depends})
 endmacro()
