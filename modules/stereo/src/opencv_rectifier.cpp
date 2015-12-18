@@ -34,7 +34,6 @@ opencv_rectifier::opencv_rectifier(std::shared_ptr<calibu::Rigd> calibration){
 opencv_rectifier::~opencv_rectifier(){}
 
 void opencv_rectifier::set_calibration(std::shared_ptr<calibu::Rigd> calibration){
-	cv::Mat T, R, K1, K2, d1, d2;
 	cv::eigen2cv(calibration->cameras_[1]->Pose().translation(),T);
 	cv::eigen2cv(calibration->cameras_[1]->Pose().rotationMatrix(),R);
 	cv::eigen2cv(calibration->cameras_[0]->K(),K1);
@@ -55,7 +54,6 @@ void opencv_rectifier::set_calibration(std::shared_ptr<calibu::Rigd> calibration
  */
 void opencv_rectifier::set_calibration(const std::string& path, double scale_factor){
 	cv::FileStorage fs(path, cv::FileStorage::READ);
-	cv::Mat T, R, K1, K2, d1, d2;
 	fs["K1"] >> K1;
 	fs["K2"] >> K2;
 	fs["d1"] >> d1;
@@ -79,7 +77,6 @@ void opencv_rectifier::compute_maps(const cv::Mat& T, const cv::Mat& R,
 		const cv::Mat& K1, const cv::Mat& d1,
 		const cv::Mat& K2, const cv::Mat& d2,
 		const cv::Size im_size){
-	cv::Mat R1,R2,P1,P2,Q;
 	double factor = 1.8;
 	cv::Size new_size((int)(im_size.width*factor),(int)(im_size.height*factor));
 	cv::stereoRectify(K1, d1, K2, d2, im_size, R, T, R1, R2, P1, P2, Q, cv::CALIB_ZERO_DISPARITY,-1.0,new_size);
@@ -117,6 +114,33 @@ void opencv_rectifier::rectify(const cv::Mat& left, const cv::Mat& right, cv::Ma
 		left_rect = rect_left;
 		right_rect = rect_right;
 	}
+}
+
+const cv::Mat& opencv_rectifier::get_left_camera_matrix() const{
+	return this->K1;
+};
+const cv::Mat& opencv_rectifier::get_right_camera_matrix() const{
+	return this->K2;
+};
+const cv::Mat& opencv_rectifier::get_left_rectified_camera_matrix() const{
+	return this->P1;
+};
+const cv::Mat& opencv_rectifier::get_right_rectified_camera_matrix() const{
+	return this->P2;
+};
+
+const cv::Mat& opencv_rectifier::get_translation_between_cameras() const{
+	return this->T;
+};
+const cv::Mat& opencv_rectifier::get_rotation_between_cameras() const{
+	return this->R;
+};
+const cv::Mat& opencv_rectifier::get_projection_matrix() const{
+	return this->Q;
+}
+
+double opencv_rectifier::get_baseline() const{
+	return this->Q.at<float>(3,2);
 }
 
 } /* namespace stereo */

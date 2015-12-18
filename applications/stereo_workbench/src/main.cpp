@@ -38,8 +38,11 @@
 #include <thread>
 #include <limits>
 
+#include <pcl/visualization/pcl_visualizer.h>
+
 #include <reco/stereo/opencv_rectifier.hpp>
 #include <reco/stereo_workbench/semiglobal_matcher.hpp>
+#include <reco/stereo_workbench/pcl_opencv_conversions.hpp>
 
 #define CALIB_FOLDER "/home/algomorph/Dropbox/calib/yi/"
 
@@ -62,7 +65,8 @@ public:
 			int end_frame = std::numeric_limits<int>::max()) :
 			start_frame(start_frame), end_frame(end_frame),
 					path_l(path_left), path_r(path_right), work_dir(work_dir),
-					rectifier(CALIB_FOLDER "0_1_smallboard.xml", 1.0) {
+					rectifier(CALIB_FOLDER "0_1_smallboard.xml", 1.0),
+					viewer("3D Viewer"){
 
 		if (!fs::is_regular_file(path_l)) {
 			err2(std::invalid_argument, "Cannot find file at this path: " << path_l.string());
@@ -106,14 +110,15 @@ public:
 	void run() {
 		cv::Mat result_l, result_r, result_big;
 
+
+
 		cv::Mat mask_l;
 		if (input_is_video) {
 			int i_frame = 0;
 			int ch = 0;
 			cv::Mat prev, grey, flow;
 			cv::cvtColor(frame_l, prev, cv::COLOR_BGR2GRAY);
-//			int block_size = 20;
-//			int max_flow = 5;
+
 
 			cv::Ptr<cv::DenseOpticalFlow> dense_flow = cv::optflow::createOptFlow_DeepFlow();
 			//dense_flow->alpha
@@ -144,10 +149,26 @@ public:
 		} else {
 			rectifier.rectify(frame_l,frame_r,result_l,result_r);
 
-			cv::Mat disparity = cv::imread((work_dir / fs::path("01_LU_disparity.png")).string(), cv::IMREAD_ANYDEPTH);
-			cv::Mat disparity_mask = cv::imread((work_dir / fs::path("01_LU_disparity_mask.png")).string());
-			cv::Mat mouse_mask = cv::imread((work_dir / fs::path("01_LU_mouse_mask.png")).string());;
 
+
+
+			cv::Mat disparity = cv::imread((work_dir / fs::path("01_LU_disparity.png")).string(), cv::IMREAD_ANYDEPTH);
+
+//			cv::Mat disparity;
+//			matcher->compute(result_l, result_r, disparity);
+			cv::Mat disparity_mask = cv::imread((work_dir / fs::path("01_LU_disparity_mask.png")).string(), cv::IMREAD_GRAYSCALE);
+
+			cv::Mat mouse_mask = cv::imread((work_dir / fs::path("01_LU_mouse_mask.png")).string(), cv::IMREAD_GRAYSCALE);
+			cv::Mat disparity_32f;
+			disparity.convertTo(disparity_32f,CV_32F, 1./16.0);
+
+			cv::Mat Q = rectifier.get_projection_matrix();
+			cv::Mat cloud_mat;
+
+			cv::reprojectImageTo3D(disparity_32f, cloud_mat, Q);
+			//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud(disparity_uint16, result_l, disparity_mask, mouse_mask, Q);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud(disparity, result_l, disparity_mask, Q);
+			//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud_direct(cloud_mat, result_l, disparity_mask);
 
 
 			//compute_frame_disparity(result_l, result_r,disparity, result_big);
@@ -156,6 +177,8 @@ public:
 
 			cv::imshow(left_win_title, result_l);
 			cv::imshow(right_win_title, result_r);
+			boost::this_thread::sleep (boost::posix_time::microseconds (1000000));
+
 
 
 			//cv::Point fixation = cv::Point(frame_l.cols/2,frame_l.rows/2+100);
@@ -163,7 +186,18 @@ public:
 			//cv::Point fixation = cv::Point(977,454);
 			//log_polar_segment(frame_l, fixation, mask_l,result_big);
 			//cv::imshow(big_win_title,disparity);
+
+			if (!viewer.updatePointCloud(cloud)) {
+				viewer.addPointCloud(cloud);
+			}
+			//viewer.resetCameraViewpoint();
+
+			while (!viewer.wasStopped()){
+				viewer.spinOnce(100);
+				boost::this_thread::sleep (boost::posix_time::microseconds (100000));
+			}
 			cv::waitKey(0);
+
 		}
 	}
 
@@ -176,6 +210,7 @@ private:
 	cv::Ptr<cv::StereoSGBM> matcher;
 	bool input_is_video;
 	reco::stereo::opencv_rectifier rectifier;
+	pcl::visualization::PCLVisualizer viewer;
 
 	const char* left_win_title = "Left";
 	const char* right_win_title = "Right";
@@ -252,7 +287,7 @@ private:
 			cv::findContours(mask, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);
 			cv::cvtColor(mask_bgr, mask_bgr, cv::COLOR_GRAY2BGR);
 			cv::addWeighted(log_polar, 1.0, mask_bgr, -0.5, 1.0, log_polar);
-			for (int i_contour = 0; i_contour < contours.size(); i_contour++) {
+			for (size_t i_contour = 0; i_contour < contours.size(); i_contour++) {
 				cv::drawContours(log_polar, contours, i_contour, Scalar(0, 255, 30), 1, cv::LINE_8);
 			}
 		}
@@ -260,7 +295,7 @@ private:
 	}
 
 	void set_up_windows(cv::Size image_size) {
-
+#define RESIZE_TO_FIT
 		const int screen_width = 1920;
 		const int screen_height = 1080;
 		const int right_offset = 70;			//approx launcher width
@@ -279,16 +314,32 @@ private:
 
 		cv::namedWindow(left_win_title, cv::WINDOW_FREERATIO);
 		cv::namedWindow(right_win_title, cv::WINDOW_FREERATIO);
-		cv::namedWindow(big_win_title, cv::WINDOW_AUTOSIZE);
-		//cv::namedWindow(big_win_title, cv::WINDOW_KEEPRATIO);
 		cv::resizeWindow(left_win_title, window_l_size.width, window_l_size.height);
 		cv::resizeWindow(right_win_title, window_r_size.width, window_r_size.height);
-		//cv::resizeWindow(big_win_title, window_big_size.width, window_big_size.height);
-//		cv::imshow(left_win_title,frame_l);
-//		cv::imshow(right_win_title,frame_r);
+#ifdef RESIZE_TO_FIT
+		cv::namedWindow(big_win_title, cv::WINDOW_AUTOSIZE);
+#else
+		cv::namedWindow(big_win_title, cv::WINDOW_KEEPRATIO);
+		cv::resizeWindow(big_win_title, window_big_size.width, window_big_size.height);
+#endif
+
 		cv::moveWindow(left_win_title, window_l_pos.x, window_l_pos.y);
 		cv::moveWindow(right_win_title, window_r_pos.x, window_r_pos.y);
 		cv::moveWindow(big_win_title, window_big_pos.x, window_big_pos.y);
+
+
+		//viewer.setPosition(right_offset,top_offset*2 + window_l_size.height);
+		//viewer.setSize(screen_width - right_offset, screen_height - top_offset*2 - window_l_size.height);
+		viewer.setPosition(screen_width, top_offset);
+		viewer.setSize(screen_width,screen_height - top_offset);
+		//setup PCL viewer
+		viewer.setCameraPosition(
+				0.0, 0.0, 0.0,   // camera position
+				0.0, 0.0, 1.0,   // viewpoint
+				0.0, -1.0, 0.0,  // normal
+				0);              // which viewport
+		//viewer.setCameraClipDistances(0.0, 3.0,0);
+		viewer.setBackgroundColor(0.1,0.3,0.35);
 	}
 
 	inline cv::Mat process_superpixels(const cv::Mat& frame,
