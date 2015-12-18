@@ -148,53 +148,52 @@ public:
 			}
 		} else {
 			rectifier.rectify(frame_l,frame_r,result_l,result_r);
+#define SEG
+#ifdef DISP
 
-
-
-
+#ifdef LOAD_DISP
 			cv::Mat disparity = cv::imread((work_dir / fs::path("01_LU_disparity.png")).string(), cv::IMREAD_ANYDEPTH);
-
-//			cv::Mat disparity;
-//			matcher->compute(result_l, result_r, disparity);
+#elif COMPUTE_DISP
+			cv::Mat disparity;
+			matcher->compute(result_l, result_r, disparity);
+			//save_disparity_image(work_dir, disparity);
+#endif
 			cv::Mat disparity_mask = cv::imread((work_dir / fs::path("01_LU_disparity_mask.png")).string(), cv::IMREAD_GRAYSCALE);
 			cv::Mat mouse_mask = cv::imread((work_dir / fs::path("01_LU_mouse_mask.png")).string(), cv::IMREAD_GRAYSCALE);
 			cv::Mat combined_mask;
 			cv::bitwise_and(disparity_mask, mouse_mask, combined_mask);
+			cv::imshow(big_win_title,disparity);
 
-			cv::Mat disparity_32f;
-			disparity.convertTo(disparity_32f,CV_32F, 1./16.0);
 
 			cv::Mat Q = rectifier.get_projection_matrix();
 			cv::Mat cloud_mat;
 
-			cv::reprojectImageTo3D(disparity_32f, cloud_mat, Q);
+
 			//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud(disparity_uint16, result_l, disparity_mask, mouse_mask, Q);
 			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud(disparity, result_l, combined_mask, Q);
 			//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud_direct(cloud_mat, result_l, disparity_mask);
-
-
-			//compute_frame_disparity(result_l, result_r,disparity, result_big);
-			//save_disparity_image(work_dir, disparity);
-
-
-			cv::imshow(left_win_title, result_l);
-			cv::imshow(right_win_title, result_r);
-			boost::this_thread::sleep (boost::posix_time::microseconds (1000000));
-
-			//cv::Point fixation = cv::Point(frame_l.cols/2,frame_l.rows/2+100);
-			//cv::Point fixation = cv::Point(870,670);
-			//cv::Point fixation = cv::Point(977,454);
-			//log_polar_segment(frame_l, fixation, mask_l,result_big);
-			//cv::imshow(big_win_title,disparity);
-
-			if (!viewer.updatePointCloud(cloud)) {
-				viewer.addPointCloud(cloud);
-			}
-
 			while (!viewer.wasStopped()){
 				viewer.spinOnce(100);
 				boost::this_thread::sleep (boost::posix_time::microseconds (100000));
 			}
+			if (!viewer.updatePointCloud(cloud)) {
+				viewer.addPointCloud(cloud);
+			}
+
+#endif
+
+
+
+#ifdef SEG
+			cv::Point fixation = cv::Point(frame_l.cols/2,frame_l.rows/2+100);
+//			cv::Point fixation = cv::Point(870,670);
+//			cv::Point fixation = cv::Point(977,454);
+			log_polar_segment(frame_l, fixation, mask_l,result_big);
+
+#endif
+			cv::imshow(left_win_title, result_l);
+			cv::imshow(right_win_title, result_r);
+			cv::imshow(big_win_title,result_big);
 			cv::waitKey(0);
 
 		}
