@@ -3,8 +3,7 @@
 ** description: Definition of class Image.
 **/
 
-#include <reco/segmentation/Image.h>
-
+#include <reco/segmentation/image.h>
 #include <iostream>
 #include <fstream>
 #include <sstream>

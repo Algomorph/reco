@@ -5,8 +5,7 @@
 #ifndef _IMAGE_H_
 #define _IMAGE_H_
 
-#include"Exception.h"
-
+#include <reco/segmentation/exception.h>
 #include<iostream>
 
 extern "C" {

@@ -1,11 +1,11 @@
 #include <cuda_runtime.h>
-#include <reco/segmentation/Image.h>
-#include <reco/segmentation/Exception.h>
 #include <reco/cuda/helper_cuda.h>
 #include <reco/segmentation/quickshift_common.h>
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
+#include <reco/segmentation/exception.h>
+#include <reco/segmentation/image.h>
 
 #include <chrono>
 #include <fstream>
