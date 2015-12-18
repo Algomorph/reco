@@ -184,10 +184,10 @@ void add_to_cloud(
 	for (int row = 0; row < disparity.rows; row++) {
 		for (int col = 0; col < disparity.cols; col++, cur_disp++, cur_mask++) {
 			if (cur_mask) {
-				float ib_d = inv_baseline * (*cur_disp);
+				float ib_d = inv_baseline * static_cast<double>(*cur_disp) / 16;
 				pcl::PointXYZRGB ptRGB(r, g, b);
-				ptRGB.x = (col - ox) / ib_d; //equiv. to (x-x_0) * z / f
-				ptRGB.y = (row - oy) / ib_d; //equiv. to (y-y_0) * z / f
+				ptRGB.x = (col + ox) / ib_d; //equiv. to (x-x_0) * z / f
+				ptRGB.y = (row + oy) / ib_d; //equiv. to (y-y_0) * z / f
 				ptRGB.z = f / ib_d; //equiv. to fB/d
 				cloud.push_back(ptRGB);
 			}
@@ -251,12 +251,17 @@ void add_to_cloud(
 	for (int row = 0; row < disparity.rows; row++) {
 		for (int col = 0; col < disparity.cols; col++, cur_disp++, cur_mask++, color_px += 3) {
 			if (*cur_mask) {
-				float ib_d = inv_baseline * static_cast<double>(*cur_disp) / 16;
-				pcl::PointXYZRGB pt(*(color_px + 2), *(color_px + 1), *(color_px));
-				pt.x = (col + ox) / ib_d; //equiv. to (x-x_0) * z / f
-				pt.y = (row + oy) / ib_d;//equiv. to (y-y_0) * z / f
-				pt.z = f / ib_d;//equiv. to fB/d
-				cloud.push_back(pt);
+				double ib_d = inv_baseline * static_cast<double>(*cur_disp) / 16;
+				double z = f / ib_d;//equiv. to fB/d
+				if(z < 0.5){
+					pcl::PointXYZRGB pt(*(color_px + 2), *(color_px + 1), *(color_px));
+					if(pt.z < 1.0){
+						pt.x = (col + ox) / ib_d; //equiv. to (x-x_0) * z / f
+						pt.y = (row + oy) / ib_d;//equiv. to (y-y_0) * z / f
+						pt.z = z;
+						cloud.push_back(pt);
+					}
+				}
 			}
 		}
 	}

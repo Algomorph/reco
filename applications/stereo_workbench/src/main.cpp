@@ -157,8 +157,10 @@ public:
 //			cv::Mat disparity;
 //			matcher->compute(result_l, result_r, disparity);
 			cv::Mat disparity_mask = cv::imread((work_dir / fs::path("01_LU_disparity_mask.png")).string(), cv::IMREAD_GRAYSCALE);
-
 			cv::Mat mouse_mask = cv::imread((work_dir / fs::path("01_LU_mouse_mask.png")).string(), cv::IMREAD_GRAYSCALE);
+			cv::Mat combined_mask;
+			cv::bitwise_and(disparity_mask, mouse_mask, combined_mask);
+
 			cv::Mat disparity_32f;
 			disparity.convertTo(disparity_32f,CV_32F, 1./16.0);
 
@@ -167,7 +169,7 @@ public:
 
 			cv::reprojectImageTo3D(disparity_32f, cloud_mat, Q);
 			//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud(disparity_uint16, result_l, disparity_mask, mouse_mask, Q);
-			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud(disparity, result_l, disparity_mask, Q);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud(disparity, result_l, combined_mask, Q);
 			//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud_direct(cloud_mat, result_l, disparity_mask);
 
 
@@ -190,7 +192,6 @@ public:
 			if (!viewer.updatePointCloud(cloud)) {
 				viewer.addPointCloud(cloud);
 			}
-			//viewer.resetCameraViewpoint();
 
 			while (!viewer.wasStopped()){
 				viewer.spinOnce(100);
