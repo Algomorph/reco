@@ -181,8 +181,6 @@ public:
 			cv::imshow(right_win_title, result_r);
 			boost::this_thread::sleep (boost::posix_time::microseconds (1000000));
 
-
-
 			//cv::Point fixation = cv::Point(frame_l.cols/2,frame_l.rows/2+100);
 			//cv::Point fixation = cv::Point(870,670);
 			//cv::Point fixation = cv::Point(977,454);

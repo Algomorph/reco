@@ -80,9 +80,9 @@ void add_to_cloud(const cv::Mat& depth, const cv::Mat& K, Eigen::Matrix<float, 3
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_cloud(
 		const cv::Mat& disparity, const cv::Mat& mask,
 		const cv::Mat& Q, Eigen::Matrix<double, 3, 3> R,
-		Eigen::Vector3d T, uint8_t r, uint8_t g, uint8_t b) {
+		Eigen::Vector3d T, uint8_t r, uint8_t g, uint8_t b, double z_limit) {
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
-	add_to_cloud(disparity, mask, Q, R, T, r, g, b, *cloud);
+	add_to_cloud(disparity, mask, Q, R, T, r, g, b, *cloud, z_limit);
 	return cloud;
 
 }
@@ -100,7 +100,7 @@ void add_to_cloud(
 		const cv::Mat& disparity, const cv::Mat& mask,
 		const cv::Mat& Q, Eigen::Matrix<double, 3, 3> R,
 		Eigen::Vector3d T, uint8_t r, uint8_t g, uint8_t b,
-		pcl::PointCloud<pcl::PointXYZRGB>& cloud) {
+		pcl::PointCloud<pcl::PointXYZRGB>& cloud, double z_limit) {
 
 	if (disparity.type() != CV_16UC1) {
 		pcl::console::print_error("[add_to_cloud] disparity matrix type must be CV_16U");
@@ -128,7 +128,7 @@ void add_to_cloud(
 	for (int row = 0; row < disparity.rows; row++) {
 		for (int col = 0; col < disparity.cols; col++, cur_disp++, cur_mask++) {
 			if (cur_mask) {
-				float ib_d = inv_baseline * (*cur_disp);
+				double ib_d = inv_baseline * static_cast<double>(*cur_disp) / 16;
 				pt << (col - ox) / ib_d, (row - oy) / ib_d, f / ib_d;
 				pt += T;
 				pt = R * pt;
@@ -152,7 +152,7 @@ void add_to_cloud(
 void add_to_cloud(
 		const cv::Mat& disparity, const cv::Mat& mask,
 		const cv::Mat& Q, uint8_t r, uint8_t g, uint8_t b,
-		pcl::PointCloud<pcl::PointXYZRGB>& cloud) {
+		pcl::PointCloud<pcl::PointXYZRGB>& cloud, double z_limit) {
 
 	if (disparity.type() != CV_16UC1) {
 		pcl::console::print_error("[add_to_cloud] disparity matrix type must be CV_16U");
@@ -185,11 +185,11 @@ void add_to_cloud(
 		for (int col = 0; col < disparity.cols; col++, cur_disp++, cur_mask++) {
 			if (cur_mask) {
 				float ib_d = inv_baseline * static_cast<double>(*cur_disp) / 16;
-				pcl::PointXYZRGB ptRGB(r, g, b);
-				ptRGB.x = (col + ox) / ib_d; //equiv. to (x-x_0) * z / f
-				ptRGB.y = (row + oy) / ib_d; //equiv. to (y-y_0) * z / f
-				ptRGB.z = f / ib_d; //equiv. to fB/d
-				cloud.push_back(ptRGB);
+				pcl::PointXYZRGB pt(r, g, b);
+				pt.x = (col + ox) / ib_d; //equiv. to (x-x_0) * z / f
+				pt.y = (row + oy) / ib_d; //equiv. to (y-y_0) * z / f
+				pt.z = f / ib_d; //equiv. to fB/d
+				cloud.push_back(pt);
 			}
 		}
 	}
@@ -198,9 +198,10 @@ void add_to_cloud(
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_cloud(
 		const cv::Mat& disparity, const cv::Mat& color,
 		const cv::Mat& mask,
-		const cv::Mat& Q) {
+		const cv::Mat& Q,
+		double z_limit) {
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
-	add_to_cloud(disparity, color, mask, Q, *cloud);
+	add_to_cloud(disparity, color, mask, Q, *cloud, z_limit);
 	return cloud;
 }
 
@@ -214,7 +215,7 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_cloud(
  */
 void add_to_cloud(
 		const cv::Mat& disparity, const cv::Mat& color, const cv::Mat& mask, const cv::Mat& Q,
-		pcl::PointCloud<pcl::PointXYZRGB>& cloud) {
+		pcl::PointCloud<pcl::PointXYZRGB>& cloud, double z_limit) {
 
 	if (disparity.type() != CV_16UC1) {
 		pcl::console::print_error("[add_to_cloud] disparity matrix type must be CV_16U");
@@ -253,14 +254,12 @@ void add_to_cloud(
 			if (*cur_mask) {
 				double ib_d = inv_baseline * static_cast<double>(*cur_disp) / 16;
 				double z = f / ib_d;//equiv. to fB/d
-				if(z < 0.5){
+				if(z <= z_limit){
 					pcl::PointXYZRGB pt(*(color_px + 2), *(color_px + 1), *(color_px));
-					if(pt.z < 1.0){
-						pt.x = (col + ox) / ib_d; //equiv. to (x-x_0) * z / f
-						pt.y = (row + oy) / ib_d;//equiv. to (y-y_0) * z / f
-						pt.z = z;
-						cloud.push_back(pt);
-					}
+					pt.x = (col + ox) / ib_d; //equiv. to (x-x_0) * z / f
+					pt.y = (row + oy) / ib_d;//equiv. to (y-y_0) * z / f
+					pt.z = z;
+					cloud.push_back(pt);
 				}
 			}
 		}
@@ -269,24 +268,30 @@ void add_to_cloud(
 
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_cloud_direct(
-		const cv::Mat& vertices, const cv::Mat& color, const cv::Mat& mask) {
+		const cv::Mat& vertices, const cv::Mat& color, const cv::Mat& mask,
+		double z_limit) {
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
-	add_to_cloud_direct(vertices, color, mask, *cloud);
+	add_to_cloud_direct(vertices, color, mask, *cloud, z_limit);
 	return cloud;
 }
 void add_to_cloud_direct(
 		const cv::Mat& vertices, const cv::Mat& color, const cv::Mat& mask,
-		pcl::PointCloud<pcl::PointXYZRGB>& cloud) {
-//	uchar* color_px = color.data;
-//	const float* vertex = vertices.ptr<float>();
-//	uchar* cur_mask = mask.data;
-//	for (int i_pt = 0; i_pt < vertices.rows*vertices.cols; i_pt++, color_px+=3, vertex+=3, cur_mask++) {
-//		pcl::PointXYZRGB pt(*(color_px + 2), *(color_px + 1), *(color_px));
-//		pt.x = *vertex;
-//		pt.y = *(vertex+1);
-//		pt.z = *(vertex+2);
-//		cloud.push_back(pt);
-//	}
+		pcl::PointCloud<pcl::PointXYZRGB>& cloud, double z_limit) {
+#if 1
+	uchar* color_px = color.data;
+	const float* vertex = vertices.ptr<float>();
+	uchar* cur_mask = mask.data;
+	for (int i_pt = 0; i_pt < vertices.rows*vertices.cols; i_pt++, color_px+=3, vertex+=3, cur_mask++) {
+		pcl::PointXYZRGB pt(*(color_px + 2), *(color_px + 1), *(color_px));
+		float z = *(vertex+2);
+		if(z <= z_limit){
+			pt.x = *vertex;
+			pt.y = *(vertex+1);
+			pt.z = z;
+			cloud.push_back(pt);
+		}
+	}
+#else
 	for (int row = 0; row < vertices.rows; row++) {
 		for (int col = 0; col < vertices.cols; col++) {
 			if (mask.at<uchar>(row, col)) {
@@ -300,7 +305,7 @@ void add_to_cloud_direct(
 			}
 		}
 	}
-
+#endif
 }
 
 } //stereo_workbench

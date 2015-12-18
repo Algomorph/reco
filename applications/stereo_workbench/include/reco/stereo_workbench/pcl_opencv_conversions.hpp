@@ -36,6 +36,8 @@ class Mat;
 namespace reco{
 namespace stereo_workbench{
 
+#define Z_LIMIT_DEFAULT 1.0
+
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_cloud(const cv::Mat& depth,
 		const cv::Mat& K, Eigen::Matrix<float, 3, 3> R,
 		Eigen::Vector3f T,  uint8_t r, uint8_t g, uint8_t b);
@@ -48,32 +50,37 @@ void add_to_cloud(const cv::Mat& depth,
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_cloud(
 		const cv::Mat& disparity,const cv::Mat& mask,
 		const cv::Mat& Q, Eigen::Matrix<double, 3, 3> R,
-		Eigen::Vector3d T,  uint8_t r, uint8_t g, uint8_t b);
+		Eigen::Vector3d T,  uint8_t r, uint8_t g, uint8_t b,
+		double z_limit = Z_LIMIT_DEFAULT);
 
 void add_to_cloud(
 		const cv::Mat& disparity,const cv::Mat& mask,
 		const cv::Mat& Q, Eigen::Matrix<double, 3, 3> R,
 		Eigen::Vector3d T,  uint8_t r, uint8_t g, uint8_t b,
-		pcl::PointCloud<pcl::PointXYZRGB>& cloud);
+		pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+		double z_limit = Z_LIMIT_DEFAULT);
 
 void add_to_cloud(
 		const cv::Mat& disparity,const cv::Mat& mask,
 		const cv::Mat& Q, uint8_t r, uint8_t g, uint8_t b,
-		pcl::PointCloud<pcl::PointXYZRGB>& cloud);
+		pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+		double z_limit = Z_LIMIT_DEFAULT);
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_cloud(
-		const cv::Mat& disparity, const cv::Mat& color, const cv::Mat& mask,const cv::Mat& Q);
+		const cv::Mat& disparity, const cv::Mat& color, const cv::Mat& mask,const cv::Mat& Q,
+		double z_limit = Z_LIMIT_DEFAULT);
 
 void add_to_cloud(
 		const cv::Mat& disparity, const cv::Mat& color, const cv::Mat& mask,
-		const cv::Mat& Q, pcl::PointCloud<pcl::PointXYZRGB>& cloud);
+		const cv::Mat& Q, pcl::PointCloud<pcl::PointXYZRGB>& cloud, double z_limit = Z_LIMIT_DEFAULT);
 
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_cloud_direct(
-		const cv::Mat& vertices, const cv::Mat& color, const cv::Mat& mask);
+		const cv::Mat& vertices, const cv::Mat& color, const cv::Mat& mask,
+		double z_limit = Z_LIMIT_DEFAULT);
 void add_to_cloud_direct(
 		const cv::Mat& vertices, const cv::Mat& color, const cv::Mat& mask,
-		pcl::PointCloud<pcl::PointXYZRGB>& cloud);
+		pcl::PointCloud<pcl::PointXYZRGB>& cloud, double z_limit = Z_LIMIT_DEFAULT);
 
 }//stereo_workbench
 }//reco
