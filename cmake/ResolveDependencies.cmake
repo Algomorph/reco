@@ -11,24 +11,31 @@ reco_find_dependency(Boost ${verbosity} QUIET COMPONENTS system filesystem pytho
 reco_find_dependency(freenect2 ${verbosity} QUIET LIBRARIES freenect2_LIBRARY)
 reco_find_dependency(SceneGraph ${verbosity} QUIET)
 reco_find_dependency(Pangolin ${verbosity} QUIET)
-reco_find_dependency(HAL ${verbosity} QUIET)
+reco_find_dependency(HAL ${verbosity} QUIET) 
 reco_find_dependency(Protobuf ${verbosity} QUIET)
 reco_find_dependency(Calibu ${verbosity} QUIET)
-reco_find_dependency(Kangaroo ${verbosity} QUIET)
-reco_find_dependency(LibDL ${verbosity} QUIET)
-reco_find_dependency(VTK ${verbosity} QUIET) 
+reco_find_dependency(Kangaroo ${verbosity} QUIET) 
+reco_find_dependency(LibDL ${verbosity} QUIET)  
+reco_find_dependency(VTK ${verbosity} QUIET)  
 reco_find_dependency(x264 ${verbosity} QUIET LIBRARIES X264_LIBRARIES)
 reco_find_dependency(FFMPEG ${verbosity} QUIET) 
 reco_find_dependency(OpenMP ${verbosity} QUIET) 
 reco_find_dependency(CUDA ${verbosity} QUIET)
-reco_find_dependency(OpenCL ${verbosity} QUIET)
-reco_find_dependency(OpenGL ${verbosity} QUIET)  
+reco_find_dependency(OpenGL ${verbosity} QUIET)
+if(CUDA_FOUND)
+    #default to the CUDA version of OpenCL
+    find_OpenCL_CUDA()
+endif()
+if(NOT OpenCL_FOUND)
+    #Could not locate OpenCL in the nvidia CUDA package
+    reco_find_dependency(OpenCL ${verbosity} QUIET)
+endif()
 reco_find_dependency(GLUT ${verbosity} QUIET)
 reco_find_dependency(GLEW ${verbosity} QUIET)
 
 #find python, numpy
 include("DetectPython")
-include("DetectQt")
+include("DetectQt") 
 
 #temp fix for OpenKinect/libfreenect2 issue #217
 #set(freenect2_INCLUDE_DIRS ${freenect2_INCLUDE_DIR} ${freenect2_INCLUDE_DIR}/libfreenect2/tinythread)

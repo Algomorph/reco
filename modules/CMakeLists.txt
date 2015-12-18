@@ -1,5 +1,7 @@
 #add subdirectories containing modules here
 
+set(modules_built_by_default "utils" "stereo" "segmentation")
+
 add_subdirectory("python")
 add_subdirectory("datapipe")
 add_subdirectory("utils")

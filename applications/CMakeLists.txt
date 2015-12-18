@@ -1,4 +1,7 @@
 #Applications CMakeLists.txt
+
+set (applications_built_by_default "stereo_workbench")
+
 #=====================LARGE APPS===================================================================#
 add_subdirectory("rgbd_workbench")
 add_subdirectory("stereo_tuner")

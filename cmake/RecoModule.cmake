@@ -37,7 +37,7 @@ macro(reco_link_libraries_to_subproject _target_name verbose link_plain)
 endmacro()
 
 #add dependency preprocessor definitions and compile flags to subproject
-macro(reco_add_depends_to_subproject _target_name verbose)
+macro(reco_add_depends_to_subproject _target_name verbose cuda_subproject)
     if(NOT "${${_target_name}_definitions}")
         #clear out the "...-NOTFOUND" value
         set(${_target_name}_definitions)
@@ -63,8 +63,11 @@ macro(reco_add_depends_to_subproject _target_name verbose)
             list(APPEND ${_target_name}_link_flags ${${depend}_CXX_FLAGS})
             set_target_properties(${_target_name} PROPERTIES LINK_FLAGS "${${_target_name}_link_flags}")
             target_compile_options(${_target_name} PUBLIC ${${depend}_CXX_FLAGS}) 
-        endif()
+        endif() 
     endforeach()
+    if(${cuda_subproject})
+        #add_compile_options(${_target_name} PUBLIC "-c++11") 
+    endif()
 endmacro()
 
 #report failure on repeatedly setting a parameter that can only be set once
@@ -219,17 +222,26 @@ macro(reco_add_subproject _name)
     endif()
     
     if(NOT DEFINED BUILD_${_name})
-        SET(BUILD_${_name} ${_can_build} CACHE BOOL "Build the '${_name}' module.")
-        if(NOT ${_have_depends})
-            message(WARNING "Cannot build module '${_name}', the following dependencies are not met: ${_unmet_depends}")
-        endif()
-        if(NOT ${_reqs_satisfied})
-            message(WARNING "Cannot build module '${_name}', the following requirements are not met: ${_unmet_reqs}")
+        # also check if build is enabled by default
+        set(_built_by_default ${modules_built_by_default} ${applications_built_by_default})
+        list(FIND _built_by_default ${_name} _def_ix)
+        if(_def_ix GREATER -1)
+            SET(BUILD_${_name} ${_can_build} CACHE BOOL "Build the '${_name}' module.")
+            if(_def_ix GREATER -1)
+                if(NOT ${_have_depends})
+                    message(WARNING "Cannot build module '${_name}', the following dependencies are not met: ${_unmet_depends}. Setting BUILD_${_name} to FALSE.")
+                endif()
+                if(NOT ${_reqs_satisfied})
+                    message(WARNING "Cannot build module '${_name}', the following requirements are not met: ${_unmet_reqs}. Setting BUILD_${_name} to FALSE.")
+                endif()
+            endif()
+        else()
+            SET(BUILD_${_name} FALSE CACHE BOOL "Build the '${_name}' module.")
         endif()
     else()
         if(BUILD_${_name})
             if(NOT ${_have_depends})
-                message(FATAL_ERROR "Cannot build module '${_name}', the following dependencies are not met: ${_unmet_depends}")
+                message(FATAL_ERROR "Cannot build module '${_name}', the following dependencies are not met: ${_unmet_depends}. Setting BUILD_${_name} to FALSE.")
             endif()
             if(NOT ${_reqs_satisfied})
                 message(FATAL_ERROR "Cannot build module '${_name}', the following requirements are not met: ${_unmet_reqs}")
@@ -302,7 +314,7 @@ macro(reco_add_subproject _name)
     	${${subproject_name}_ui}
     	${${subproject_name}_ui_headers}
         ${${subproject_name}_generated_resources}
-    ) 
+    )   
     
     #${subproject_name}_target_files is an intermediate list in case not all project files
     #need to be added to the target in the future
@@ -320,6 +332,15 @@ macro(reco_add_subproject _name)
         message(STATUS "     Ui Generated Headers: ${${subproject_name}_ui_headers}")
         message(STATUS "     Resource Generated Headers: ${${subproject_name}_generated_resources}")
     endif()
+#---------------------------HANDLE COMPILE DEFS IN CASE OF CUDA------------------------------------#
+    if(cuda_subproject)
+        get_property(folder_compile_defs DIRECTORY PROPERTY COMPILE_DEFINITIONS)
+        foreach(def ${folder_compile_defs})
+            if(NOT ${def} STREQUAL "_DEBUG")
+               remove_definitions("-D${def}")
+            endif() 
+        endforeach()
+    endif() 
 #---------------------------ADD TARGET-------------------------------------------------------------#
     if(${_subproject_type} STREQUAL "${app_type}" OR ${_subproject_type} STREQUAL "${lightweight_app_type}")
         #don't use the subproject name, but rather the briefer name suffix for the executables
@@ -378,5 +399,6 @@ macro(reco_add_subproject _name)
     
 #---------------------------ADD PREPROCESSOR DEFINES-----------------------------------------------#
 #TODO: add support for user-specified defines
-    reco_add_depends_to_subproject(${_target_name} ${verbose} ${_depends})
+    reco_add_depends_to_subproject(${_target_name} ${verbose} ${cuda_subproject} ${_depends})
+    
 endmacro()

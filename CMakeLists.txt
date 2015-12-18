@@ -13,7 +13,7 @@
 # 5) Freedom = slavery
 #
 
-cmake_minimum_required(VERSION 3.0.0)
+cmake_minimum_required(VERSION 3.3.0)
 	
 #----------------------------PROJECT NAME--------------------------------------#
 project(reco)
