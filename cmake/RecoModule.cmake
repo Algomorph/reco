@@ -38,6 +38,7 @@ endmacro()
 
 #add dependency preprocessor definitions and compile flags to subproject
 macro(reco_add_depends_to_subproject _target_name verbose cuda_subproject)
+    set(_depends ${ARGN})
     if(NOT "${${_target_name}_definitions}")
         #clear out the "...-NOTFOUND" value
         set(${_target_name}_definitions)
@@ -53,21 +54,30 @@ macro(reco_add_depends_to_subproject _target_name verbose cuda_subproject)
         get_target_property(${_target_name}_definitions ${_target_name} COMPILE_DEFINITIONS)
         message(STATUS "${_target_name} defs: ${${_target_name}_definitions}")
     endif()
+
+endmacro()
+
+macro(reco_add_depend_flags verbose cuda_subproject)
+    set(_depends ${ARGN})
+    if(${cuda_subproject})
+        get_property(folder_compile_defs DIRECTORY PROPERTY COMPILE_DEFINITIONS)
+        foreach(def ${folder_compile_defs})
+            if(NOT ${def} STREQUAL "_DEBUG") 
+               remove_definitions("-D${def}")
+            endif() 
+        endforeach() 
+    endif()
     foreach(depend ${_depends})
         if(DEFINED ${depend}_CXX_FLAGS)
-            get_target_property(${_target_name}_link_flags ${_target_name} LINK_FLAGS)
-            if(NOT "${${_target_name}_link_flags}")
-                #clear out the "...-NOTFOUND" value
-                set(${_target_name}_link_flags)
-            endif()
-            list(APPEND ${_target_name}_link_flags ${${depend}_CXX_FLAGS})
-            set_target_properties(${_target_name} PROPERTIES LINK_FLAGS "${${_target_name}_link_flags}")
-            target_compile_options(${_target_name} PUBLIC ${${depend}_CXX_FLAGS}) 
+            set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${${depend}_CXX_FLAGS}")
+        endif()
+        if(DEFINED ${depend}_SHARED_LINKER_FLAGS )
+            set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} ${${depend}_SHARED_LINKER_FLAGS }")
+        endif()
+        if(DEFINED ${depend}_MODULE_LINKER_FLAGS )
+            set(CMAKE_SHARED_MODULE_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} ${${depend}_MODULE_LINKER_FLAGS }")
         endif() 
     endforeach()
-    if(${cuda_subproject})
-        #add_compile_options(${_target_name} PUBLIC "-c++11") 
-    endif()
 endmacro()
 
 #report failure on repeatedly setting a parameter that can only be set once
@@ -332,15 +342,9 @@ macro(reco_add_subproject _name)
         message(STATUS "     Ui Generated Headers: ${${subproject_name}_ui_headers}")
         message(STATUS "     Resource Generated Headers: ${${subproject_name}_generated_resources}")
     endif()
-#---------------------------HANDLE COMPILE DEFS IN CASE OF CUDA------------------------------------#
-    if(cuda_subproject)
-        get_property(folder_compile_defs DIRECTORY PROPERTY COMPILE_DEFINITIONS)
-        foreach(def ${folder_compile_defs})
-            if(NOT ${def} STREQUAL "_DEBUG")
-               remove_definitions("-D${def}")
-            endif() 
-        endforeach()
-    endif() 
+#---------------------------HANDLE EXTRA COMPILE AND LINKER FLAGS----------------------------------#
+    reco_add_depend_flags(${verbose} ${cuda_subproject} ${_depends})
+    
 #---------------------------ADD TARGET-------------------------------------------------------------#
     if(${_subproject_type} STREQUAL "${app_type}" OR ${_subproject_type} STREQUAL "${lightweight_app_type}")
         #don't use the subproject name, but rather the briefer name suffix for the executables

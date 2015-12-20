@@ -2,6 +2,7 @@
 #define __QUICKSHIFT_COMMON_H__
 
 #include <float.h>
+#include <opencv2/core.hpp>
 
 typedef unsigned int vl_uint32 ;
 typedef unsigned char vl_uint8 ; 
@@ -22,6 +23,9 @@ typedef struct _image_t
 void quickshift(image_t im, float sigma, float tau, float * map, float * gaps, float * E);
 
 extern "C" 
-void quickshift_gpu(image_t im_d, float sigma, float tau_d, float * map_d, float * gaps_d, float * E_d);
+void quickshift_gpu(image_t im_d, float sigma, float tau, float * map, float * gaps, float * E_d);
+
+extern "C"
+void quickshift_gpu_cv(const cv::Mat& in, float sigma, float tau, float* map, float* gaps, float* E_d);
 
 #endif

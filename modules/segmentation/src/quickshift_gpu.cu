@@ -19,6 +19,7 @@ texture<float, 2, cudaReadModeElementType> texE;
 
 #if USE_TEX_I
   #define TEXI(x,y,c) tex3D(texI, x + 0.5f, y + 0.5f, c + 0.5f)
+  #define TEXI(x,y,c) tex3D(texI, x + 0.5f, y + 0.5f, c + 0.5f)
 #else
   #define TEXI(x,y,c) I [ (x) + N1*(y) + N2*N1*k ]
 #endif
@@ -168,7 +169,7 @@ void quickshift_gpu(image_t im, float sigma, float tau, float * map, float * gap
   // Allocate array
   cudaChannelFormatDesc descriptionI = cudaCreateChannelDesc<float>();
 
-  cudaExtent const ext = {im.N1, im.N2, im.K};
+  cudaExtent const ext = {(size_t)im.N1, (size_t)im.N2, (size_t)im.K};
   cudaMalloc3DArray(&cu_array_I, &descriptionI, ext);
 
   cudaMemcpy3DParms copyParams = {0};
@@ -284,5 +285,166 @@ void quickshift_gpu(image_t im, float sigma, float tau, float * map, float * gap
   cudaFree(map_d);
   cudaFree(gaps_d);
   cudaFree(E_d);
+
+}
+
+extern "C"
+void quickshift_gpu_cv(const cv::Mat& in, float sigma, float tau, float * map, float * gaps, float * E){
+
+  assert(in.type() == CV_32F || in.type() == CV_32FC3);
+  float* data;
+  bool free_mem;
+  if(in.type() == CV_32FC3){
+	  free_mem = true;
+	  int layer_size = in.rows*in.cols;
+	  data = new float[layer_size*in.channels()];
+	  float* ch_1 = data;
+	  float* ch_2 = ch_1 + layer_size;
+	  float* ch_3 = ch_2 + layer_size;
+	  float* orig_data = reinterpret_cast<float*>(in.data);
+#ifdef _OPENMP
+#pragma omp parallel for
+	  for(int i_elem = 0; i_elem < layer_size;i_elem++){
+		  *ch_1++ = *orig_data++;
+		  *ch_2++ = *orig_data++;
+		  *ch_3++ = *orig_data++;
+	  }
+#else
+	  float* ch_1_end = ch_1 + layer_size;
+	  for(; ch_1 < ch_1_end;){
+		  *ch_1++ = *orig_data++;
+		  *ch_2++ = *orig_data++;
+		  *ch_3++ = *orig_data++;
+	  }
+#endif
+  }else{
+	  data = reinterpret_cast<float*>(in.data);
+  }
+#if USE_TEX_I
+  printf("quickshiftGPU: using texture for I\n");
+  cudaArray * cu_array_I;
+
+  // Allocate array
+  cudaChannelFormatDesc descriptionI = cudaCreateChannelDesc<float>();
+
+  cudaExtent const ext = {(size_t)in.rows, (size_t)in.cols, (size_t)in.channels()};
+  cudaMalloc3DArray(&cu_array_I, &descriptionI, ext);
+
+  cudaMemcpy3DParms copyParams = {0};
+  copyParams.extent = make_cudaExtent(in.rows, in.cols, in.channels());
+  copyParams.kind = cudaMemcpyHostToDevice;
+  copyParams.dstArray = cu_array_I;
+  // The pitched pointer is really tricky to get right. We give the
+  // pitch of a row, then the number of elements in a row, then the
+  // height, and we omit the 3rd dimension.
+  copyParams.srcPtr = make_cudaPitchedPtr(
+  (void*)&data, ext.width*sizeof(float), ext.width, ext.height);
+  cudaMemcpy3D(&copyParams);
+
+  cudaBindTextureToArray(texI, cu_array_I,
+        descriptionI);
+
+  texI.normalized = false;
+  texI.filterMode = cudaFilterModePoint;
+#endif
+
+
+  float *map_d, *E_d, *gaps_d, *I;
+
+  int verb = 1 ;
+
+  float tau2;
+
+  int K;
+  int N1,N2, R, tR;
+
+  N1 = in.rows;
+  N2 = in.cols;
+  K = in.channels();
+
+  //d = 2 + K ; /* Total dimensions include spatial component (x,y) */
+
+  tau2  = tau*tau;
+
+  unsigned int size = in.rows*in.cols * sizeof(float);
+  cudaMalloc( (void**) &I, size*in.channels());
+  cudaMalloc( (void**) &map_d, size);
+  cudaMalloc( (void**) &gaps_d, size);
+  cudaMalloc( (void**) &E_d, size);
+
+  cudaMemcpy( I, data, size*in.channels(), cudaMemcpyHostToDevice);
+  cudaMemset( E_d, 0, size);
+
+  R = (int) ceil (3 * sigma) ;
+  tR = (int) ceil (tau) ;
+
+  if (verb) {
+    printf("quickshiftGPU: [N1,N2,K]: [%d,%d,%d]\n", N1,N2,K) ;
+    printf("quickshiftGPU: type: quick\n");
+    printf("quickshiftGPU: sigma:   %g\n", sigma) ;
+    /* R is ceil(3 * sigma) and determines the window size to accumulate
+     * similarity */
+    printf("quickshiftGPU: R:       %d\n", R) ;
+    printf("quickshiftGPU: tau:     %g\n", tau) ;
+    printf("quickshiftGPU: tR:      %d\n", tR) ;
+  }
+
+
+    dim3 dimBlock(32,4,1);
+  dim3 dimGrid(iDivUp(N2, dimBlock.x), iDivUp(N1, dimBlock.y), 1);
+  compute_E_gpu <<<dimGrid,dimBlock>>> (I, N1, N2, K, R, sigma, E_d, 0, 0);
+
+  cudaThreadSynchronize();
+  // check if kernel execution generated an error
+  //cutilCheckMsg("Kernel execution failed");
+
+  cudaMemcpy(E, E_d, size, cudaMemcpyDeviceToHost);
+
+
+  /* Texture map E */
+#if USE_TEX_E
+  printf("quickshiftGPU: using texture for E\n");
+  cudaChannelFormatDesc descriptionE = cudaCreateChannelDesc<float>();
+
+  cudaArray * cu_array_E;
+  cudaMallocArray(&cu_array_E, &descriptionE, in.rows, in.cols);
+
+  cudaMemcpyToArray(cu_array_E, 0, 0, E,
+        sizeof(float)*in.rows*in.cols, cudaMemcpyHostToDevice);
+
+  texE.normalized = false;
+  texE.filterMode = cudaFilterModePoint;
+
+  cudaBindTextureToArray(texE, cu_array_E,
+        descriptionE);
+
+  cudaThreadSynchronize();
+#endif
+
+  /* -----------------------------------------------------------------
+   *                                               Find best neighbors
+   * -------------------------------------------------------------- */
+
+  find_neighbors_gpu <<<dimGrid,dimBlock>>> (I, N1 ,N2, K, E_d, tau2,
+      tR, map_d, gaps_d);
+
+  cudaThreadSynchronize();
+  // check if kernel execution generated an error
+  //cutilCheckMsg("Kernel execution failed");
+
+  cudaMemcpy(map, map_d, size, cudaMemcpyDeviceToHost);
+  cudaMemcpy(gaps, gaps_d, size, cudaMemcpyDeviceToHost);
+
+
+  printf("dimGrid: %d %d\n", dimGrid.x, dimGrid.y);
+  printf("dimBlock: %d %d\n", dimBlock.x, dimBlock.y);
+
+  cudaFree(I);
+  cudaFree(map_d);
+  cudaFree(gaps_d);
+  cudaFree(E_d);
+  if(free_mem){
+	  delete[] data;
+  }
 
 }

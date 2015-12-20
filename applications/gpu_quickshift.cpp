@@ -1,11 +1,15 @@
 #include <cuda_runtime.h>
+
 #include <reco/cuda/helper_cuda.h>
 #include <reco/segmentation/quickshift_common.h>
+#include <reco/segmentation/exception.h>
+#include <reco/segmentation/image.h>
+#include <reco/utils/cpp_exception_util.h>
 
 #include <boost/program_options.hpp>
 #include <boost/filesystem.hpp>
-#include <reco/segmentation/exception.h>
-#include <reco/segmentation/image.h>
+
+#include <opencv2/imgcodecs.hpp>
 
 #include <chrono>
 #include <fstream>
@@ -133,6 +137,7 @@ int main(int argc, char ** argv) {
 	std::string file;
 	std::string mode;
 	std::string out_path;
+	bool use_cv;
 
 	po::variables_map vm;
 	po::options_description regular_options("Options");
@@ -142,8 +147,10 @@ int main(int argc, char ** argv) {
 		("mode,m", po::value<string>(&mode)->default_value("gpu"),"Input mode. One of [gpu,cpu].")
 		("sigma,s", po::value<float>(&sigma)->default_value(6.0f),"Sigma parameter for quickshift.")
 		("tau,t", po::value<float>(&sigma)->default_value(10.0f),"Tau parameter for quickshift.")
-		("device,d", po::value<int>(&device)->default_value(-1), "Device. Default: device with max. GFlops.")
-		("output,o", po::value<string>(&out_path)->default_value(""), "Output path.");
+		("device,d", po::value<int>(&device)->default_value(-1),
+				"Device. Default: device with max. Gflops.")
+		("output,o", po::value<string>(&out_path)->default_value(""), "Output path.")
+		("cv", po::bool_switch(&use_cv)->default_value(false),"use OpenCV");
 
 	try{
 		po::store(po::command_line_parser(argc, argv)
@@ -176,31 +183,41 @@ int main(int argc, char ** argv) {
 	modes[0] = mode;
 	int nmodes = 1;
 
-	/********** Read image **********/
-	Image IMG;
 	char outfile[1024];
+	/********** Read image **********/
+	int width, height, channels;
+	image_t im; cv::Mat img;
+	if(use_cv){
+		img = cv::imread(file);
+		width = img.cols;
+		height = img.rows;
+		channels =img.channels();
+	}else{
+		Image IMG;
 
-	std::ifstream ifs(file, std::ios::binary);
-	if (!ifs) {
-		throw Exception("Could not open the file");
+
+		std::ifstream ifs(file, std::ios::binary);
+		if (!ifs) {
+			throw Exception("Could not open the file");
+		}
+		ifs >> IMG;
+
+		image_to_matlab(IMG, im);
+
+		height = im.N1;
+		width = im.N2;
+		channels = im.K;
 	}
-	ifs >> IMG;
-	image_t im;
-
-	image_to_matlab(IMG, im);
-
 	std::chrono::time_point<std::chrono::system_clock> start_total, end_total;
 	start_total = std::chrono::system_clock::now();
-
-
 	/********** CUDA setup **********/
 	float *map, *E, *gaps;
 	int * flatmap;
 	image_t imout;
 
-	map = (float *) calloc(im.N1 * im.N2, sizeof(float));
-	gaps = (float *) calloc(im.N1 * im.N2, sizeof(float));
-	E = (float *) calloc(im.N1 * im.N2, sizeof(float));
+	map = (float *) calloc(width * height, sizeof(float));
+	gaps = (float *) calloc(width * height, sizeof(float));
+	E = (float *) calloc(width * height, sizeof(float));
 
 	for (int m = 0; m < nmodes; m++){
 		std::chrono::time_point<std::chrono::system_clock> start_dev, end_dev;
@@ -209,9 +226,17 @@ int main(int argc, char ** argv) {
 		/********** Quick shift **********/
 		printf("Mode: %s\n", modes[m].c_str());
 		if (modes[m] == "cpu"){
-			quickshift(im, sigma, tau, map, gaps, E);
+			if(use_cv){
+				err2(std::invalid_argument, "Not currently supported!");
+			}else{
+				quickshift(im, sigma, tau, map, gaps, E);
+			}
 		}else if(modes[m] == "gpu"){
-			quickshift_gpu(im, sigma, tau, map, gaps, E);
+			if(use_cv){
+				quickshift_gpu_cv(img, sigma, tau, map, gaps, E);
+			}else{
+				quickshift_gpu(im, sigma, tau, map, gaps, E);
+			}
 		}else{
 			assert(0 && "Unrecognized mode line");
 		}

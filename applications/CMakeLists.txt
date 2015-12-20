@@ -52,6 +52,6 @@ reco_add_subproject(optical_flow_contours
     
 reco_add_subproject(gpu_quickshift
     SOURCES gpu_quickshift.cpp
-    DEPENDENCIES utils Boost segmentation CUDA
+    DEPENDENCIES utils Boost segmentation CUDA OpenCV
     ADDITIONAL_INCLUDE_DIRS 
     LIGHTWEIGHT_APPLICATION)
