@@ -216,7 +216,7 @@ void quickshift(image_t im, float sigma, float tau, float * map, float * gaps, f
   //float ETime = cutGetTimerValue(Etimer);
   //printf("ComputeE: %fms\n", ETime);
 
-  unsigned int Ntimer;
+  //unsigned int Ntimer;
 //  cutilCheckError( cutCreateTimer(&Ntimer) );
 //  cutilCheckError( cutResetTimer(Ntimer) );
 //  cutilCheckError( cutStartTimer(Ntimer) );
