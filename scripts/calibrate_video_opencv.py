@@ -9,61 +9,89 @@ import re
 import time
 import calib as cb
 
-parser = ap.ArgumentParser(description='Traverse all .mp4 video files in the specified folder and'+
-                           ' pick out frames to export as images.')
-parser.add_argument("-f", "--folder", help="Folder to work in", 
+
+parser = ap.ArgumentParser(description='Traverse two .mp4 stereo video files and '+
+                           ' calibrate the cameras based on specially selected frames within.')
+parser.add_argument("-f", "--folder", help="Path to root folder to work in", 
                     required=False, default= "./")
-parser.add_argument("-fn", "--frame_numbers", help="Frame numbers .npz file with frame_numbers array."+
+parser.add_argument("-fn", "--frame_numbers", help="frame numbers .npz file with frame_numbers array."+
                     " If specified, program filters frame pairs based on these numbers instead of other"+
                     " criteria.",required=False, default=None)
-parser.add_argument("-v", "--videos", nargs=2, help="Input stereo video tuple (left, right)", 
+parser.add_argument("-v", "--videos", nargs=2, help="input stereo video tuple (left, right)", 
                     required=False, default= ["left.mp4","right.mp4"])
-parser.add_argument("-pf", "--preview_files", nargs=2, help="Input frames to test calibration result", 
+
+#============== CALIBRATION PREVIEW ===============================================================#
+#currently does not work due to OpenCV python bindings bug
+parser.add_argument("-pf", "--preview_files", nargs=2, help="input frames to test calibration result", 
                     required=False, default= ["left.png","right.png"])
 parser.add_argument("-p", "--preview", help="Test calibration result on left/right frame pair", 
                     action = "store_true", required=False)
+
+#============== BOARD DIMENSIONS ==================================================================#
 parser.add_argument("-bw", "--board_width", help="checkerboard inner corner width",required = False, 
                     default= 15, type=int)
 parser.add_argument("-bh", "--board_height", help="checkerboard inner corner height",required = False,
                      default= 8, type=int)
 parser.add_argument("-bs", "--board_square_size", help="checkerboard square size, in meters", 
                     required = False, type=float, default=0.0508)
-parser.add_argument("-t", "--sharpness_threshold", help="sharpness threshold based on variance of "+
-                    "Laplacian; used to filter out frames that are too blurry.", 
+
+#============== FRAME FILTERING CONTROLS ==========================================================#
+parser.add_argument("-ft", "--sharpness_threshold", help="sharpness threshold based on variance of "+
+                    "Laplacian; used to filter out frames that are too blurry (default 55.0).", 
                     type=float, required = False, default=55.0)
-parser.add_argument("-d", "--difference_threshold", help="difference threshold: minimum average "
+parser.add_argument("-fd", "--difference_threshold", help="difference threshold: minimum average "
                     +" per-pixel difference (in range [0,1.0]) between current and previous frames to "
-                    +"filter out frames that are too much alike", type=float, required = False, default=0.4)
-parser.add_argument("-c", "--corners_file", required = False, default="corners.npz")
+                    +"filter out frames that are too much alike (default: 0.4)", type=float, 
+                    required = False, default=0.4)
+parser.add_argument("-m", "--manual_filter", help="pick which (pre-filtered)frames to use manually"+
+                    " one-by-one (use 'a' key to approve)", required = False, action='store_true', 
+                    default=False)
+parser.add_argument("-fi", "--frame_interval", required=False, default=1, type=int,
+                    help="minimal interval (in frames) between successive frames to consider for"
+                    +" calibration board extraction.")
+parser.add_argument("-fa", "--advanced_filtering", required=False, action="store_true", default=False,
+                    help="filter frames based on camera position and orientation rather than" +
+                    " basic absolute difference between pixels. With this argument, the difference"+
+                    " threshold parameter is ignored.")
+parser.add_argument("-ft", "--filter_target", required=False, type=int, "Target number of frames "+
+                    "to filter out" )
+
+#============== STORAGE OF BOARD CORNER POSITIONS =================================================#
+parser.add_argument("-c", "--corners_file", required = False, default="corners.npz", 
+                    help="store filtered corners")
 parser.add_argument("-s", "--save_corners", action='store_true', required = False, default=False)
 parser.add_argument("-l", "--load_corners", action='store_true', required = False, default=False)
-parser.add_argument("-ds", "--precalibrate_solo", action='store_true', required = False, default=False)
+
+#============== CALIBRATION & DISTORTION MODEL CONTROLS ===========================================#
 parser.add_argument("-i", "--max_iterations", help="maximum number of iterations for the stereo"+
                     " calibration (optimization) loop", type=int, required = False, default=30)
+parser.add_argument("-ds", "--precalibrate_solo", help="pre-calibrate each camera individually "+
+                    "first, then perform stereo calibration",action='store_true', required = False, 
+                    default=False)
 parser.add_argument("-d8", "--use_8_distortion_coefficients", action='store_true', required = False, 
                     default=False)
 parser.add_argument("-dt", "--use_tangential_distortion_coefficients", action='store_true', 
                     required = False, default=False)
 parser.add_argument("-df", "--use_fisheye_distortion_model", action='store_true', 
                     required = False, default=False)
+
 parser.add_argument("-sp", "--skip_printing_output", action='store_true', required = False, default= False)
 parser.add_argument("-ss", "--skip_saving_output", action='store_true', required = False, default= False)
+
 parser.add_argument("-o", "--output", help="output file to store calibration results", 
                     required = False, default="cvcalib.xml")
 parser.add_argument("-u", "--use_existing", 
                     help="use the existing output file to initialize calibration parameters", 
                     action="store_true", required = False, default=False)
-parser.add_argument("-ff", "--filtered_frame_folder", help="filtered frames"+
+
+#============== FILTERED IMAGE/FRAME BACKUP & LOADING =============================================#
+parser.add_argument("-if", "--filtered_image_folder", help="filtered frames"+
                     " will be saved into this folder (relative to work folder specified by --folder)", 
                     required = False, default="frames")
-parser.add_argument("-sf", "--save_frames", action='store_true', required = False, default= False)
-parser.add_argument("-lf", "--load_frames", action='store_true', required = False, default= False)
-parser.add_argument("-m", "--manual_filter", help="pick which (pre-filtered)frames to use manually"+
-                    " one-by-one (use 'a' key to approve)", required = False, action='store_true', 
-                    default=False)
-parser.add_argument("-fi", "--frame_interval", required=False, default=1, type=int,
-                    help="Minimal interval (in frames) between successive frames to consider for"
-                    +" calibration board extraction.")
+parser.add_argument("-is", "--save_images", action='store_true', required = False, default= False)
+parser.add_argument("-il", "--load_images", action='store_true', required = False, default= False)
+
+
 
 
 def print_output(error, K1, d1, K2, d2, R, T):
