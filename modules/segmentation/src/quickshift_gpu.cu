@@ -291,9 +291,10 @@ void quickshift_gpu(image_t im, float sigma, float tau, float * map, float * gap
 extern "C"
 void quickshift_gpu_cv(const cv::Mat& in, float sigma, float tau, float * map, float * gaps, float * E){
 
-  assert(in.type() == CV_32F || in.type() == CV_32FC3);
+  assert((in.type() == CV_32F || in.type() == CV_32FC3) && in.isContinuous());
   float* data;
   bool free_mem;
+
   if(in.type() == CV_32FC3){
 	  free_mem = true;
 	  int layer_size = in.rows*in.cols;
@@ -302,24 +303,21 @@ void quickshift_gpu_cv(const cv::Mat& in, float sigma, float tau, float * map, f
 	  float* ch_2 = ch_1 + layer_size;
 	  float* ch_3 = ch_2 + layer_size;
 	  float* orig_data = reinterpret_cast<float*>(in.data);
-#ifdef _OPENMP
-#pragma omp parallel for
-	  for(int i_elem = 0; i_elem < layer_size;i_elem++){
-		  *ch_1++ = *orig_data++;
-		  *ch_2++ = *orig_data++;
-		  *ch_3++ = *orig_data++;
-	  }
-#else
 	  float* ch_1_end = ch_1 + layer_size;
 	  for(; ch_1 < ch_1_end;){
 		  *ch_1++ = *orig_data++;
 		  *ch_2++ = *orig_data++;
 		  *ch_3++ = *orig_data++;
 	  }
-#endif
   }else{
+	  free_mem = false;
 	  data = reinterpret_cast<float*>(in.data);
   }
+  int n_channels, width, height;
+  width = in.cols;
+  height = in.rows;
+  n_channels = in.channels();
+
 #if USE_TEX_I
   printf("quickshiftGPU: using texture for I\n");
   cudaArray * cu_array_I;
@@ -327,18 +325,18 @@ void quickshift_gpu_cv(const cv::Mat& in, float sigma, float tau, float * map, f
   // Allocate array
   cudaChannelFormatDesc descriptionI = cudaCreateChannelDesc<float>();
 
-  cudaExtent const ext = {(size_t)in.rows, (size_t)in.cols, (size_t)in.channels()};
+  cudaExtent const ext = {(size_t)width, (size_t)height, (size_t)n_channels};
   cudaMalloc3DArray(&cu_array_I, &descriptionI, ext);
 
   cudaMemcpy3DParms copyParams = {0};
-  copyParams.extent = make_cudaExtent(in.rows, in.cols, in.channels());
+  copyParams.extent = make_cudaExtent(width, height, n_channels);
   copyParams.kind = cudaMemcpyHostToDevice;
   copyParams.dstArray = cu_array_I;
   // The pitched pointer is really tricky to get right. We give the
   // pitch of a row, then the number of elements in a row, then the
   // height, and we omit the 3rd dimension.
   copyParams.srcPtr = make_cudaPitchedPtr(
-  (void*)&data, ext.width*sizeof(float), ext.width, ext.height);
+  (void*)data, ext.width*sizeof(float), ext.width, ext.height);
   cudaMemcpy3D(&copyParams);
 
   cudaBindTextureToArray(texI, cu_array_I,
@@ -355,31 +353,29 @@ void quickshift_gpu_cv(const cv::Mat& in, float sigma, float tau, float * map, f
 
   float tau2;
 
-  int K;
-  int N1,N2, R, tR;
 
-  N1 = in.rows;
-  N2 = in.cols;
-  K = in.channels();
+  int R, tR;
+
+
 
   //d = 2 + K ; /* Total dimensions include spatial component (x,y) */
 
   tau2  = tau*tau;
 
-  unsigned int size = in.rows*in.cols * sizeof(float);
+  unsigned int size = width*height * sizeof(float);
   cudaMalloc( (void**) &I, size*in.channels());
   cudaMalloc( (void**) &map_d, size);
   cudaMalloc( (void**) &gaps_d, size);
   cudaMalloc( (void**) &E_d, size);
 
-  cudaMemcpy( I, data, size*in.channels(), cudaMemcpyHostToDevice);
+  cudaMemcpy( I, data, size*n_channels, cudaMemcpyHostToDevice);
   cudaMemset( E_d, 0, size);
 
   R = (int) ceil (3 * sigma) ;
   tR = (int) ceil (tau) ;
 
   if (verb) {
-    printf("quickshiftGPU: [N1,N2,K]: [%d,%d,%d]\n", N1,N2,K) ;
+    printf("quickshiftGPU: [N1,N2,K]: [%d,%d,%d]\n", width,height,n_channels) ;
     printf("quickshiftGPU: type: quick\n");
     printf("quickshiftGPU: sigma:   %g\n", sigma) ;
     /* R is ceil(3 * sigma) and determines the window size to accumulate
@@ -391,8 +387,8 @@ void quickshift_gpu_cv(const cv::Mat& in, float sigma, float tau, float * map, f
 
 
     dim3 dimBlock(32,4,1);
-  dim3 dimGrid(iDivUp(N2, dimBlock.x), iDivUp(N1, dimBlock.y), 1);
-  compute_E_gpu <<<dimGrid,dimBlock>>> (I, N1, N2, K, R, sigma, E_d, 0, 0);
+  dim3 dimGrid(iDivUp(height, dimBlock.x), iDivUp(width, dimBlock.y), 1);
+  compute_E_gpu <<<dimGrid,dimBlock>>> (I, width, height, n_channels, R, sigma, E_d, 0, 0);
 
   cudaThreadSynchronize();
   // check if kernel execution generated an error
@@ -407,10 +403,10 @@ void quickshift_gpu_cv(const cv::Mat& in, float sigma, float tau, float * map, f
   cudaChannelFormatDesc descriptionE = cudaCreateChannelDesc<float>();
 
   cudaArray * cu_array_E;
-  cudaMallocArray(&cu_array_E, &descriptionE, in.rows, in.cols);
+  cudaMallocArray(&cu_array_E, &descriptionE, width, height);
 
   cudaMemcpyToArray(cu_array_E, 0, 0, E,
-        sizeof(float)*in.rows*in.cols, cudaMemcpyHostToDevice);
+        sizeof(float)*width*height, cudaMemcpyHostToDevice);
 
   texE.normalized = false;
   texE.filterMode = cudaFilterModePoint;
@@ -425,7 +421,7 @@ void quickshift_gpu_cv(const cv::Mat& in, float sigma, float tau, float * map, f
    *                                               Find best neighbors
    * -------------------------------------------------------------- */
 
-  find_neighbors_gpu <<<dimGrid,dimBlock>>> (I, N1 ,N2, K, E_d, tau2,
+  find_neighbors_gpu <<<dimGrid,dimBlock>>> (I, width ,height, n_channels, E_d, tau2,
       tR, map_d, gaps_d);
 
   cudaThreadSynchronize();
