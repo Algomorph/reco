@@ -4,10 +4,8 @@ import os.path as osp
 import cv2
 import numpy as np
 import argparse as ap
-from lxml import etree
-import re
 import time
-import calib as cb
+from calib import utils as cb
 
 
 parser = ap.ArgumentParser(description='Traverse two .mp4 stereo video files and '+
@@ -53,8 +51,8 @@ parser.add_argument("-fa", "--advanced_filtering", required=False, action="store
                     help="filter frames based on camera position and orientation rather than" +
                     " basic absolute difference between pixels. With this argument, the difference"+
                     " threshold parameter is ignored.")
-parser.add_argument("-ft", "--filter_target", required=False, type=int, "Target number of frames "+
-                    "to filter out" )
+parser.add_argument("-aft", "--advanced_filter_target", required=False, type=int, help="Target number of "+
+                    "frames to filter out" )
 
 #============== STORAGE OF BOARD CORNER POSITIONS =================================================#
 parser.add_argument("-c", "--corners_file", required = False, default="corners.npz", 
@@ -91,9 +89,6 @@ parser.add_argument("-if", "--filtered_image_folder", help="filtered frames"+
 parser.add_argument("-is", "--save_images", action='store_true', required = False, default= False)
 parser.add_argument("-il", "--load_images", action='store_true', required = False, default= False)
 
-
-
-
 def print_output(error, K1, d1, K2, d2, R, T):
     print "Final reprojection error: " + str(error)
     print "K0:"
@@ -108,49 +103,6 @@ def print_output(error, K1, d1, K2, d2, R, T):
     print R
     print "T:"
     print T
-    
-def opencv_matrix_xml_element(root, mat,name):
-    mat_element = etree.SubElement(root, name, attrib={"type_id":"opencv-matrix"})
-    rows_elem = etree.SubElement(mat_element, "rows")
-    rows_elem.text = str(mat.shape[0])
-    cols_elem = etree.SubElement(mat_element, "cols")
-    cols_elem.text = str(mat.shape[1])
-    dt_elem = etree.SubElement(mat_element, "dt")
-    if(mat.dtype == np.dtype('float64')):
-        dt_elem.text = "d"
-    elif(mat.dtype == np.dtype("float32")):
-        dt_elem.text = "f"
-    else:
-        raise ValueError("dtype " + str(mat.dtype) + "not supported")
-    
-    data_elem = etree.SubElement(mat_element, "data")
-    data_string = str(mat.flatten()).replace("\n","").replace("[","").replace("]","")
-    data_string = re.sub("\s+"," ",data_string)
-    data_elem.text = data_string
-    return mat_element
-    
-def save_output_opencv(error, K1, d1, K2, d2, R, T, dims, file_path):
-    root = etree.Element("opencv_storage")
-    width_element = etree.SubElement(root, "width")
-    width_element.text = str(dims[1])
-    width_element = etree.SubElement(root, "height")
-    width_element.text = str(dims[0])
-    K1_element = opencv_matrix_xml_element(root, K1, "K1")
-    d1_element = opencv_matrix_xml_element(root, d1, "d1")
-    K2_element = opencv_matrix_xml_element(root, K2, "K2")
-    d2_element = opencv_matrix_xml_element(root, d2, "d2")
-    R_element = opencv_matrix_xml_element(root, R, "R")
-    T_element = opencv_matrix_xml_element(root, T, "T")
-    error_element = etree.SubElement(root, "reprojection_error")
-    error_element.text = str(error)
-    et = etree.ElementTree(root)
-    with open(file_path,'w') as f:
-        et.write(f,encoding="utf-8",xml_declaration=True, pretty_print=True)
-    s=open(file_path).read()
-    s = s.replace("'","\"")
-    with open(file_path,'w') as f:
-        f.write(s)
-        f.flush()
 
 def automatic_filter(lframe,rframe,lframe_prev,rframe_prev,sharpness_threshold, difference_threshold):
     sharpness = min(cv2.Laplacian(lframe, cv2.CV_64F).var(), cv2.Laplacian(rframe, cv2.CV_64F).var())
@@ -167,23 +119,16 @@ def automatic_filter(lframe,rframe,lframe_prev,rframe_prev,sharpness_threshold, 
     
     return True, lcorners, rcorners
 
-def calibrate_solo(objpoints,imgpoints,frame_dims, K, d, flags, criteria, ix_cam):
-    start = time.time()
-    err, K, d, rvecs, tvecs = cv2.calibrateCamera(objpoints, imgpoints, 
-                                               frame_dims, K, d, flags=flags,criteria = criteria)
-    end = time.time()
-    print "Camera {0:d} calibration.\n   Time (s): {1:f}".format(ix_cam,end - start)
-    print "K: "
-    print K
-    print "d: "
-    print d
-    print "Error: " + str(err)
-    return err, K, d
-
 if __name__ == "__main__":
     args = parser.parse_args()
-    left_vid = args.folder + os.path.sep + args.videos[0]
-    right_vid = args.folder + os.path.sep +  args.videos[1]
+    left_vid = osp.join(args.folder,args.videos[0])
+    right_vid = osp.join(args.folder,args.videos[1])
+    
+    if not osp.isfile(left_vid):
+        raise ValueError("No video file found at {0:s}".format(left_vid))
+    if not osp.isfile(right_vid):
+        raise ValueError("No video file found at {0:s}".format(right_vid))
+    
     l_vid_name = args.videos[0][:-4] 
     r_vid_name = args.videos[1][:-4]
     
@@ -191,9 +136,8 @@ if __name__ == "__main__":
     print(left_vid)
     print(right_vid)
     
-    if args.save_frames or args.load_frames:
-        full_frame_folder_path = args.folder + os.path.sep + args.filtered_frame_folder
-        print full_frame_folder_path
+    if args.save_images or args.load_images:
+        full_frame_folder_path = osp.join(args.folder,args.filtered_image_folder)
         #if filtered frame folder is specified but doesn't exist, create it
         if not os.path.exists(full_frame_folder_path):
             os.makedirs(full_frame_folder_path)
@@ -228,7 +172,8 @@ if __name__ == "__main__":
     if(args.load_corners):    
         limgpoints,rimgpoints,objpoints, usable_frame_ct = cb.load_corners(path)
         i_frame = usable_frame_ct
-    elif(args.load_frames):
+    elif(args.load_images):
+        print "Loading frames from '{0:s}'".format(full_frame_folder_path)
         files = [f for f in os.listdir(full_frame_folder_path) if osp.isfile(osp.join(full_frame_folder_path,f)) and f.endswith(".png")]
         files.sort()
         #assume matching numbers in corresponding left & right files
@@ -290,7 +235,7 @@ if __name__ == "__main__":
                     cv2.cornerSubPix(rgrey, rcorners, (11,11),(-1,-1),criteria_subpix)
                     
                     #save frames if filtered frame folder was specified
-                    if(args.save_frames):
+                    if(args.save_images):
                         lfname = (full_frame_folder_path + os.path.sep + l_vid_name
                             + "{0:04d}".format(i_frame) + ".png")
                         rfname = (full_frame_folder_path + os.path.sep + r_vid_name
@@ -326,99 +271,21 @@ if __name__ == "__main__":
     
     print "Total usable frames: " + str(usable_frame_ct) + " (" + str(usable_frame_ct * 100.0/(i_frame)) + " %)"
     print "Calibrating for max. " +str(args.max_iterations) + " iterations...."
-    
-    flags = 0
-    
-    if args.use_existing:
-        prev_error, K1, d1, K2, d2, R, T, prev_dims = cb.load_opencv_calibration(osp.join(args.folder, args.output))
-        if(frame_dims != prev_dims):
-            raise ValueError("Frame dimensions in specified calibration file (" + 
-                             osp.join(args.folder, args.output) + " don't correspond to video files.")
-        flags += cv2.CALIB_USE_INTRINSIC_GUESS
+   
+    if(args.use_existing):
+        path_to_calib_file = osp.join(args.folder, args.output)
     else:
-        K1 = np.eye(3,3,np.float64)
-        K2 = np.eye(3,3,np.float64)
-    
-    criteria = (cv2.TERM_CRITERIA_MAX_ITER + cv2.TERM_CRITERIA_EPS, args.max_iterations, 2.2204460492503131e-16)
-    
-    
-    if args.use_fisheye_distortion_model:
-        if not args.use_existing:  
-            d1 = np.zeros(4,np.float64)
-            d2 = np.zeros(4,np.float64)
-        obp2 = []
-        for pointset in objpoints:
-            obp2.append(np.transpose(pointset,(1,0,2)).astype(np.float64))
-        
-        lpts2 = []
-        for pointset in limgpoints:
-            lpts2.append(np.transpose(pointset,(1,0,2)).astype(np.float64))
-        
-        rpts2 = []
-        for pointset in rimgpoints:
-            rpts2.append(np.transpose(pointset,(1,0,2)).astype(np.float64))
-        #err, K1, d1, tvecs, rvecs = cv2.fisheye.calibrate(objectPoints = obp2, imagePoints = lpts2, 
-        #                                                  image_size = frame_dims, K=K1, D=d1)
-        #TODO: try this with transposed matrices
-        error, K1, d1, K2, d2, R, T \
-            = cv2.fisheye.stereoCalibrate(obp2, lpts2, rpts2, 
-                                          K1, d1, K2, d2, 
-                                          imageSize=frame_dims,
-                                          flags=flags,
-                                          criteria=criteria)
-    else:
-        if not args.use_existing:
-            d1 = np.zeros(8,np.float64)
-            d2 = np.zeros(8,np.float64)
-        if not args.use_tangential_distortion_coefficients:
-            flags += cv2.CALIB_ZERO_TANGENT_DIST
-        if args.use_8_distortion_coefficients:
-            flags += cv2.CALIB_RATIONAL_MODEL
-        
-        if(args.precalibrate_solo):
-            err1, K1, d1 = calibrate_solo(objpoints, limgpoints, frame_dims, K1, d1, flags, criteria, 1)
-            err2, K2, d2 = calibrate_solo(objpoints, rimgpoints, frame_dims, K2, d2, flags, criteria, 2)
-
-            flags += cv2.CALIB_FIX_INTRINSIC
-            
-            if(int(cv2.__version__ [0]) == 2):
-                error, K1, d1, K2, d2, R, T, E, F \
-                    = cv2.stereoCalibrate(objpoints,limgpoints,rimgpoints,  
-                                          imageSize = frame_dims,
-                                          cameraMatrix1 = K1, distCoeffs1 = d1, 
-                                          cameraMatrix2 = K2, distCoeffs2 = d2,
-                                          flags = flags,
-                                          criteria = criteria)
-            else:
-                start = time.time()
-                error, K1, d1, K2, d2, R, T, E, F \
-                        = cv2.stereoCalibrate(objpoints,limgpoints,rimgpoints, 
-                                              cameraMatrix1 = K1, distCoeffs1 = d1, 
-                                              cameraMatrix2 = K2, distCoeffs2 =  d2,
-                                              imageSize = frame_dims,
-                                              flags = flags,
-                                              criteria = criteria)
-                end = time.time()
-                print "Time for stereo calibration with fixed intrinsics (s): " + str(end - start) 
-        else:
-            if(int(cv2.__version__ [0]) == 2):
-                error, K1, d1, K2, d2, R, T, E, F \
-                      = cv2.stereoCalibrate(objpoints,limgpoints,rimgpoints, 
-                                            imageSize = frame_dims,
-                                            flags = flags,
-                                            criteria = criteria)
-            else:  
-                error, K1, d1, K2, d2, R, T, E, F \
-                    = cv2.stereoCalibrate(objpoints,limgpoints,rimgpoints, 
-                                          K1, d1, K2, d2, 
-                                          imageSize = frame_dims,
-                                          flags = flags,
-                                          criteria = criteria)
-            
+        path_to_calib_file = None
+    error, K1, d1, K2, d2, R, T, E, F = cb.calibrate(limgpoints, rimgpoints, objpoints, 
+                                                     frame_dims, args.use_fisheye_distortion_model, 
+                                                     args.use_8_distortion_coefficients, 
+                                                     args.use_tangential_distortion_coefficients, 
+                                                     args.precalibrate_solo, args.max_iterations, 
+                                                     path_to_calib_file)
     if not args.skip_printing_output:
         print_output(error, K1, d1, K2, d2, R, T)
     if not args.skip_saving_output:
-        save_output_opencv(error, K1, d1, K2, d2, R, T, frame_dims, osp.join(args.folder,args.output))
+        cb.save_output_opencv(error, K1, d1, K2, d2, R, T, frame_dims, osp.join(args.folder,args.output))
         
     if args.preview:
         l_im = cv2.imread(osp.join(args.folder,args.preview_files[0]))

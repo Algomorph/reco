@@ -8,6 +8,50 @@ import numpy as np
 from lxml import etree
 import cv2
 import time
+import re
+
+def opencv_matrix_xml_element(root, mat,name):
+    mat_element = etree.SubElement(root, name, attrib={"type_id":"opencv-matrix"})
+    rows_elem = etree.SubElement(mat_element, "rows")
+    rows_elem.text = str(mat.shape[0])
+    cols_elem = etree.SubElement(mat_element, "cols")
+    cols_elem.text = str(mat.shape[1])
+    dt_elem = etree.SubElement(mat_element, "dt")
+    if(mat.dtype == np.dtype('float64')):
+        dt_elem.text = "d"
+    elif(mat.dtype == np.dtype("float32")):
+        dt_elem.text = "f"
+    else:
+        raise ValueError("dtype " + str(mat.dtype) + "not supported")
+    
+    data_elem = etree.SubElement(mat_element, "data")
+    data_string = str(mat.flatten()).replace("\n","").replace("[","").replace("]","")
+    data_string = re.sub("\s+"," ",data_string)
+    data_elem.text = data_string
+    return mat_element
+    
+def save_output_opencv(error, K1, d1, K2, d2, R, T, dims, file_path):
+    root = etree.Element("opencv_storage")
+    width_element = etree.SubElement(root, "width")
+    width_element.text = str(dims[1])
+    width_element = etree.SubElement(root, "height")
+    width_element.text = str(dims[0])
+    K1_element = opencv_matrix_xml_element(root, K1, "K1")
+    d1_element = opencv_matrix_xml_element(root, d1, "d1")
+    K2_element = opencv_matrix_xml_element(root, K2, "K2")
+    d2_element = opencv_matrix_xml_element(root, d2, "d2")
+    R_element = opencv_matrix_xml_element(root, R, "R")
+    T_element = opencv_matrix_xml_element(root, T, "T")
+    error_element = etree.SubElement(root, "reprojection_error")
+    error_element.text = str(error)
+    et = etree.ElementTree(root)
+    with open(file_path,'w') as f:
+        et.write(f,encoding="utf-8",xml_declaration=True, pretty_print=True)
+    s=open(file_path).read()
+    s = s.replace("'","\"")
+    with open(file_path,'w') as f:
+        f.write(s)
+        f.flush()
 
 def generate_object_points(board_height, board_width, board_square_size):
     board_dims = (board_width,board_height)
@@ -152,7 +196,7 @@ def calibrate(limgpoints,rimgpoints,objpoints,
             flags += cv2.CALIB_FIX_INTRINSIC
             
             if(int(cv2.__version__ [0]) == 2):
-                error, K1_2, d1, K2_2, d2, R, T, E, F \
+                error, K1, d1, K2, d2, R, T, E, F \
                     = cv2.stereoCalibrate(objpoints,limgpoints,rimgpoints,  
                                           imageSize = frame_dims,
                                           cameraMatrix1 = K1, distCoeffs1 = d1, 

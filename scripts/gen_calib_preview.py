@@ -6,7 +6,7 @@ Created on Nov 24, 2015
 @author: algomorph
 '''
 
-import calib as cb
+from calib import utils as cb
 import argparse
 import cv2
 import os.path as osp
@@ -15,7 +15,7 @@ parser = argparse.ArgumentParser(description='Rectify a stereo image pair using 
 parser.add_argument("-f", "--folder", help="Folder to work in",
                     required=False, default= "./")
 parser.add_argument("-c", "--calibration", help="Calibration file", 
-                    required=False, default= "calib.xml")
+                    required=False, default= "calib_utils.xml")
 parser.add_argument("-i", "--images", nargs=2, help="Input files (left, right) to test calibration result on.", 
                     required=False, default= ["left.png","right.png"])
 parser.add_argument("-o", "--output", nargs=2, help="Output files (left, right).", 
