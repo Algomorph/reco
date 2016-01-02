@@ -9,7 +9,7 @@ from calib import io as cio
 
 
 parser = ap.ArgumentParser(description='Traverse two .mp4 stereo video files and '+
-                           ' calibrate the cameras based on specially selected frames within.')
+                           ' stereo_calibrate the cameras based on specially selected frames within.')
 parser.add_argument("-f", "--folder", help="Path to root folder to work in", 
                     required=False, default= "./")
 parser.add_argument("-fn", "--frame_numbers", help="frame numbers .npz file with frame_numbers array."+
@@ -63,7 +63,7 @@ parser.add_argument("-l", "--load_corners", action='store_true', required = Fals
 #============== CALIBRATION & DISTORTION MODEL CONTROLS ===========================================#
 parser.add_argument("-i", "--max_iterations", help="maximum number of iterations for the stereo"+
                     " calibration (optimization) loop", type=int, required = False, default=30)
-parser.add_argument("-ds", "--precalibrate_solo", help="pre-calibrate each camera individually "+
+parser.add_argument("-ds", "--precalibrate_solo", help="pre-stereo_calibrate each camera individually "+
                     "first, then perform stereo calibration",action='store_true', required = False, 
                     default=False)
 parser.add_argument("-d8", "--use_8_distortion_coefficients", action='store_true', required = False, 
@@ -180,6 +180,51 @@ class CalibrateStereoVideoApplication:
             usable_frame_ct+=1
         return usable_frame_ct
     
+    
+    def bootstrap(self, num_frames_for_bootstrap = 20):
+        '''
+        pick out a few frames and stereo_calibrate based on those
+        '''
+        #just in case we're running capture again
+        self.left_cap.set(cv2.CAP_PROP_POS_FRAMES,0.0)
+        self.right_cap.set(cv2.CAP_PROP_POS_FRAMES,0.0)
+        
+        #assume a relatively uniform distribution of camera angles and positions
+        bootstrap_frame_interval = self.total_frames / num_frames_for_bootstrap
+        
+        i_frame = 0
+        
+        lret, l_frame = self.left_cap.read()
+        rret, r_frame = self.right_cap.read()
+        continue_capture = lret and rret
+        
+        bootstrap_limgcorners = []
+        bootstrap_rimgcorners = []
+        
+        while i_frame < self.total_frames:
+            got_bootstrap_frame = False
+            while not got_bootstrap_frame and continue_capture:
+                sharpness = min(cv2.Laplacian(l_frame, cv2.CV_64F).var(), 
+                        cv2.Laplacian(r_frame, cv2.CV_64F).var())
+                if(sharpness > self.args.sharpness_threshold):
+                    lfound,lcorners = cv2.findChessboardCorners(l_frame,self.board_dims)
+                    rfound,rcorners = cv2.findChessboardCorners(r_frame,self.board_dims)
+                    if (lfound and rfound):
+                        got_bootstrap_frame = True
+                i_frame +=1
+                lret, l_frame = self.left_cap.read()
+                rret, r_frame = self.right_cap.read()
+                continue_capture = lret and rret
+            
+                
+    
+    def run_capture_advanced(self):
+        self.bootstrap()
+        
+        
+            
+            
+    
             
     def run_capture(self):
         #just in case we're running capture again
@@ -270,10 +315,6 @@ class CalibrateStereoVideoApplication:
                                     objpoints=self.board_object_corner_set)
         print ("Total usable frames: {0:d} ({1:.3%})"
                .format(usable_frame_ct, float(usable_frame_ct)/self.total_frames))
-        
-    def print_output(self, error, K1, d1, K2, d2, R, T):
-        print (("Final reprojection error: {0:f}\nK0:\n{1:s}\nK1:\n{2:s}\nd0:\n{3:s}\nd1:\n{4:s}\n"+
-               "R:\n{5:s}\nT:\n{6:s}").format(error,str(K1),str(K2),str(d1),str(d2),str(R),str(T)))
                
     def run_calibration(self):
         print ("Calibrating for max. {0:d} iterations...".format(self.args.max_iterations))
@@ -281,24 +322,24 @@ class CalibrateStereoVideoApplication:
             path_to_calib_file = osp.join(self.args.folder, self.args.output)
         else:
             path_to_calib_file = None
-        error, K1, d1, K2, d2, R, T, E, F = cutils.calibrate(self.limgpoints, self.rimgpoints, self.objpoints,  # @UnusedVariable
-                                                             self.frame_dims, self.args.use_fisheye_distortion_model, 
-                                                             self.args.use_8_distortion_coefficients, 
-                                                             self.args.use_tangential_distortion_coefficients, 
-                                                             self.args.precalibrate_solo, self.args.max_iterations, 
-                                                             path_to_calib_file)
+        calibration_result = cutils.stereo_calibrate(self.limgpoints, self.rimgpoints, self.objpoints,
+                                                     self.frame_dims, self.args.use_fisheye_distortion_model, 
+                                                     self.args.use_8_distortion_coefficients, 
+                                                     self.args.use_tangential_distortion_coefficients, 
+                                                     self.args.precalibrate_solo, self.args.max_iterations, 
+                                                     path_to_calib_file)
         if self.args.preview:
             l_im = cv2.imread(osp.join(self.args.folder,self.args.preview_files[0]))
             r_im = cv2.imread(osp.join(self.args.folder,self.args.preview_files[1]))
-            l_im, r_im = cutils.generate_preview(K1, d1, K2, d2, R, T, l_im, r_im)
+            l_im, r_im = cutils.generate_preview(calibration_result, l_im, r_im)
             path_l = osp.join(self.args.folder,self.args.preview_files[0][:-4] + "_rect.png")
             path_r = osp.join(self.args.folder,self.args.preview_files[1][:-4] + "_rect.png")
             cv2.imwrite(path_l, l_im)
             cv2.imwrite(path_r, r_im)
         if not self.args.skip_printing_output:
-            self.print_output(error, K1, d1, K2, d2, R, T)
+            print(calibration_result)
         if not self.args.skip_saving_output:
-            cio.save_output_opencv(error, K1, d1, K2, d2, R, T, self.frame_dims, osp.join(args.folder,args.output))
+            cio.save_opencv_stereo_calibration(osp.join(args.folder,args.output), calibration_result)
         
         
         
