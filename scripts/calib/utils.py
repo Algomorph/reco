@@ -65,15 +65,15 @@ def stereo_calibrate(limgpoints,rimgpoints,objpoints,
         flags += cv2.CALIB_USE_INTRINSIC_GUESS
     else:
         signature = time.strftime("%Y%m%d-%H%M%S",time.localtime())
-        result = data.StereoCalibrationInfo((data.CameraCalibrationInfo(),
-                                                        data.CameraCalibrationInfo()), 
-                                                       _id=signature)
+        result = data.StereoCalibrationInfo((data.CameraCalibrationInfo(resolution),
+                                             data.CameraCalibrationInfo(resolution)), 
+                                             _id=signature)
     #shorten notation later in the code
     cam0 = result.cameras[0]
     cam1 = result.cameras[1]
     
     #OpenCV prefers the Width x Height as "Size" to Height x Width
-    frame_dims = (resolution[1],resolution[2])
+    frame_dims = (resolution[1],resolution[0])
     
     criteria = (cv2.TERM_CRITERIA_MAX_ITER + cv2.TERM_CRITERIA_EPS, max_iters, 2.2204460492503131e-16)
     

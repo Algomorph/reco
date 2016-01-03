@@ -78,7 +78,7 @@ class CameraCalibrationInfo(object):
         @type root_element:  lxml.etree.SubElement
         @param root_element: the root element to build under
         '''
-        intrinsics_elem = etree.SubElement(root_element,"CameraCalibrationInfo",attrib={"index":self.index})
+        intrinsics_elem = etree.SubElement(root_element,"CameraCalibrationInfo",attrib={"index":str(self.index)})
         _resolution_to_xml(intrinsics_elem, self.resolution)
         xml.make_opencv_matrix_xml_element(intrinsics_elem, self.intrinsic_mat, "intrinsic_mat")
         xml.make_opencv_matrix_xml_element(intrinsics_elem, self.distortion_coeffs, "distortion_coeffs")
@@ -147,7 +147,7 @@ class StereoCalibrationInfo(object):
         @type root_element:  lxml.etree.SubElement
         @param root_element: the root element to build under
         '''
-        stereo_calib_elem = etree.SubElement(root_element, "StereoCalibrationInfo",attrib={"id":self.id})
+        stereo_calib_elem = etree.SubElement(root_element, "StereoCalibrationInfo",attrib={"id":str(self.id)})
         cameras_elem = etree.SubElement(stereo_calib_elem, "Cameras")
         self.cameras[0].to_xml(cameras_elem)
         self.cameras[1].to_xml(cameras_elem)
@@ -158,10 +158,10 @@ class StereoCalibrationInfo(object):
         _error_and_time_to_xml(stereo_calib_elem, self.error, self.time)
         
     def __str__(self):
-        return (("Stereo Calibration Info, id: {0:d}\n-----CAM0-----\n{1:s}\n-----CAM1-----\n{2:s}"+
+        return (("Stereo Calibration Info, id: {0:s}\n-----CAM0-----\n{1:s}\n-----CAM1-----\n{2:s}"+
                  "\nRotation:\n{3:s}\nTranslation:\n{4:s}\nEssential Matrix:\n{5:s}\n"+
                  "Fundamental Matrix:\n{6:s}\nError: {7:f}\nTime: {8:f}")
-                .format(self.id,str(self.cameras[0]),str(self.cameras[1]),str(self.rotation),
+                .format(str(self.id),str(self.cameras[0]),str(self.cameras[1]),str(self.rotation),
                         str(self.translation),str(self.essential_mat),str(self.fundamental_mat),
                         self.error,self.time))
         

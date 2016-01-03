@@ -312,7 +312,7 @@ class CalibrateStereoVideoApplication:
                 print("Saving corners to {0:s}".format(self.full_corners_path))
                 np.savez_compressed(self.full_corners_path,
                                     limgpoints=self.limgpoints,rimgpoints=self.rimgpoints, 
-                                    objpoints=self.board_object_corner_set)
+                                    object_point_set=self.board_object_corner_set)
         print ("Total usable frames: {0:d} ({1:.3%})"
                .format(usable_frame_ct, float(usable_frame_ct)/self.total_frames))
                

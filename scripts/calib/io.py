@@ -14,15 +14,15 @@ def load_corners(path, board_height = None, board_width = None, board_square_siz
     npzfile = np.load(path)
     limgpoints = npzfile['limgpoints']
     rimgpoints = npzfile['rimgpoints']
-    if 'objp' in npzfile:
-        objp = npzfile['objp']
+    if 'object_point_set' in npzfile:
+        objp = npzfile['object_point_set']
     else:
         objp = geom.generate_object_points(board_height, board_width, board_square_size)
     objpoints = []
     usable_frame_ct = len(limgpoints)
-    for i_frame in xrange(usable_frame_ct): # @UnusedVariable
+    for i_frame in range(usable_frame_ct): # @UnusedVariable
         objpoints.append(objp)
-    return limgpoints,rimgpoints,objpoints, usable_frame_ct
+    return limgpoints,rimgpoints,objpoints,usable_frame_ct
 
 def load_opencv_stereo_calibration(path):
     '''
