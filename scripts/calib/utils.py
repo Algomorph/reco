@@ -65,8 +65,8 @@ def stereo_calibrate(limgpoints,rimgpoints,objpoints,
         flags += cv2.CALIB_USE_INTRINSIC_GUESS
     else:
         signature = time.strftime("%Y%m%d-%H%M%S",time.localtime())
-        result = data.StereoCalibrationInfo((data.CameraCalibrationInfo(resolution),
-                                             data.CameraCalibrationInfo(resolution)), 
+        result = data.StereoCalibrationInfo((data.CameraCalibrationInfo(resolution, index=0),
+                                             data.CameraCalibrationInfo(resolution, index=1)), 
                                              _id=signature)
     #shorten notation later in the code
     cam0 = result.cameras[0]

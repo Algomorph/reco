@@ -117,6 +117,7 @@ class CalibrateStereoVideoApplication:
         self.board_dims = (args.board_width,args.board_height)
         self.board_object_corner_set = np.zeros((args.board_height*args.board_width,1,3), np.float32)
         self.board_object_corner_set[:,:,:2] = np.indices(self.board_dims).T.reshape(-1, 1, 2)
+        self.board_object_corner_set *= args.board_square_size
         if args.frame_numbers:
             path = osp.join(args.folder, args.frame_numbers)
             print("Loading frame numbers from \"{0:s}\"".format(path))

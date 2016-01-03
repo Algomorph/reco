@@ -22,16 +22,16 @@ import numpy as np
 
 
 def _resolution_from_xml(element):
-    resolution_elem = element.find("Resolution")
-    width = float(resolution_elem.find("Width").text)
-    height = float(resolution_elem.find("Height").text)
+    resolution_elem = element.find("resolution")
+    width = float(resolution_elem.find("width").text)
+    height = float(resolution_elem.find("height").text)
     return (height, width)
 
 def _resolution_to_xml(element, resolution):
-    resolution_elem = etree.SubElement(element, "Resolution")
-    width_elem = etree.SubElement(resolution_elem, "Width")
+    resolution_elem = etree.SubElement(element, "resolution")
+    width_elem = etree.SubElement(resolution_elem, "width")
     width_elem.text = str(resolution[1])
-    height_elem = etree.SubElement(resolution_elem, "Height")
+    height_elem = etree.SubElement(resolution_elem, "height")
     height_elem.text = str(resolution[0])
 
 def _error_and_time_from_xml(element):
@@ -147,20 +147,22 @@ class StereoCalibrationInfo(object):
         @type root_element:  lxml.etree.SubElement
         @param root_element: the root element to build under
         '''
-        stereo_calib_elem = etree.SubElement(root_element, "StereoCalibrationInfo",attrib={"id":str(self.id)})
+        stereo_calib_elem = etree.SubElement(root_element, "StereoCalibrationInfo",
+                                             attrib={"id":str(self.id)})
         cameras_elem = etree.SubElement(stereo_calib_elem, "Cameras")
         self.cameras[0].to_xml(cameras_elem)
         self.cameras[1].to_xml(cameras_elem)
         xml.make_opencv_matrix_xml_element(stereo_calib_elem, self.rotation, "rotation")
         xml.make_opencv_matrix_xml_element(stereo_calib_elem, self.translation, "translation")
         xml.make_opencv_matrix_xml_element(stereo_calib_elem, self.essential_mat, "essential_mat")
-        xml.make_opencv_matrix_xml_element(stereo_calib_elem, self.fundamental_mat, "fundamental_mat")
+        xml.make_opencv_matrix_xml_element(stereo_calib_elem, self.fundamental_mat,
+                                           "fundamental_mat")
         _error_and_time_to_xml(stereo_calib_elem, self.error, self.time)
         
     def __str__(self):
         return (("Stereo Calibration Info, id: {0:s}\n-----CAM0-----\n{1:s}\n-----CAM1-----\n{2:s}"+
-                 "\nRotation:\n{3:s}\nTranslation:\n{4:s}\nEssential Matrix:\n{5:s}\n"+
-                 "Fundamental Matrix:\n{6:s}\nError: {7:f}\nTime: {8:f}")
+                 "\n--------------\nRotation:\n{3:s}\nTranslation:\n{4:s}\nEssential Matrix:\n{5:s}"
+                 +"\nFundamental Matrix:\n{6:s}\nError: {7:f}\nTime: {8:f}")
                 .format(str(self.id),str(self.cameras[0]),str(self.cameras[1]),str(self.rotation),
                         str(self.translation),str(self.essential_mat),str(self.fundamental_mat),
                         self.error,self.time))
@@ -168,9 +170,11 @@ class StereoCalibrationInfo(object):
     @staticmethod
     def from_xml(element):
         '''
+        Build a StereoCalibrationInfo object out of the given xml node
         @type element: lxml.etree.SubElement
         @param element: the element to construct an StereoCalibrationInfo object from
-        @return a new StereoCalibrationInfo object constructed from XML node with matrices in OpenCV format
+        @return a new StereoCalibrationInfo object constructed from XML node with matrices in 
+        OpenCV format
         '''
         cameras_elem = element.find("Cameras")
         intrinsics = []
