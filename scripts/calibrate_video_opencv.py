@@ -94,6 +94,7 @@ parser.add_argument("-il", "--load_images", action='store_true', required = Fals
 
 
 class CalibrateStereoVideoApplication:
+    min_frames_to_calibrate = 4
     def __init__(self,args):
         self.left_vid = osp.join(args.folder,args.videos[0])
         self.right_vid = osp.join(args.folder,args.videos[1])
@@ -186,48 +187,91 @@ class CalibrateStereoVideoApplication:
         '''
         pick out a few frames and stereo_calibrate based on those
         '''
-        #just in case we're running capture again
-        self.left_cap.set(cv2.CAP_PROP_POS_FRAMES,0.0)
-        self.right_cap.set(cv2.CAP_PROP_POS_FRAMES,0.0)
+        
         
         #assume a relatively uniform distribution of camera angles and positions
         bootstrap_frame_interval = self.total_frames / num_frames_for_bootstrap
         
-        i_frame = 0
+        start_seek_frame = 0
         
-        lret, l_frame = self.left_cap.read()
-        rret, r_frame = self.right_cap.read()
-        continue_capture = lret and rret
+        bootstrap_limgpts = []
+        bootstrap_rimgpts = []
+        bootstrap_objectpts = []
+        bootstrap_frame_ct = 0
         
-        bootstrap_limgcorners = []
-        bootstrap_rimgcorners = []
+        preview = True
         
-        while i_frame < self.total_frames:
+        if(preview):
+            screen_width = 1920
+            screen_height = 1080
+            top_offset = 30
+            launcher_offset = 100
+            cv2.namedWindow("left", flags = cv2.WINDOW_KEEPRATIO)
+            cv2.namedWindow("right", flags = cv2.WINDOW_KEEPRATIO)
+            cv2.moveWindow("left", launcher_offset, top_offset)
+            cv2.moveWindow("right", screen_width, top_offset)
+            cv2.resizeWindow("left", screen_width-launcher_offset, screen_height-top_offset)
+            cv2.resizeWindow("right", screen_width, screen_height-top_offset)
+        
+        while start_seek_frame < self.total_frames:
             got_bootstrap_frame = False
+            i_frame = start_seek_frame
+            self.left_cap.set(cv2.CAP_PROP_POS_FRAMES,i_frame)
+            self.right_cap.set(cv2.CAP_PROP_POS_FRAMES,i_frame)
+            lret, l_frame = self.left_cap.read()
+            rret, r_frame = self.right_cap.read()
+            continue_capture = lret and rret
+            
             while not got_bootstrap_frame and continue_capture:
-                sharpness = min(cv2.Laplacian(l_frame, cv2.CV_64F).var(), 
-                        cv2.Laplacian(r_frame, cv2.CV_64F).var())
-                if(sharpness > self.args.sharpness_threshold):
+                #try sampling a frame
+                sharpness_left = cv2.Laplacian(l_frame, cv2.CV_64F).var()
+                sharpness_right = cv2.Laplacian(r_frame, cv2.CV_64F).var()  
+                sharpness = min(sharpness_left,sharpness_right) 
+                
+                if(sharpness > self.args.sharpness_threshold or preview):
                     lfound,lcorners = cv2.findChessboardCorners(l_frame,self.board_dims)
                     rfound,rcorners = cv2.findChessboardCorners(r_frame,self.board_dims)
                     if (lfound and rfound):
+                        lgrey = cv2.cvtColor(l_frame,cv2.COLOR_BGR2GRAY)
+                        rgrey = cv2.cvtColor(r_frame,cv2.COLOR_BGR2GRAY)
+                        cv2.cornerSubPix(lgrey, lcorners, (11,11),(-1,-1),self.criteria_subpix)
+                        cv2.cornerSubPix(rgrey, rcorners, (11,11),(-1,-1),self.criteria_subpix)
+                        if(preview):
+                            cv2.drawChessboardCorners(l_frame, self.board_dims, lcorners, lfound)
+                            cv2.drawChessboardCorners(r_frame, self.board_dims, rcorners, rfound)
+                            print("Sharpness left: {0:f}".format(sharpness_left))
+                            print("Sharpness right: {0:f}".format(sharpness_right))
+                            cv2.imshow("left", l_frame)
+                            cv2.imshow("right", r_frame)
+                            key = cv2.waitKey(0)
+                            if(key == 27):
+                                preview = False
+                                cv2.destroyAllWindows()
+                        bootstrap_limgpts.append(lcorners)
+                        bootstrap_rimgpts.append(rcorners)
+                        bootstrap_objectpts.append(self.board_object_corner_set)
+                        bootstrap_frame_ct += 1
                         got_bootstrap_frame = True
                 i_frame +=1
                 lret, l_frame = self.left_cap.read()
                 rret, r_frame = self.right_cap.read()
                 continue_capture = lret and rret
-            
-                
+            #advance to next sampling interval
+            start_seek_frame += bootstrap_frame_interval
+        
+        print("Got total bootstrap frames: {0:d}".format(bootstrap_frame_ct))
+        
     
     def run_capture_advanced(self):
         self.bootstrap()
+        return 0
         
         
             
             
     
             
-    def run_capture(self):
+    def run_capture_basic(self):
         #just in case we're running capture again
         self.left_cap.set(cv2.CAP_PROP_POS_FRAMES,0.0)
         self.right_cap.set(cv2.CAP_PROP_POS_FRAMES,0.0)
@@ -307,8 +351,10 @@ class CalibrateStereoVideoApplication:
         else:
             if(self.args.load_images):
                 usable_frame_ct = self.load_frame_images()
+            elif(self.args.advanced_filtering):
+                usable_frame_ct = self.run_capture_advanced()
             else:
-                usable_frame_ct = self.run_capture()            
+                usable_frame_ct = self.run_capture_basic()            
             if self.args.save_corners:
                 print("Saving corners to {0:s}".format(self.full_corners_path))
                 np.savez_compressed(self.full_corners_path,
@@ -316,8 +362,14 @@ class CalibrateStereoVideoApplication:
                                     object_point_set=self.board_object_corner_set)
         print ("Total usable frames: {0:d} ({1:.3%})"
                .format(usable_frame_ct, float(usable_frame_ct)/self.total_frames))
+        self.usable_frame_count = usable_frame_ct
                
     def run_calibration(self):
+        min_frames = CalibrateStereoVideoApplication.min_frames_to_calibrate
+        if self.usable_frame_count < min_frames:
+            print("Not enough usable frames to calibrate."+
+                  " Need at least {0:d}, got {1:d}".format(min_frames,self.usable_frame_count))
+            return
         print ("Calibrating for max. {0:d} iterations...".format(self.args.max_iterations))
         if(self.args.use_existing):
             path_to_calib_file = osp.join(self.args.folder, self.args.output)
