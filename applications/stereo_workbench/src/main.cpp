@@ -110,15 +110,15 @@ public:
 	void run() {
 		cv::Mat result_l, result_r, result_big;
 
-
+		cv::Ptr<cv::BackgroundSubtractorMOG2> background_model = cv::createBackgroundSubtractorMOG2();
 
 		cv::Mat mask_l;
 		if (input_is_video) {
 			int i_frame = 0;
 			int ch = 0;
-			cv::Mat prev, grey, flow;
+			cv::Mat prev, grey, flow, mask;
 			cv::cvtColor(frame_l, prev, cv::COLOR_BGR2GRAY);
-
+			cv::Mat kernel = cv::getStructuringElement(cv::MORPH_ELLIPSE,cv::Size(3,3));
 
 			cv::Ptr<cv::DenseOpticalFlow> dense_flow = cv::optflow::createOptFlow_DeepFlow();
 			//dense_flow->alpha
@@ -130,13 +130,18 @@ public:
 				}
 				cv::cvtColor(frame_l, grey, cv::COLOR_BGR2GRAY);
 				cv::calcOpticalFlowFarneback(prev, grey, flow, 0.5, 3, 15, 3, 5, 1.2, 0);
+				//background_model->apply(frame_l,mask);
+				//cv::morphologyEx(mask,mask,cv::MORPH_OPEN,kernel);
 				//dense_flow->calc(prev, grey, flow);
-				result_big = flow_to_hsv(flow);
+				//result_big = flow_to_hsv(flow);
+				result_big = threshold_flow(flow);
+				//result_big = mask;
 
 
 				//cv::optflow::calcOpticalFlowSF(prev,frame_l,flow,4,block_size,max_flow);
 //				result_l = process_superpixels(frame_l, seeds_l);
 //				result_r = process_superpixels(frame_r, seeds_r);
+
 				cv::imshow(left_win_title, frame_l);
 				cv::imshow(right_win_title, frame_l);
 				cv::imshow(right_win_title, grey);
@@ -148,7 +153,8 @@ public:
 			}
 		} else {
 			rectifier.rectify(frame_l,frame_r,result_l,result_r);
-#define SEG
+#define DISP
+#define LOAD_DISP
 #ifdef DISP
 
 #ifdef LOAD_DISP
@@ -170,7 +176,8 @@ public:
 
 
 			//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud(disparity_uint16, result_l, disparity_mask, mouse_mask, Q);
-			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud(disparity, result_l, combined_mask, Q);
+			//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud(disparity, result_l, combined_mask, Q);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud(disparity, result_l, disparity_mask, Q);
 			//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud_direct(cloud_mat, result_l, disparity_mask);
 			while (!viewer.wasStopped()){
 				viewer.spinOnce(100);
@@ -233,6 +240,19 @@ private:
 		cv::imwrite((dir / fs::path(disparity_file_name)).string(), out);
 		cv::imwrite((dir / fs::path(mask_file_name)).string(), mask);
 
+	}
+
+	static cv::Mat threshold_flow(cv::Mat& flow){
+		cv::Mat mag, ang, mag2;
+		std::vector<cv::Mat> flow_channels;
+		cv::split(flow, flow_channels);
+		cv::cartToPolar(flow_channels[0], flow_channels[1], mag, ang, true);
+		cv::normalize(mag, mag2, 0, 1.0, cv::NORM_MINMAX);
+		cv::threshold(mag2,mag,0.1,1.0,cv::THRESH_BINARY);
+
+		mag *= 255;
+		mag.convertTo(mag, CV_8UC1);
+		return mag;
 	}
 
 	static cv::Mat flow_to_hsv(cv::Mat& flow) {

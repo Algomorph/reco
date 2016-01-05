@@ -51,14 +51,20 @@ parser.add_argument("-fa", "--advanced_filtering", required=False, action="store
                     help="filter frames based on camera position and orientation rather than" +
                     " basic absolute difference between pixels. With this argument, the difference"+
                     " threshold parameter is ignored.")
-parser.add_argument("-aft", "--advanced_filter_target", required=False, type=int, help="Target number of "+
-                    "frames to filter out" )
+parser.add_argument("-fat", "--advanced_filter_target", required=False, type=int, help="Target number of "+
+                    "frames to filter out", default=200 )
 
 #============== STORAGE OF BOARD CORNER POSITIONS =================================================#
 parser.add_argument("-c", "--corners_file", required = False, default="corners.npz", 
                     help="store filtered corners")
 parser.add_argument("-s", "--save_corners", action='store_true', required = False, default=False)
 parser.add_argument("-l", "--load_corners", action='store_true', required = False, default=False)
+#============== STORAGE/RETRIEVAL OF SETTINGS =====================================================#
+#TODO:
+parser.add_argument("-sf", "--settings_file", required = False, default="settings.cfg", 
+                    help="File to save to / load from settings for the program.")
+parser.add_argument("-ss", "--save_setttings", action='store_true', required = False, default = False)
+parser.add_argument("-ls", "--load_settings", action='store_true',required=False, default=False)
 
 #============== CALIBRATION & DISTORTION MODEL CONTROLS ===========================================#
 parser.add_argument("-i", "--max_iterations", help="maximum number of iterations for the stereo"+
@@ -73,8 +79,10 @@ parser.add_argument("-dt", "--use_tangential_distortion_coefficients", action='s
 parser.add_argument("-df", "--use_fisheye_distortion_model", action='store_true', 
                     required = False, default=False)
 
-parser.add_argument("-sp", "--skip_printing_output", action='store_true', required = False, default= False)
-parser.add_argument("-ss", "--skip_saving_output", action='store_true', required = False, default= False)
+parser.add_argument("-skp", "--skip_printing_output", action='store_true', 
+                    required = False, default= False)
+parser.add_argument("-sks", "--skip_saving_output", action='store_true', 
+                    required = False, default= False)
 
 parser.add_argument("-o", "--output", help="output file to store calibration results", 
                     required = False, default="cvcalib.xml")
@@ -124,11 +132,15 @@ class CalibrateStereoVideoApplication:
             print("Loading frame numbers from \"{0:s}\"".format(path))
             npzfile = np.load(path)
             self.frame_numbers = set(npzfile["frame_numbers"])
-        self.criteria_subpix = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 30, 0.001)
-        self.frame_dims = (int(self.left_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),
-                           int(self.left_cap.get(cv2.CAP_PROP_FRAME_WIDTH)))
-        self.total_frames = self.left_cap.get(cv2.CAP_PROP_FRAME_COUNT)
+        self.criteria_subpix = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 40, 0.001)
+        self.frame_dims = (int(self.left_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),#@UndefinedVariable
+                           int(self.left_cap.get(cv2.CAP_PROP_FRAME_WIDTH)))#@UndefinedVariable
+        self.total_frames = self.left_cap.get(cv2.CAP_PROP_FRAME_COUNT)#@UndefinedVariable
         self.pixel_difference_factor = 1.0 / (self.board_dims[0] * self.board_dims[1] * 3 * 256.0)
+        if(args.use_existing):
+            self.path_to_calib_file = osp.join(self.args.folder, self.args.output)
+        else:
+            self.path_to_calib_file = None
         self.args = args
         
     def __del__(self):
@@ -199,15 +211,16 @@ class CalibrateStereoVideoApplication:
         bootstrap_objectpts = []
         bootstrap_frame_ct = 0
         
-        preview = True
+        #TODO: remove preview stuff after sharpness is completely resolved
+        preview = False
         
         if(preview):
             screen_width = 1920
             screen_height = 1080
             top_offset = 30
             launcher_offset = 100
-            cv2.namedWindow("left", flags = cv2.WINDOW_KEEPRATIO)
-            cv2.namedWindow("right", flags = cv2.WINDOW_KEEPRATIO)
+            cv2.namedWindow("left", flags = cv2.WINDOW_KEEPRATIO)#@UndefinedVariable
+            cv2.namedWindow("right", flags = cv2.WINDOW_KEEPRATIO)#@UndefinedVariable
             cv2.moveWindow("left", launcher_offset, top_offset)
             cv2.moveWindow("right", screen_width, top_offset)
             cv2.resizeWindow("left", screen_width-launcher_offset, screen_height-top_offset)
@@ -216,19 +229,20 @@ class CalibrateStereoVideoApplication:
         while start_seek_frame < self.total_frames:
             got_bootstrap_frame = False
             i_frame = start_seek_frame
-            self.left_cap.set(cv2.CAP_PROP_POS_FRAMES,i_frame)
-            self.right_cap.set(cv2.CAP_PROP_POS_FRAMES,i_frame)
+            self.left_cap.set(cv2.CAP_PROP_POS_FRAMES,i_frame)#@UndefinedVariable
+            self.right_cap.set(cv2.CAP_PROP_POS_FRAMES,i_frame)#@UndefinedVariable
             lret, l_frame = self.left_cap.read()
             rret, r_frame = self.right_cap.read()
             continue_capture = lret and rret
             
             while not got_bootstrap_frame and continue_capture:
                 #try sampling a frame
-                sharpness_left = cv2.Laplacian(l_frame, cv2.CV_64F).var()
-                sharpness_right = cv2.Laplacian(r_frame, cv2.CV_64F).var()  
-                sharpness = min(sharpness_left,sharpness_right) 
-                
-                if(sharpness > self.args.sharpness_threshold or preview):
+                #sharpness_left = cv2.Laplacian(l_frame, cv2.CV_64F).var()
+                #sharpness_right = cv2.Laplacian(r_frame, cv2.CV_64F).var()  
+                #sharpness = min(sharpness_left,sharpness_right)
+                #TODO: more advanced sharpness filter 
+                if True:
+                #if(sharpness > self.args.sharpness_threshold or preview):
                     lfound,lcorners = cv2.findChessboardCorners(l_frame,self.board_dims)
                     rfound,rcorners = cv2.findChessboardCorners(r_frame,self.board_dims)
                     if (lfound and rfound):
@@ -239,8 +253,8 @@ class CalibrateStereoVideoApplication:
                         if(preview):
                             cv2.drawChessboardCorners(l_frame, self.board_dims, lcorners, lfound)
                             cv2.drawChessboardCorners(r_frame, self.board_dims, rcorners, rfound)
-                            print("Sharpness left: {0:f}".format(sharpness_left))
-                            print("Sharpness right: {0:f}".format(sharpness_right))
+                            #print("Sharpness left: {0:f}".format(sharpness_left))
+                            #print("Sharpness right: {0:f}".format(sharpness_right))
                             cv2.imshow("left", l_frame)
                             cv2.imshow("right", r_frame)
                             key = cv2.waitKey(0)
@@ -260,21 +274,41 @@ class CalibrateStereoVideoApplication:
             start_seek_frame += bootstrap_frame_interval
         
         print("Got total bootstrap frames: {0:d}".format(bootstrap_frame_ct))
+        print("Performing bootstrap calibration.")
+
+        bootstrap_calib_res = cutils.stereo_calibrate(bootstrap_limgpts, bootstrap_rimgpts, bootstrap_objectpts,
+                                                      self.frame_dims, self.args.use_fisheye_distortion_model, 
+                                                      self.args.use_8_distortion_coefficients, 
+                                                      self.args.use_tangential_distortion_coefficients, 
+                                                      self.args.precalibrate_solo, self.args.max_iterations, 
+                                                      self.path_to_calib_file)
         
+        return bootstrap_calib_res, (bootstrap_limgpts, bootstrap_rimgpts), bootstrap_objectpts
     
+    def angle_filter_iteration(self, calib, img_pts, obj_pts, target_num_frames):
+        lcam = calib.cameras[0]
+        rcam = calib.cameras[1]
+        limg_pts_undist = [cv2.undistortPoints(limg_pt_set,cameraMatrix = lcam.intrinsic_mat, 
+                                               distCoeffs = lcam.distortion_coeffs)
+                           for limg_pt_set in img_pts[0]]
+        rimg_pts_undist = [cv2.undistortPoints(rimg_pt_set,cameraMatrix = rcam.intrinsic_mat, 
+                                               distCoeffs = rcam.distortion_coeffs) 
+                           for rimg_pt_set in img_pts[1]]
+        print(limg_pts_undist[0])
+        
+        
+        
     def run_capture_advanced(self):
-        self.bootstrap()
+        bootstrap_calib_result, bootstrap_img_pts, bootstrap_obj_pts = self.bootstrap(5)
+        self.angle_filter_iteration(bootstrap_calib_result, bootstrap_img_pts, bootstrap_obj_pts, 60)
+        
+        
         return 0
-        
-        
-            
-            
-    
             
     def run_capture_basic(self):
         #just in case we're running capture again
-        self.left_cap.set(cv2.CAP_PROP_POS_FRAMES,0.0)
-        self.right_cap.set(cv2.CAP_PROP_POS_FRAMES,0.0)
+        self.left_cap.set(cv2.CAP_PROP_POS_FRAMES,0.0)#@UndefinedVariable
+        self.right_cap.set(cv2.CAP_PROP_POS_FRAMES,0.0)#@UndefinedVariable
         
         #init capture
         lret, l_frame = self.left_cap.read()
@@ -371,16 +405,12 @@ class CalibrateStereoVideoApplication:
                   " Need at least {0:d}, got {1:d}".format(min_frames,self.usable_frame_count))
             return
         print ("Calibrating for max. {0:d} iterations...".format(self.args.max_iterations))
-        if(self.args.use_existing):
-            path_to_calib_file = osp.join(self.args.folder, self.args.output)
-        else:
-            path_to_calib_file = None
         calibration_result = cutils.stereo_calibrate(self.limgpoints, self.rimgpoints, self.objpoints,
                                                      self.frame_dims, self.args.use_fisheye_distortion_model, 
                                                      self.args.use_8_distortion_coefficients, 
                                                      self.args.use_tangential_distortion_coefficients, 
                                                      self.args.precalibrate_solo, self.args.max_iterations, 
-                                                     path_to_calib_file)
+                                                     self.path_to_calib_file )
         if self.args.preview:
             l_im = cv2.imread(osp.join(self.args.folder,self.args.preview_files[0]))
             r_im = cv2.imread(osp.join(self.args.folder,self.args.preview_files[1]))
