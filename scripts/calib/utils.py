@@ -12,7 +12,7 @@ import calib.io as io
 import calib.data as data
 
 def calibrate(objpoints, imgpoints, flags, criteria, calibration_info, verbose = False):
-    #OpenCV prefers the Width x Height as "Size" to Height x Width
+    #OpenCV prefers the width x height as "Size" to height x width
     frame_dims = (calibration_info.resolution[1],calibration_info.resolution[0])
     start = time.time()
     calibration_info.error, calibration_info.intrinsic_mat, calibration_info.distortion_coeffs =\

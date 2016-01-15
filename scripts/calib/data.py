@@ -19,6 +19,8 @@
 import calib.xml as xml
 from lxml import etree
 import numpy as np
+import os.path as osp
+import cv2
 
 
 def _resolution_from_xml(element):
@@ -43,13 +45,55 @@ def _error_and_time_to_xml(element, error, time):
     error_element = etree.SubElement(element,"error")
     error_element.text = str(error)
     time_element = etree.SubElement(element,"time")
-    time_element.text = str(time)    
+    time_element.text = str(time) 
+    
+    
+class CameraInfo(object):
+    def __init__(self, directory, filename, index = 0):
+        self.index = index
+        if not filename[-3:] == ".mp4":
+            raise ValueError("Specified file does not have .mp4 extension.")
+        self.path = osp.join(directory, filename)
+        if not osp.isfile(self.path):
+            raise ValueError("No video file found at {0:s}".format(self.left_vid))
+        self.name = filename[:-4]
+        self.cap = cv2.VideoCapture(self.left_vid)
+        if not self.cap.isOpened():
+            raise ValueError("Could not open specified .mp4 file ({0:s}) for capture!".format(self.path))
+        self.imgpoints = []
+        self.frame_dims = (int(self.cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),#@UndefinedVariable
+                           int(self.cap.get(cv2.CAP_PROP_FRAME_WIDTH)))#@UndefinedVariable
+        self.frame_count = self.cap.get(cv2.CAP_PROP_FRAME_COUNT) #@UndefinedVariable
+        self.calib = CameraCalibrationInfo(self.frame_dims, index = index )
+        if(self.cap.get(cv2.CAP_PROP_MONOCHROME) == 0.0):
+            self.n_channels = 3
+        else:
+            self.n_channels = 1
+        self.current_corners = None
+        self.frame = np.zeros((self.frame_dims[0],self.frame_dims[1],self.n_channels), np.uint8)
+        self.previous_frame = np.zeros((self.frame_dims[0],self.frame_dims[1],self.n_channels), np.uint8)
+        self.more_frames_remain = False
+    
+    def read_next_frame(self):
+        self.more_frames_remain, self.frame = self.cap.read()
+        
+    def set_previous_to_current(self):
+        self.previous_frame = self.frame
+        
+    def scroll_to_frame(self,index):
+        self.cap.set(cv2.CAP_PROP_POS_FRAMES,i_frame)#@UndefinedVariable
+    
+    def scroll_to_beginning(self):
+        self.cap.set(cv2.CAP_PROP_POS_FRAMES,0.0)#@UndefinedVariable
+        
+    def __del__(self):
+        self.cap.release()
 
 class CameraCalibrationInfo(object):
     '''
     Represents cameras of a camera, i.e. intrinsic matrix & distortion coefficients
     '''
-    def __init__(self, resolution, intrinsic_mat = np.eye(3,dtype=np.float64), 
+    def __init__(self, resolution, intrinsic_mat = None, 
                  distortion_coeffs = np.zeros(8,np.float64), 
                  error = -1.0, time = 0.0, index = 0):
         '''
@@ -65,6 +109,8 @@ class CameraCalibrationInfo(object):
         @type  time: float
         @param time: calibration time in seconds
         '''
+        if(type(intrinsic_mat) == type(None)):
+            intrinsic_mat = np.eye(3,dtype=np.float64)
         self.intrinsic_mat = intrinsic_mat
         self.distortion_coeffs = distortion_coeffs
         self.resolution = resolution

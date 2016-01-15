@@ -6,7 +6,21 @@ import numpy as np
 import argparse as ap
 from calib import utils as cutils
 from calib import io as cio
+from calib.data import CameraInfo
+import datetime
+import sys
+import re
 
+
+def required_length(nmin,nmax):
+    class RequiredLength(ap.Action):
+        def __call__(self, parser, args, values, option_string=None):
+            if not nmin<=len(values)<=nmax:
+                msg='argument "{f}" requires between {nmin} and {nmax} arguments'.format(
+                    f=self.dest,nmin=nmin,nmax=nmax)
+                raise ap.ArgumentTypeError(msg)
+            setattr(args, self.dest, values)
+    return RequiredLength
 
 parser = ap.ArgumentParser(description='Traverse two .mp4 stereo video files and '+
                            ' stereo_calibrate the cameras based on specially selected frames within.')
@@ -15,14 +29,15 @@ parser.add_argument("-f", "--folder", help="Path to root folder to work in",
 parser.add_argument("-fn", "--frame_numbers", help="frame numbers .npz file with frame_numbers array."+
                     " If specified, program filters frame pairs based on these numbers instead of other"+
                     " criteria.",required=False, default=None)
-parser.add_argument("-v", "--videos", nargs=2, help="input stereo video tuple (left, right)", 
+parser.add_argument("-v", "--videos", nargs='+', action=required_length(1, 2),
+                    help="input stereo video tuple (left, right)", 
                     required=False, default= ["left.mp4","right.mp4"])
 
 #============== CALIBRATION PREVIEW ===============================================================#
 #currently does not work due to OpenCV python bindings bug
-parser.add_argument("-pf", "--preview_files", nargs=2, help="input frames to test calibration result", 
-                    required=False, default= ["left.png","right.png"])
-parser.add_argument("-p", "--preview", help="Test calibration result on left/right frame pair", 
+parser.add_argument("-pf", "--preview_files", nargs='+', help="input frames to test calibration result (currently only for stereo)", 
+                    required=False, default= ["left.png","right.png"], action=required_length(1, 2))
+parser.add_argument("-p", "--preview", help="Test calibration result on left/right frame pair (currently only for stereo)", 
                     action = "store_true", required=False)
 
 #============== BOARD DIMENSIONS ==================================================================#
@@ -47,12 +62,8 @@ parser.add_argument("-m", "--manual_filter", help="pick which (pre-filtered)fram
 parser.add_argument("-fi", "--frame_interval", required=False, default=1, type=int,
                     help="minimal interval (in frames) between successive frames to consider for"
                     +" calibration board extraction.")
-parser.add_argument("-fa", "--advanced_filtering", required=False, action="store_true", default=False,
-                    help="filter frames based on camera position and orientation rather than" +
-                    " basic absolute difference between pixels. With this argument, the difference"+
-                    " threshold parameter is ignored.")
-parser.add_argument("-fat", "--advanced_filter_target", required=False, type=int, help="Target number of "+
-                    "frames to filter out", default=200 )
+parser.add_argument("-fc", "--frame_count_target", required=False, default=-1, type=int,
+                    help="total number of frames (from either camera) to target for calibration.")
 
 #============== STORAGE OF BOARD CORNER POSITIONS =================================================#
 parser.add_argument("-c", "--corners_file", required = False, default="corners.npz", 
@@ -85,7 +96,7 @@ parser.add_argument("-sks", "--skip_saving_output", action='store_true',
                     required = False, default= False)
 
 parser.add_argument("-o", "--output", help="output file to store calibration results", 
-                    required = False, default="cvcalib.xml")
+                    required = False, default=None)
 parser.add_argument("-u", "--use_existing", 
                     help="use the existing output file to initialize calibration parameters", 
                     action="store_true", required = False, default=False)
@@ -97,328 +108,324 @@ parser.add_argument("-if", "--filtered_image_folder", help="filtered frames"+
 parser.add_argument("-is", "--save_images", action='store_true', required = False, default= False)
 parser.add_argument("-il", "--load_images", action='store_true', required = False, default= False)
 
-
-
-
-
-class CalibrateStereoVideoApplication:
+class CalibrateVideoApplication:
     min_frames_to_calibrate = 4
     def __init__(self,args):
-        self.left_vid = osp.join(args.folder,args.videos[0])
-        self.right_vid = osp.join(args.folder,args.videos[1])
-        if not osp.isfile(self.left_vid):
-            raise ValueError("No video file found at {0:s}".format(self.left_vid))
-        if not osp.isfile(self.right_vid):
-            raise ValueError("No video file found at {0:s}".format(self.right_vid))
-        self.l_vid_name = args.videos[0][:-4] 
-        self.r_vid_name = args.videos[1][:-4]
-        self.left_cap = cv2.VideoCapture(self.left_vid)
-        self.right_cap = cv2.VideoCapture(self.right_vid)
+        self.camera = CameraInfo(args.folder,args.videos[0], 0)
+        
+        if(len(args.videos > 1)):
+            self.cameras = [self.camera, CameraInfo(args.folder, args.videos[1], 1)]
+            self.__automatic_filter_basic = self.__automatic_filter_basic_stereo
+            self.__automatic_filter = self.__automatic_filter_stereo
+            if(len.args.preview_files != len(args.videos)):
+                raise ValueError("There must be two preview file arguments passed in for stereo calibration.")
+        else:
+            self.cameras = [self.camera]
+            self.__automatic_filter_basic = self.__automatic_filter_basic_mono
+            self.__automatic_filter = self.__automatic_filter_mono
         
         self.full_frame_folder_path = osp.join(args.folder,args.filtered_image_folder)
-        #if image folder doesn't yet exist, create it
+        #if image folder (for captured frames) doesn't yet exist, create it
         if args.save_images and not os.path.exists(self.full_frame_folder_path):
             os.makedirs(self.full_frame_folder_path)
         self.full_corners_path = osp.join(args.folder,args.corners_file)
-        self.limgpoints = []
-        self.rimgpoints = []
+        
+        #set up board (3D object points of checkerboard used for calibration)
         self.objpoints = []
         self.board_dims = (args.board_width,args.board_height)
         self.board_object_corner_set = np.zeros((args.board_height*args.board_width,1,3), np.float32)
         self.board_object_corner_set[:,:,:2] = np.indices(self.board_dims).T.reshape(-1, 1, 2)
         self.board_object_corner_set *= args.board_square_size
+        
         if args.frame_numbers:
             path = osp.join(args.folder, args.frame_numbers)
             print("Loading frame numbers from \"{0:s}\"".format(path))
             npzfile = np.load(path)
             self.frame_numbers = set(npzfile["frame_numbers"])
+            
         self.criteria_subpix = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 40, 0.001)
-        self.frame_dims = (int(self.left_cap.get(cv2.CAP_PROP_FRAME_HEIGHT)),#@UndefinedVariable
-                           int(self.left_cap.get(cv2.CAP_PROP_FRAME_WIDTH)))#@UndefinedVariable
-        self.total_frames = self.left_cap.get(cv2.CAP_PROP_FRAME_COUNT)#@UndefinedVariable
+        self.frame_dims = self.camera.frame_dims
+        self.total_frames = min(self.cameras[0].frame_count,self.cameras[1].frame_count)
+        
         self.pixel_difference_factor = 1.0 / (self.board_dims[0] * self.board_dims[1] * 3 * 256.0)
         if(args.use_existing):
             self.path_to_calib_file = osp.join(self.args.folder, self.args.output)
         else:
             self.path_to_calib_file = None
+        if(args.output is None):
+            args.output = "calib{0:s}.xml".format(re.sub(r"-|:","",
+                                                         str(datetime.datetime.now())[:-7])
+                                                  .replace(" ","-"))
         self.args = args
-        
-    def __del__(self):
-        self.left_cap.release()
-        self.right_cap.release()
     
-    def __automatic_filter(self, l_frame,r_frame,
-                     lframe_prev,rframe_prev,
-                     difference_factor):
+    def __automatic_filter_stereo(self):
+        l_frame = self.cameras[0].frame
+        lframe_prev = self.cameras[0].previous_frame
+        r_frame = self.cameras[1].frame
+
         sharpness = min(cv2.Laplacian(l_frame, cv2.CV_64F).var(), 
                         cv2.Laplacian(r_frame, cv2.CV_64F).var())
+        
         #compare left frame to the previous left **filtered** one
         ldiff = np.sum(abs(lframe_prev - l_frame)) * self.pixel_difference_factor
         
         if sharpness < self.args.sharpness_threshold or ldiff < self.args.difference_threshold:
-            return False, None, None
+            return False
         
         lfound,lcorners = cv2.findChessboardCorners(l_frame,self.board_dims)
         rfound,rcorners = cv2.findChessboardCorners(r_frame,self.board_dims)
         if not (lfound and rfound):
-            return False, None, None
+            return False
         
-        return True, lcorners, rcorners
+        self.cameras[0].current_corners = lcorners
+        self.cameras[1].current_corners = rcorners
+        
+        return True
+    
+    def __automatic_filter_mono(self):
+        frame = self.camera.frame
+        frame_prev = self.camera[0].previous_frame
+        sharpness = cv2.Laplacian(frame,cv2.CV_64F).var()
+        if sharpness < self.args.sharpness_threshold:
+            return False
+        #compare left frame to the previous left **filtered** one
+        ldiff = np.sum(abs(frame_prev - frame)) * self.pixel_difference_factor
+        if ldiff < self.args.difference_threshold:
+            return False
+        
+        found,corners = cv2.findChessboardCorners(frame,self.board_dims)
+        
+        if not found:
+            return False
+        
+        self.camera.current_corners = corners
+        
+        return True
+        
+    
+    def __automatic_filter_basic_stereo(self):
+        l_frame = self.cameras[0].frame
+        r_frame = self.cameras[1].frame
+        
+        lfound,lcorners = cv2.findChessboardCorners(l_frame,self.board_dims)
+        rfound,rcorners = cv2.findChessboardCorners(r_frame,self.board_dims)
+        if not (lfound and rfound):
+            return False
+        
+        self.cameras[0].current_corners = lcorners
+        self.cameras[1].current_corners = rcorners
+        
+        return True
+    
+    def __automatic_filter_basic_mono(self):
+        frame = self.camera.frame
+        found,corners = cv2.findChessboardCorners(frame,self.board_dims)  
+        self.camera.current_corners = corners
+        return found
 
     def load_frame_images(self):
         print("Loading frames from '{0:s}'".format(self.full_frame_folder_path))
         files = [f for f in os.listdir(self.full_frame_folder_path) 
                  if osp.isfile(osp.join(self.full_frame_folder_path,f)) and f.endswith(".png")]
         files.sort()
-        #assume matching numbers in corresponding left & right files
-        lfiles = [f for f in files if f.startswith(self.l_vid_name)]
-        rfiles = [f for f in files if f.startswith(self.r_vid_name)]
-        #assume all are usable
-        usable_frame_ct = 0
-        for ix_pair in range(min(len(lfiles),len(rfiles))):
-            l_frame = cv2.imread(osp.join(self.full_frame_folder_path,lfiles[ix_pair]))
-            r_frame = cv2.imread(osp.join(self.full_frame_folder_path,rfiles[ix_pair]))
-            lfound,lcorners = cv2.findChessboardCorners(l_frame,self.board_dims)
-            rfound,rcorners = cv2.findChessboardCorners(r_frame,self.board_dims)
-            if not (lfound):
-                raise ValueError("Could not find corners in image '{0:s}'".format(lfiles[ix_pair]))
-            if not (rfound):
-                raise ValueError("Could not find corners in image '{0:s}'".format(rfiles[ix_pair]))
-            lgrey = cv2.cvtColor(l_frame,cv2.COLOR_BGR2GRAY)
-            rgrey = cv2.cvtColor(r_frame,cv2.COLOR_BGR2GRAY)
-            cv2.cornerSubPix(lgrey, lcorners, (11,11),(-1,-1),self.criteria_subpix)
-            cv2.cornerSubPix(rgrey, rcorners, (11,11),(-1,-1),self.criteria_subpix)
-            self.limgpoints.append(lcorners)
-            self.rimgpoints.append(rcorners)
+        
+        usable_frame_ct = sys.maxint
+        
+        for camera in self.cameras:
+            #assume matching numbers in corresponding left & right files
+            files = [f for f in files if f.startswith(self.l_vid_name)]
+            cam_frame_ct = 0
+            for ix_pair in range(len(files)):
+                #TODO: assumes there is the same number of frames for all videos, and all frame
+                #indexes match
+                frame = cv2.imread(osp.join(self.full_frame_folder_path,files[ix_pair]))
+                found,lcorners = cv2.findChessboardCorners(frame,self.board_dims)
+                if not found:
+                    raise ValueError("Could not find corners in image '{0:s}'".format(files[ix_pair]))
+                grey = cv2.cvtColor(frame,cv2.COLOR_BGR2GRAY)
+                cv2.cornerSubPix(grey, lcorners, (11,11),(-1,-1),self.criteria_subpix)
+                camera.imgpoints.append(lcorners)
+                cam_frame_ct+=1
+            usable_frame_ct = min(usable_frame_ct,cam_frame_ct)
+        for i_frame in range(usable_frame_ct):#@UnusedVariable
             self.objpoints.append(self.board_object_corner_set)
-            usable_frame_ct+=1
         return usable_frame_ct
     
-    
-    def bootstrap(self, num_frames_for_bootstrap = 20):
-        '''
-        pick out a few frames and stereo_calibrate based on those
-        '''
-        
-        
-        #assume a relatively uniform distribution of camera angles and positions
-        bootstrap_frame_interval = self.total_frames / num_frames_for_bootstrap
-        
-        start_seek_frame = 0
-        
-        bootstrap_limgpts = []
-        bootstrap_rimgpts = []
-        bootstrap_objectpts = []
-        bootstrap_frame_ct = 0
-        
-        #TODO: remove preview stuff after sharpness is completely resolved
-        preview = False
-        
-        if(preview):
-            screen_width = 1920
-            screen_height = 1080
-            top_offset = 30
-            launcher_offset = 100
-            cv2.namedWindow("left", flags = cv2.WINDOW_KEEPRATIO)#@UndefinedVariable
-            cv2.namedWindow("right", flags = cv2.WINDOW_KEEPRATIO)#@UndefinedVariable
-            cv2.moveWindow("left", launcher_offset, top_offset)
-            cv2.moveWindow("right", screen_width, top_offset)
-            cv2.resizeWindow("left", screen_width-launcher_offset, screen_height-top_offset)
-            cv2.resizeWindow("right", screen_width, screen_height-top_offset)
-        
-        while start_seek_frame < self.total_frames:
-            got_bootstrap_frame = False
-            i_frame = start_seek_frame
-            self.left_cap.set(cv2.CAP_PROP_POS_FRAMES,i_frame)#@UndefinedVariable
-            self.right_cap.set(cv2.CAP_PROP_POS_FRAMES,i_frame)#@UndefinedVariable
-            lret, l_frame = self.left_cap.read()
-            rret, r_frame = self.right_cap.read()
-            continue_capture = lret and rret
+    def add_corners(self, usable_frame_ct, report_interval, i_frame):
+        if(usable_frame_ct % report_interval == 0):
+            print ("Usable frames: {0:d} ({1:.3%})"
+                   .format(usable_frame_ct, float(usable_frame_ct)/(i_frame+1)))
             
-            while not got_bootstrap_frame and continue_capture:
-                #try sampling a frame
-                #sharpness_left = cv2.Laplacian(l_frame, cv2.CV_64F).var()
-                #sharpness_right = cv2.Laplacian(r_frame, cv2.CV_64F).var()  
-                #sharpness = min(sharpness_left,sharpness_right)
-                #TODO: more advanced sharpness filter 
-                if True:
-                #if(sharpness > self.args.sharpness_threshold or preview):
-                    lfound,lcorners = cv2.findChessboardCorners(l_frame,self.board_dims)
-                    rfound,rcorners = cv2.findChessboardCorners(r_frame,self.board_dims)
-                    if (lfound and rfound):
-                        lgrey = cv2.cvtColor(l_frame,cv2.COLOR_BGR2GRAY)
-                        rgrey = cv2.cvtColor(r_frame,cv2.COLOR_BGR2GRAY)
-                        cv2.cornerSubPix(lgrey, lcorners, (11,11),(-1,-1),self.criteria_subpix)
-                        cv2.cornerSubPix(rgrey, rcorners, (11,11),(-1,-1),self.criteria_subpix)
-                        if(preview):
-                            cv2.drawChessboardCorners(l_frame, self.board_dims, lcorners, lfound)
-                            cv2.drawChessboardCorners(r_frame, self.board_dims, rcorners, rfound)
-                            #print("Sharpness left: {0:f}".format(sharpness_left))
-                            #print("Sharpness right: {0:f}".format(sharpness_right))
-                            cv2.imshow("left", l_frame)
-                            cv2.imshow("right", r_frame)
-                            key = cv2.waitKey(0)
-                            if(key == 27):
-                                preview = False
-                                cv2.destroyAllWindows()
-                        bootstrap_limgpts.append(lcorners)
-                        bootstrap_rimgpts.append(rcorners)
-                        bootstrap_objectpts.append(self.board_object_corner_set)
-                        bootstrap_frame_ct += 1
-                        got_bootstrap_frame = True
-                i_frame +=1
-                lret, l_frame = self.left_cap.read()
-                rret, r_frame = self.right_cap.read()
-                continue_capture = lret and rret
-            #advance to next sampling interval
-            start_seek_frame += bootstrap_frame_interval
-        
-        print("Got total bootstrap frames: {0:d}".format(bootstrap_frame_ct))
-        print("Performing bootstrap calibration.")
+        for camera in self.cameras:
+            grey_frame = cv2.cvtColor(camera.frame,cv2.COLOR_BGR2GRAY)
+            cv2.cornerSubPix(grey_frame, camera.current_corners, (11,11),(-1,-1),self.criteria_subpix)
+            if(self.args.save_images):
+                fname = (osp.join(self.full_frame_folder_path,
+                               "{0:s}{1:04d}{2:s}".format(camera.name,i_frame,".png")))
+                cv2.imwrite(fname, camera.frame)
+            camera.imgpoints.append(camera.current_corners)
+        self.objpoints.append(self.board_object_corner_set)
+    
+    def filter_frame_manually(self):
+        if len(self.cameras) == 2:
+            display_image = np.hstack((self.cameras[0].frame, self.cameras[1].frame))
+        else:
+            display_image = self.cameras[0].frame
+        cv2.imshow("frame", display_image)
+        key = cv2.waitKey(0) & 0xFF
+        add_corners = (key == ord('a'))
+        cv2.destroyWindow("frame")
+        return add_corners, key
+    
+    def run_capture_deterministic_count(self):
+        skip_interval = int(self.total_frames / self.args.frame_count_target)
 
-        bootstrap_calib_res = cutils.stereo_calibrate(bootstrap_limgpts, bootstrap_rimgpts, bootstrap_objectpts,
-                                                      self.frame_dims, self.args.use_fisheye_distortion_model, 
-                                                      self.args.use_8_distortion_coefficients, 
-                                                      self.args.use_tangential_distortion_coefficients, 
-                                                      self.args.precalibrate_solo, self.args.max_iterations, 
-                                                      self.path_to_calib_file)
-        
-        return bootstrap_calib_res, (bootstrap_limgpts, bootstrap_rimgpts), bootstrap_objectpts
-    
-    def angle_filter_iteration(self, calib, img_pts, obj_pts, target_num_frames):
-        lcam = calib.cameras[0]
-        rcam = calib.cameras[1]
-        limg_pts_undist = [cv2.undistortPoints(limg_pt_set,cameraMatrix = lcam.intrinsic_mat, 
-                                               distCoeffs = lcam.distortion_coeffs)
-                           for limg_pt_set in img_pts[0]]
-        rimg_pts_undist = [cv2.undistortPoints(rimg_pt_set,cameraMatrix = rcam.intrinsic_mat, 
-                                               distCoeffs = rcam.distortion_coeffs) 
-                           for rimg_pt_set in img_pts[1]]
-        print(limg_pts_undist[0])
-        
-        
-        
-    def run_capture_advanced(self):
-        bootstrap_calib_result, bootstrap_img_pts, bootstrap_obj_pts = self.bootstrap(5)
-        self.angle_filter_iteration(bootstrap_calib_result, bootstrap_img_pts, bootstrap_obj_pts, 60)
-        
-        
-        return 0
+        continue_capture = 0
+        for camera in self.cameras:
+            #init capture
+            camera.read_next_frame()
+            continue_capture |= camera.end_of_video_not_reached()
             
-    def run_capture_basic(self):
-        #just in case we're running capture again
-        self.left_cap.set(cv2.CAP_PROP_POS_FRAMES,0.0)#@UndefinedVariable
-        self.right_cap.set(cv2.CAP_PROP_POS_FRAMES,0.0)#@UndefinedVariable
-        
-        #init capture
-        lret, l_frame = self.left_cap.read()
-        rret, r_frame = self.right_cap.read()
-        continue_capture = lret and rret
-        lframe_prev = np.zeros(l_frame.shape, l_frame.dtype)
-        rframe_prev = np.zeros(r_frame.shape, r_frame.dtype)
         usable_frame_ct = 0
+        i_start_frame = 0
         i_frame = 0
          
         report_interval = 10
-
-        while(continue_capture):
-            if not self.args.frame_numbers or i_frame in self.frame_numbers:
-                add_corners, lcorners, rcorners = self.__automatic_filter(l_frame, r_frame, 
-                                                                          lframe_prev, rframe_prev)
+        
+        while continue_capture:
+            add_corners = False
+            i_frame = i_start_frame
+            i_end_frame = i_start_frame + skip_interval
+            for camera in self.cameras:
+                camera.scroll_to_frame(i_frame)
+            while not add_corners and i_frame < i_end_frame and continue_capture:
+                add_corners = self.__automatic_filter()
                 if self.args.manual_filter:
-                    combo = np.hstack((l_frame, r_frame))
-                    cv2.imshow("frame", combo)
-                    key = cv2.waitKey(0) & 0xFF
-                    add_corners = (key == ord('a'))
-                    cv2.destroyWindow("frame")
+                    add_corners, key = self.filter_frame_manually()
                       
                 if add_corners:
                     usable_frame_ct += 1
-                    if(usable_frame_ct % report_interval == 0):
-                        print ("Usable frames: {0:i} ({1:.3%})"
-                               .format(usable_frame_ct, float(usable_frame_ct)/(i_frame+1)))
-                    lgrey = cv2.cvtColor(l_frame,cv2.COLOR_BGR2GRAY)
-                    rgrey = cv2.cvtColor(r_frame,cv2.COLOR_BGR2GRAY)
-                    cv2.cornerSubPix(lgrey, lcorners, (11,11),(-1,-1),self.criteria_subpix)
-                    cv2.cornerSubPix(rgrey, rcorners, (11,11),(-1,-1),self.criteria_subpix)
-                      
-                    #save frames if filtered frame folder was specified
-                    if(self.args.save_images):
-                        lfname = (osp.join(self.full_frame_folder_path,
-                                           "{0:s}{1:04d}{2:s}".format(self.l_vid_name,
-                                                                      i_frame,".png")))
-                        rfname = (osp.join(self.full_frame_folder_path,
-                                           "{0:s}{1:04d}{2:s}".format(self.r_vid_name,
-                                                                      i_frame,".png")))
-                        cv2.imwrite(lfname, l_frame)
-                        cv2.imwrite(rfname, r_frame)
-                          
-                    self.limgpoints.append(lcorners)
-                    self.rimgpoints.append(rcorners) 
-                    self.objpoints.append(self.board_object_corner_set)
-                  
+                    self.add_corners(usable_frame_ct, report_interval, i_frame)
                     #log last usable **filtered** frame
-                    lframe_prev = l_frame
-                    rframe_prev = r_frame
+                    for camera in self.cameras:
+                        camera.set_previous_to_current()
+  
+                i_frame += 1
+                continue_capture = 0
+                for camera in self.cameras:
+                    camera.read_next_frame()
+                    continue_capture &= camera.end_of_video_not_reached()
+                continue_capture &= (not (self.args.manual_filter and key == 27))
+            i_start_frame = i_end_frame
+            
+        if self.args.manual_filter and key == 27:
+            continue_capture = False
+        if self.args.manual_filter:
+            cv2.destroyAllWindows()
+        return usable_frame_ct
+            
+    def run_capture(self):
+        continue_capture = 0
+        for camera in self.cameras:
+            #just in case we're running capture again
+            camera.scroll_to_beginning()
+            #init capture
+            camera.read_next_frame()
+            continue_capture |= camera.end_of_video_not_reached()
+        
+        report_interval = 10
+        i_frame = 0
+        usable_frame_ct = 0
+
+        while(continue_capture):
+            if not self.args.frame_numbers or i_frame in self.frame_numbers:
+                add_corners = self.__automatic_filter()
+                
+                if self.args.manual_filter:
+                    add_corners, key = self.filter_frame_manually()
+                      
+                if add_corners:
+                    usable_frame_ct += 1
+                    self.add_corners(usable_frame_ct, report_interval, i_frame)
+                    
+                    #log last usable **filtered** frame
+                    for camera in self.cameras:
+                        camera.set_previous_to_current()
       
             i_frame += 1
-            lret, l_frame = self.left_cap.read()
-            rret, r_frame = self.right_cap.read()
-            continue_capture = lret and rret
-            if self.args.manual_filter and key == 27:
-                continue_capture = False
+            continue_capture = 0
+            for camera in self.cameras:
+                camera.read_next_frame()
+                continue_capture &= camera.end_of_video_not_reached()
+            continue_capture &= (not (self.args.manual_filter and key == 27))
+            
         if self.args.manual_filter:
             cv2.destroyAllWindows()
         return usable_frame_ct
         
     def gather_frame_data(self):
-        self.limgpoints = []
-        self.rimgpoints = []
         self.objpoints = []
         print("Gathering frame data...")
         usable_frame_ct = 0
         if(self.args.load_corners):
             print("Loading corners from {0:s}".format(self.full_corners_path))    
-            self.limgpoints,self.rimgpoints,self.objpoints, usable_frame_ct =\
+            imgpoints, self.objpoints, usable_frame_ct =\
             cio.load_corners(self.full_corners_path)
             usable_frame_ct = len(self.objpoints)
+            for camera in self.cameras:
+                camera.imgpoints = imgpoints[camera.index]
         else:
             if(self.args.load_images):
                 usable_frame_ct = self.load_frame_images()
-            elif(self.args.advanced_filtering):
-                usable_frame_ct = self.run_capture_advanced()
+            elif(self.args.frame_count_target != -1):
+                usable_frame_ct = self.run_capture_deterministic_count()
             else:
-                usable_frame_ct = self.run_capture_basic()            
+                usable_frame_ct = self.run_capture()            
             if self.args.save_corners:
                 print("Saving corners to {0:s}".format(self.full_corners_path))
-                np.savez_compressed(self.full_corners_path,
-                                    limgpoints=self.limgpoints,rimgpoints=self.rimgpoints, 
-                                    object_point_set=self.board_object_corner_set)
+                file_dict = {}
+                for camera in self.cameras:
+                    file_dict["imgpoints"+camera.index] = camera.imgpoints
+                file_dict["object_point_set"]=self.board_object_corner_set
+                np.savez_compressed(self.full_corners_path,*file_dict)
+                
         print ("Total usable frames: {0:d} ({1:.3%})"
                .format(usable_frame_ct, float(usable_frame_ct)/self.total_frames))
         self.usable_frame_count = usable_frame_ct
                
     def run_calibration(self):
-        min_frames = CalibrateStereoVideoApplication.min_frames_to_calibrate
+        min_frames = CalibrateVideoApplication.min_frames_to_calibrate
         if self.usable_frame_count < min_frames:
             print("Not enough usable frames to calibrate."+
                   " Need at least {0:d}, got {1:d}".format(min_frames,self.usable_frame_count))
             return
         print ("Calibrating for max. {0:d} iterations...".format(self.args.max_iterations))
-        calibration_result = cutils.stereo_calibrate(self.limgpoints, self.rimgpoints, self.objpoints,
-                                                     self.frame_dims, self.args.use_fisheye_distortion_model, 
-                                                     self.args.use_8_distortion_coefficients, 
-                                                     self.args.use_tangential_distortion_coefficients, 
-                                                     self.args.precalibrate_solo, self.args.max_iterations, 
-                                                     self.path_to_calib_file )
-        if self.args.preview:
-            l_im = cv2.imread(osp.join(self.args.folder,self.args.preview_files[0]))
-            r_im = cv2.imread(osp.join(self.args.folder,self.args.preview_files[1]))
-            l_im, r_im = cutils.generate_preview(calibration_result, l_im, r_im)
-            path_l = osp.join(self.args.folder,self.args.preview_files[0][:-4] + "_rect.png")
-            path_r = osp.join(self.args.folder,self.args.preview_files[1][:-4] + "_rect.png")
-            cv2.imwrite(path_l, l_im)
-            cv2.imwrite(path_r, r_im)
+        
+        if len(self.cameras) > 1:
+            calibration_result = cutils.stereo_calibrate(self.limgpoints, self.rimgpoints, self.objpoints,
+                                                         self.frame_dims, self.args.use_fisheye_distortion_model, 
+                                                         self.args.use_8_distortion_coefficients, 
+                                                         self.args.use_tangential_distortion_coefficients, 
+                                                         self.args.precalibrate_solo, self.args.max_iterations, 
+                                                         self.path_to_calib_file )
+            if self.args.preview:
+                l_im = cv2.imread(osp.join(self.args.folder,self.args.preview_files[0]))
+                r_im = cv2.imread(osp.join(self.args.folder,self.args.preview_files[1]))
+                l_im, r_im = cutils.generate_preview(calibration_result, l_im, r_im)
+                path_l = osp.join(self.args.folder,self.args.preview_files[0][:-4] + "_rect.png")
+                path_r = osp.join(self.args.folder,self.args.preview_files[1][:-4] + "_rect.png")
+                cv2.imwrite(path_l, l_im)
+                cv2.imwrite(path_r, r_im)
+        else:
+            flags = 0
+            criteria = (cv2.TERM_CRITERIA_MAX_ITER + cv2.TERM_CRITERIA_EPS, args.max_iterations, 
+                        2.2204460492503131e-16)
+            if not self.args.use_tangential_distortion_coefficients:
+                flags += cv2.CALIB_ZERO_TANGENT_DIST
+            if self.args.use_8_distortion_coefficients:
+                flags += cv2.CALIB_RATIONAL_MODEL
+            calibration_result = cutils.calibrate(self.objpoints, self.camera.imgpoints, flags, 
+                                                  criteria, self.camera.calib)
         if not self.args.skip_printing_output:
             print(calibration_result)
         if not self.args.skip_saving_output:
@@ -429,7 +436,7 @@ class CalibrateStereoVideoApplication:
 if __name__ == "__main__":
     args = parser.parse_args()
     
-    app = CalibrateStereoVideoApplication(args)
+    app = CalibrateVideoApplication(args)
     app.gather_frame_data()
     app.run_calibration()
     

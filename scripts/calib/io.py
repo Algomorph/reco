@@ -12,17 +12,22 @@ import calib.data as data
 
 def load_corners(path, board_height = None, board_width = None, board_square_size = None):
     npzfile = np.load(path)
-    limgpoints = npzfile['limgpoints']
-    rimgpoints = npzfile['rimgpoints']
     if 'object_point_set' in npzfile:
         objp = npzfile['object_point_set']
     else:
         objp = geom.generate_object_points(board_height, board_width, board_square_size)
+    imgpoints = []
+    npzfile.files.remove('object_point_set')
+    npzfile.files.sort()
+    for array_name in npzfile.files:
+        imgpoints.append(npzfile[array_name])
+        
     objpoints = []
-    usable_frame_ct = len(limgpoints)
+    usable_frame_ct = len(imgpoints[0])
     for i_frame in range(usable_frame_ct): # @UnusedVariable
         objpoints.append(objp)
-    return limgpoints,rimgpoints,objpoints,usable_frame_ct
+        
+    return imgpoints,objpoints,usable_frame_ct
 
 def load_opencv_stereo_calibration(path):
     '''
