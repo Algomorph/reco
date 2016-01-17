@@ -113,16 +113,20 @@ class CalibrateVideoApplication:
     def __init__(self,args):
         self.camera = CameraInfo(args.folder,args.videos[0], 0)
         
-        if(len(args.videos > 1)):
+        if(len(args.videos) > 1):
             self.cameras = [self.camera, CameraInfo(args.folder, args.videos[1], 1)]
             self.__automatic_filter_basic = self.__automatic_filter_basic_stereo
             self.__automatic_filter = self.__automatic_filter_stereo
-            if(len.args.preview_files != len(args.videos)):
+            if(len(args.preview_files) != len(args.videos)):
                 raise ValueError("There must be two preview file arguments passed in for stereo calibration.")
+            self.total_frames = min(self.cameras[0].frame_count,self.cameras[1].frame_count)
+            if(self.cameras[0].frame_dims != self.cameras[1].frame_dims):
+                raise ValueError("The videos must have the same resolution.")
         else:
             self.cameras = [self.camera]
             self.__automatic_filter_basic = self.__automatic_filter_basic_mono
             self.__automatic_filter = self.__automatic_filter_mono
+            self.total_frames = self.camera.frame_count
         
         self.full_frame_folder_path = osp.join(args.folder,args.filtered_image_folder)
         #if image folder (for captured frames) doesn't yet exist, create it
@@ -145,7 +149,7 @@ class CalibrateVideoApplication:
             
         self.criteria_subpix = (cv2.TERM_CRITERIA_EPS + cv2.TERM_CRITERIA_MAX_ITER, 40, 0.001)
         self.frame_dims = self.camera.frame_dims
-        self.total_frames = min(self.cameras[0].frame_count,self.cameras[1].frame_count)
+        
         
         self.pixel_difference_factor = 1.0 / (self.board_dims[0] * self.board_dims[1] * 3 * 256.0)
         if(args.use_existing):
@@ -184,7 +188,7 @@ class CalibrateVideoApplication:
     
     def __automatic_filter_mono(self):
         frame = self.camera.frame
-        frame_prev = self.camera[0].previous_frame
+        frame_prev = self.camera.previous_frame
         sharpness = cv2.Laplacian(frame,cv2.CV_64F).var()
         if sharpness < self.args.sharpness_threshold:
             return False
@@ -280,11 +284,11 @@ class CalibrateVideoApplication:
     def run_capture_deterministic_count(self):
         skip_interval = int(self.total_frames / self.args.frame_count_target)
 
-        continue_capture = 0
+        continue_capture = 1
         for camera in self.cameras:
             #init capture
             camera.read_next_frame()
-            continue_capture |= camera.end_of_video_not_reached()
+            continue_capture &= camera.more_frames_remain
             
         usable_frame_ct = 0
         i_start_frame = 0
@@ -311,10 +315,10 @@ class CalibrateVideoApplication:
                         camera.set_previous_to_current()
   
                 i_frame += 1
-                continue_capture = 0
+                continue_capture = 1
                 for camera in self.cameras:
                     camera.read_next_frame()
-                    continue_capture &= camera.end_of_video_not_reached()
+                    continue_capture &= camera.more_frames_remain
                 continue_capture &= (not (self.args.manual_filter and key == 27))
             i_start_frame = i_end_frame
             
@@ -325,13 +329,13 @@ class CalibrateVideoApplication:
         return usable_frame_ct
             
     def run_capture(self):
-        continue_capture = 0
+        continue_capture = 1
         for camera in self.cameras:
             #just in case we're running capture again
             camera.scroll_to_beginning()
             #init capture
             camera.read_next_frame()
-            continue_capture |= camera.end_of_video_not_reached()
+            continue_capture &= camera.more_frames_remain
         
         report_interval = 10
         i_frame = 0
@@ -353,10 +357,10 @@ class CalibrateVideoApplication:
                         camera.set_previous_to_current()
       
             i_frame += 1
-            continue_capture = 0
+            continue_capture = 1
             for camera in self.cameras:
                 camera.read_next_frame()
-                continue_capture &= camera.end_of_video_not_reached()
+                continue_capture &= camera.more_frames_remain
             continue_capture &= (not (self.args.manual_filter and key == 27))
             
         if self.args.manual_filter:
@@ -385,9 +389,9 @@ class CalibrateVideoApplication:
                 print("Saving corners to {0:s}".format(self.full_corners_path))
                 file_dict = {}
                 for camera in self.cameras:
-                    file_dict["imgpoints"+camera.index] = camera.imgpoints
+                    file_dict["imgpoints"+str(camera.index)] = camera.imgpoints
                 file_dict["object_point_set"]=self.board_object_corner_set
-                np.savez_compressed(self.full_corners_path,*file_dict)
+                np.savez_compressed(self.full_corners_path,**file_dict)
                 
         print ("Total usable frames: {0:d} ({1:.3%})"
                .format(usable_frame_ct, float(usable_frame_ct)/self.total_frames))
@@ -402,11 +406,14 @@ class CalibrateVideoApplication:
         print ("Calibrating for max. {0:d} iterations...".format(self.args.max_iterations))
         
         if len(self.cameras) > 1:
-            calibration_result = cutils.stereo_calibrate(self.limgpoints, self.rimgpoints, self.objpoints,
-                                                         self.frame_dims, self.args.use_fisheye_distortion_model, 
+            calibration_result = cutils.stereo_calibrate(self.cameras[0].imgpoints, 
+                                                         self.cameras[1].imgpoints, 
+                                                         self.objpoints, self.frame_dims, 
+                                                         self.args.use_fisheye_distortion_model, 
                                                          self.args.use_8_distortion_coefficients, 
                                                          self.args.use_tangential_distortion_coefficients, 
-                                                         self.args.precalibrate_solo, self.args.max_iterations, 
+                                                         self.args.precalibrate_solo, 
+                                                         self.args.max_iterations, 
                                                          self.path_to_calib_file )
             if self.args.preview:
                 l_im = cv2.imread(osp.join(self.args.folder,self.args.preview_files[0]))
@@ -418,6 +425,12 @@ class CalibrateVideoApplication:
                 cv2.imwrite(path_r, r_im)
         else:
             flags = 0
+            if self.path_to_calib_file != None:
+                result = cio.load_opencv_stereo_calibration(self.path_to_calib_file)
+                if(self.frame_dims != result.resolution):
+                    raise ValueError("Resolution in specified calibration file (" + 
+                                     self.path_to_calib_file + ") does not correspond to given resolution.")
+                flags += cv2.CALIB_USE_INTRINSIC_GUESS
             criteria = (cv2.TERM_CRITERIA_MAX_ITER + cv2.TERM_CRITERIA_EPS, args.max_iterations, 
                         2.2204460492503131e-16)
             if not self.args.use_tangential_distortion_coefficients:

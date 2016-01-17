@@ -51,13 +51,14 @@ def _error_and_time_to_xml(element, error, time):
 class CameraInfo(object):
     def __init__(self, directory, filename, index = 0):
         self.index = index
-        if not filename[-3:] == ".mp4":
+        self.cap = None
+        if filename[-3:] != "mp4":
             raise ValueError("Specified file does not have .mp4 extension.")
         self.path = osp.join(directory, filename)
         if not osp.isfile(self.path):
             raise ValueError("No video file found at {0:s}".format(self.left_vid))
         self.name = filename[:-4]
-        self.cap = cv2.VideoCapture(self.left_vid)
+        self.cap = cv2.VideoCapture(self.path)
         if not self.cap.isOpened():
             raise ValueError("Could not open specified .mp4 file ({0:s}) for capture!".format(self.path))
         self.imgpoints = []
@@ -72,7 +73,7 @@ class CameraInfo(object):
         self.current_corners = None
         self.frame = np.zeros((self.frame_dims[0],self.frame_dims[1],self.n_channels), np.uint8)
         self.previous_frame = np.zeros((self.frame_dims[0],self.frame_dims[1],self.n_channels), np.uint8)
-        self.more_frames_remain = False
+        self.more_frames_remain = True
     
     def read_next_frame(self):
         self.more_frames_remain, self.frame = self.cap.read()
@@ -80,14 +81,15 @@ class CameraInfo(object):
     def set_previous_to_current(self):
         self.previous_frame = self.frame
         
-    def scroll_to_frame(self,index):
+    def scroll_to_frame(self,i_frame):
         self.cap.set(cv2.CAP_PROP_POS_FRAMES,i_frame)#@UndefinedVariable
     
     def scroll_to_beginning(self):
         self.cap.set(cv2.CAP_PROP_POS_FRAMES,0.0)#@UndefinedVariable
         
     def __del__(self):
-        self.cap.release()
+        if self.cap != None:
+            self.cap.release()
 
 class CameraCalibrationInfo(object):
     '''
