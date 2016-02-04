@@ -13,10 +13,6 @@ import re
 from enum import Enum
 import ConfigParser
 
-
-
-
-
 class CalibrateVideoApplication:
     min_frames_to_calibrate = 4
     def __init__(self,args):
