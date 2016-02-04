@@ -6,12 +6,12 @@ import cv2
 import numpy as np
 import argparse as ap
 
-parser = ap.ArgumentParser(description='Traverse all .mp4 video files in the specified folder and pick out frames to export as images.')
-parser.add_argument("-f", "--folder", help="Folder to process", 
+conf_parser = ap.ArgumentParser(description='Traverse all .mp4 video files in the specified folder and pick out frames to export as images.')
+conf_parser.add_argument("-f", "--folder", help="Folder to process", 
                     required=False, default= ["./"])
 
 if __name__ == "__main__":
-	args = parser.parse_args()
+	args = conf_parser.parse_args()
 	files = [f for f in os.listdir(args.folder) if osp.isfile(args.folder + f) and f.endswith(".mp4")]
 	
 	files.sort();

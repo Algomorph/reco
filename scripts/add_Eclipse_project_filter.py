@@ -24,11 +24,11 @@ def make_filter(filtered_resources_element,name,arguments,filter_type,filter_id)
 	args_elem.text = arguments
 
 if __name__ == "__main__":
-	parser = argparse.ArgumentParser(description='Add exclude filter on [Subprojects] virtual folder in Eclipse project')
-	parser.add_argument('-p','--project_file', required=True, dest='proj_file')
+	conf_parser = argparse.ArgumentParser(description='Add exclude filter on [Subprojects] virtual folder in Eclipse project')
+	conf_parser.add_argument('-p','--project_file', required=True, dest='proj_file')
 
 	#parse the system arguments for the eclipse project file
-	parsed = parser.parse_args(sys.argv[1:])
+	parsed = conf_parser.parse_args(sys.argv[1:])
 	proj_file = parsed.proj_file
 
 	#if project file is not found, do nothing

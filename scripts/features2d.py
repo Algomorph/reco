@@ -8,14 +8,14 @@ import os
 import os.path as osp
 
 
-parser = ap.ArgumentParser(description='Detect & match 2d features in 2 images.')
-parser.add_argument("-f", "--folder", help="Folder to work in", 
+conf_parser = ap.ArgumentParser(description='Detect & match 2d features in 2 images.')
+conf_parser.add_argument("-f", "--folder", help="Folder to work in", 
                     required=False, default= ["./"])
-parser.add_argument("-fn", "--filenames", help="Names of the left and right images",
+conf_parser.add_argument("-fn", "--filenames", help="Names of the left and right images",
                     required=False, nargs=2, default = ["left.png","right.png"])
 
 if __name__ == "__main__":
-    args = parser.parse_args()
+    args = conf_parser.parse_args()
     im_l = cv2.imread(osp.join(args.folder,args.filenames[0]))
     im_r = cv2.imread(osp.join(args.folder,args.filenames[1]))
     

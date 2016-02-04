@@ -56,7 +56,7 @@ class CameraInfo(object):
             raise ValueError("Specified file does not have .mp4 extension.")
         self.path = osp.join(directory, filename)
         if not osp.isfile(self.path):
-            raise ValueError("No video file found at {0:s}".format(self.left_vid))
+            raise ValueError("No video file found at {0:s}".format(self.path))
         self.name = filename[:-4]
         self.cap = cv2.VideoCapture(self.path)
         if not self.cap.isOpened():

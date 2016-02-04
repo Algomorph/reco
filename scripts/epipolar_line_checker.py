@@ -4,18 +4,18 @@ import cv2
 import os.path as osp
 import argparse as ap
 
-parser = ap.ArgumentParser(description='A utility that helps check whether epipolar lines in two stereo images are horizontal and coincide')
+conf_parser = ap.ArgumentParser(description='A utility that helps check whether epipolar lines in two stereo images are horizontal and coincide')
 
-parser.add_argument("-f", "--folder", help="Folder to work in", 
+conf_parser.add_argument("-f", "--folder", help="Folder to work in", 
                     required=False, default= "./")
-parser.add_argument("-i", "--images", nargs=2, help="Input stereo image tuple (left, right)", 
+conf_parser.add_argument("-i", "--images", nargs=2, help="Input stereo image tuple (left, right)", 
                     required=False, default= ["left.png","right.png"])
-parser.add_argument("-o", "--output", help="path to the output file", 
+conf_parser.add_argument("-o", "--output", help="path to the output file", 
                     required=False, default= "epipolar_lines.png")
 
 
 if __name__ == "__main__":
-    args = parser.parse_args()
+    args = conf_parser.parse_args()
     
     left = cv2.imread(osp.join(args.folder,args.images[0]))
     
