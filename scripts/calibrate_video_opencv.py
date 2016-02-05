@@ -1,13 +1,20 @@
 #!/usr/bin/python3
 
 import sys
+import os.path as osp
 import argparse as ap
 from enum import Enum
 import configparser
 from calib.app import CalibrateVideoApplication
-
+from yaml import load, dump
+try:
+    from yaml import CLoader as Loader, CDumper as Dumper
+except ImportError:
+    from yaml import Loader, Dumper
 
 class Setting(Enum):
+    settings_file = "settings_file"
+    save_settings = "save_settings"
     folder = "folder"
     frame_numbers = "frame_numbers"
     videos = "videos"
@@ -23,7 +30,6 @@ class Setting(Enum):
     corners_file = "corners_file"
     save_corners = "save_corners"
     load_corners = "load_corners"
-    settings_file = "settings_file"
     max_iterations = "max_iterations"
     precalibrate_solo = "precalibrate_solo"
     use_8_distortion_coefficients = "use_8_distortion_coefficients"
@@ -49,6 +55,8 @@ def required_length(nmin,nmax):
 
 def main(argv=None):
     defaults = {
+        Setting.settings_file.name:None,
+        Setting.save_settings.name:False,
         Setting.folder.name:"./",
         Setting.frame_numbers.name:None,
         Setting.videos.name: ["left.mp4","right.mp4"],
@@ -64,7 +72,6 @@ def main(argv=None):
         Setting.corners_file.name:"corners.npz",
         Setting.save_corners.name:False,
         Setting.load_corners.name:False,
-        Setting.settings_file.name:None,
         Setting.max_iterations.name:30,
         Setting.precalibrate_solo.name:False,
         Setting.use_8_distortion_coefficients.name:False,
@@ -86,12 +93,20 @@ def main(argv=None):
     conf_parser.add_argument("-sf", "--" + Setting.settings_file.name, required = False, 
                         default=defaults[Setting.settings_file.name], 
                         help="File to save to / load from settings for the program.")
+    conf_parser.add_argument("-ss", "--" + Setting.save_settings.name, 
+                        help="Save setting file", 
+                        action="store_true", required = False, default=defaults[Setting.save_settings.name])
     
     args, remaining_argv = conf_parser.parse_known_args()
+    defaults[Setting.save_settings.name] = args.save_settings
     if(args.settings_file):
-        config = configparser.SafeConfigParser(defaults)
-        config.read([args.settings_file])
-        defaults.update(dict(config.items("Defaults")))
+        defaults[Setting.settings_file.name] = args.settings_file
+        if(osp.isfile(args.settings_file)):
+            file_stream = open(args.settings_file, "r", encoding="utf-8")
+            config_defaults = load(file_stream, Loader=Loader)
+            file_stream.close()
+            for key,value in config_defaults.items():
+                defaults[key] = value 
     
     parser = ap.ArgumentParser(parents=[conf_parser])
     
@@ -101,7 +116,7 @@ def main(argv=None):
                         " frame_numbers array."+
                         " If specified, program filters frame pairs based on these numbers instead of other"+
                         " criteria.",required=False, default=None)
-    parser.add_argument("-v", "--" + Setting.videos.name, nargs='+', action=required_length(1, 2),
+    parser.add_argument("-v", "--" + Setting.videos.name,metavar="VIDEO", nargs='+', action=required_length(1, 2),
                         help="input stereo video tuple (left, right)", 
                         required=False, default=defaults[Setting.videos.name])
     
@@ -187,6 +202,13 @@ def main(argv=None):
                         default= defaults[Setting.load_images.name])
     parser.set_defaults(**defaults)
     args = parser.parse_args(remaining_argv)
+
+    if(args.save_settings and args.settings_file):
+        setting_dict = vars(args)
+        file_stream = open(args.settings_file, "w", encoding="utf-8")
+        dump(setting_dict, file_stream, Dumper=Dumper)
+        file_stream.close()
+    
     app = CalibrateVideoApplication(args)
     app.gather_frame_data()
     app.run_calibration()
