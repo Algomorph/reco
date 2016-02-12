@@ -223,7 +223,8 @@ private:
 	const int superpixel_iterations = 5;
 
 
-	inline void compute_frame_disparity(cv::Mat& rectified_left, cv::Mat& rectified_right, cv::Mat& disparity, cv::Mat& demo) {
+	inline void compute_frame_disparity(cv::Mat& rectified_left, cv::Mat& rectified_right,
+			cv::Mat& disparity, cv::Mat& demo) {
 
 		matcher->compute(rectified_left, rectified_right, disparity);
 

@@ -38,16 +38,15 @@ namespace cal = reco::calib;
 
 class print_calibration_app {
 public:
-	print_calibration_app(fs::path) {
-
-	}
+	print_calibration_app(fs::path path) : rectifier(path.string()) {}
 	virtual ~print_calibration_app() {
 	}
 	int run() {
+		rectifier.print();
 		return success;
 	}
 private:
-
+	cal::opencv_rectifier rectifier;
 };
 }
 
@@ -75,7 +74,8 @@ int main(int argc, char** argv) {
 		po::store(po::command_line_parser(argc, argv)
 				.options(regular_options).positional(positional_options).run(), vm); // can throw
 
-		/** --help option
+		/**
+		 * --help option
 		 */
 		if (vm.count("help")) {
 			std::cout << "Stereo workbench." << std::endl

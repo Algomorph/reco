@@ -29,16 +29,18 @@ public:
 	const cv::Mat& get_translation_between_cameras() const;
 	const cv::Mat& get_rotation_between_cameras() const;
 	const cv::Mat& get_projection_matrix() const;
+	void print() const;
 	double get_baseline() const;
 
 private:
-	cv::Mat K1,K2,R,T,d1,d2;
-	cv::Mat R1,R2,P1,P2,Q;
+	cv::Mat K0,K1,R,T,d0,d1;
+	cv::Mat R0,R1,P0,P1,Q;
 	void compute_maps(const cv::Mat& T, const cv::Mat& R,
 			const cv::Mat& K1, const cv::Mat& d1,
 			const cv::Mat& K2, const cv::Mat& d2,
 			const cv::Size im_size);
-	cv::Mat map1x,map1y,map2x,map2y;
+	cv::Mat map0x,map0y,map1x,map1y;
+	cv::Size im_size;
 
 };
 

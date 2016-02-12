@@ -17,7 +17,7 @@ namespace calib{
 class rectifier{
 public:
 	rectifier(){}
-	virtual ~rectifier();
+	virtual ~rectifier(){};
 	virtual void set_calibration(const std::string& path, double scale_factor) = 0;
 	virtual void rectify(const cv::Mat& left,const cv::Mat& right,
 				cv::Mat& rect_left, cv::Mat& rect_right) = 0;
