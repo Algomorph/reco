@@ -47,11 +47,14 @@ reco_add_subproject(subtract_background
 reco_add_subproject(optical_flow_contours
     SOURCES optical_flow_contours.cpp
     DEPENDENCIES OpenCV utils Boost
-    ADDITIONAL_INCLUDE_DIRS 
+    LIGHTWEIGHT_APPLICATION)
+    
+reco_add_subproject(print_calibration
+    SOURCES print_calibration.cpp
+    DEPENDENCIES OpenCV utils Boost calib
     LIGHTWEIGHT_APPLICATION)
     
 reco_add_subproject(gpu_quickshift
     SOURCES gpu_quickshift.cpp
     DEPENDENCIES utils Boost segmentation CUDA OpenCV
-    ADDITIONAL_INCLUDE_DIRS 
     LIGHTWEIGHT_APPLICATION)

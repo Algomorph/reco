@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import os
 import os.path as osp
@@ -6,23 +6,25 @@ import argparse as ap
 import numpy as np
 import re
 
-conf_parser = ap.ArgumentParser(description='Delete all right frame files in folder based on which left frame files remain.')
 
-conf_parser.add_argument("-f", "--folder", help="Folder to work in", 
-                    required=False, default= "./")
-conf_parser.add_argument("-s", "--save_frame_numbers", help="Save an array containing frame numbers of the remaining pairs.",
-                    action="store_true",default = False)
-conf_parser.add_argument("-p", "--prefixes", help="custom prefixes for the frames from left and right camera respectively",
-                    required=False, nargs=2, default = None)
 
 if __name__ == "__main__":
-    args = conf_parser.parse_args()
+    parser = ap.ArgumentParser(description='Delete all right frame files in folder based on which left frame files remain.')
+
+    parser.add_argument("-f", "--folder", help="Folder to work in", 
+                        required=False, default= "./")
+    parser.add_argument("-s", "--save_frame_numbers", help="Save an array containing frame numbers of the remaining pairs.",
+                        action="store_true",default = False)
+    parser.add_argument("-p", "--prefixes", help="custom prefixes for the frames from left and right camera respectively",
+                        required=False, nargs=2, default = None)
+    
+    args = parser.parse_args()
     files = [f for f in os.listdir(args.folder) if osp.isfile(osp.join(args.folder,f)) and f.endswith(".png")]
     files.sort()
     
     if(args.prefixes == None):
-        rfiles = [f for f in files if "r_" in f]
-        lfiles = [f for f in files if "l_" in f]
+        rfiles = [f for f in files if "r_" in f or "R" in f]
+        lfiles = [f for f in files if "l_" in f or "L" in f]
         rn_search = rfiles
         ln_search = lfiles
     else:
@@ -39,11 +41,11 @@ if __name__ == "__main__":
     rdict = {}
     ldict = {}
     
-    for ix_right in xrange(len(rnums)):
+    for ix_right in range(len(rnums)):
         rfile = rfiles[ix_right]
         rnum = rnums[ix_right]
         rdict[rnum] = rfile
-    for ix_left in xrange(len(lnums)):
+    for ix_left in range(len(lnums)):
         lfile = lfiles[ix_left]
         lnum = lnums[ix_left]
         ldict[lnum] = lfile
@@ -51,18 +53,20 @@ if __name__ == "__main__":
     count_r_removed = 0
     count_l_removed = 0
     #filter right based on left
-    for rnum, rfile in rdict.iteritems():
+    for rnum, rfile in rdict.items():
         if(not rnum in ldict):
             os.remove(osp.join(args.folder,rfile))
             count_r_removed += 1
     #filter left based on right
-    for lnum, lfile in ldict.iteritems():
+    for lnum, lfile in ldict.items():
         if(not lnum in rdict):
             os.remove(osp.join(args.folder,lfile))
             count_l_removed += 1
 
-    print "removed {0:d} files ({1:d} left and {2:d} right)"\
-        .format(count_l_removed + count_r_removed, count_l_removed, count_r_removed)
+    print("removed {0:d} files ({1:d} of {3:d} for left and {2:d} of {4:d} for right)"\
+        .format(count_l_removed + count_r_removed, 
+                count_l_removed, count_r_removed,
+                len(lnums), len(rnums)))
     
     if(args.save_frame_numbers):
         rnums_arr = np.array(rnums)

@@ -25,7 +25,7 @@
 
 
 #include <thread>
-//#include <regex>
+#include <regex>
 
 
 namespace reco {
