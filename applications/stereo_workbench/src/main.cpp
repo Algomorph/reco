@@ -40,12 +40,13 @@
 
 #include <pcl/visualization/pcl_visualizer.h>
 
-#include <reco/stereo/opencv_rectifier.hpp>
+#include <reco/calib/opencv_rectifier.hpp>
+//#include <reco/stereo/opencv_rectifier.hpp>
 #include <reco/stereo_workbench/semiglobal_matcher.hpp>
 #include <reco/stereo_workbench/pcl_opencv_conversions.hpp>
 
-#define CALIB_FOLDER "/home/algomorph/Dropbox/calib/yi/"
-
+#define CALIB_FOLDER "/home/algomorph/Dropbox/calib/yi/"//old
+#define CALIB_PATH "/media/algomorph/Data/reco/calib/E_calib/calib.xml"
 namespace
 {
 const size_t error_in_command_line = 2;
@@ -65,7 +66,7 @@ public:
 			int end_frame = std::numeric_limits<int>::max()) :
 			start_frame(start_frame), end_frame(end_frame),
 					path_l(path_left), path_r(path_right), work_dir(work_dir),
-					rectifier(CALIB_FOLDER "0_1_smallboard.xml", 1.0),
+					rectifier(CALIB_PATH, 1.0),
 					viewer("3D Viewer"){
 
 		if (!fs::is_regular_file(path_l)) {
@@ -152,33 +153,26 @@ public:
 				i_frame++;
 			}
 		} else {
+			//input is still images
 			rectifier.rectify(frame_l,frame_r,result_l,result_r);
 #define DISP
 #define LOAD_DISP
+//#define COMPUTE_DISP
 #ifdef DISP
+			cv::Mat Q = rectifier.get_projection_matrix();
+#if defined(LOAD_DISP)
+			cv::Mat disparity = cv::imread((work_dir / fs::path("disparity.png")).string(), cv::IMREAD_ANYDEPTH);
+			cv::Mat mask = cv::imread((work_dir / fs::path("disparity_mask.png")).string(), cv::IMREAD_ANYDEPTH);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud(disparity, result_l, Q, mask);
+#elif defined(COMPUTE_DISP)
 
-#ifdef LOAD_DISP
-			cv::Mat disparity = cv::imread((work_dir / fs::path("01_LU_disparity.png")).string(), cv::IMREAD_ANYDEPTH);
-#elif COMPUTE_DISP
+
 			cv::Mat disparity;
 			matcher->compute(result_l, result_r, disparity);
-			//save_disparity_image(work_dir, disparity);
+			save_disparity_image(work_dir, disparity);
+			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud(disparity, result_l, Q);
 #endif
-			cv::Mat disparity_mask = cv::imread((work_dir / fs::path("01_LU_disparity_mask.png")).string(), cv::IMREAD_GRAYSCALE);
-			cv::Mat mouse_mask = cv::imread((work_dir / fs::path("01_LU_mouse_mask.png")).string(), cv::IMREAD_GRAYSCALE);
-			cv::Mat combined_mask;
-			cv::bitwise_and(disparity_mask, mouse_mask, combined_mask);
-			cv::imshow(big_win_title,disparity);
 
-
-			cv::Mat Q = rectifier.get_projection_matrix();
-			cv::Mat cloud_mat;
-
-
-			//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud(disparity_uint16, result_l, disparity_mask, mouse_mask, Q);
-			//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud(disparity, result_l, combined_mask, Q);
-			pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud(disparity, result_l, disparity_mask, Q);
-			//pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud = generate_cloud_direct(cloud_mat, result_l, disparity_mask);
 			while (!viewer.wasStopped()){
 				viewer.spinOnce(100);
 				boost::this_thread::sleep (boost::posix_time::microseconds (100000));
@@ -200,7 +194,8 @@ public:
 #endif
 			cv::imshow(left_win_title, result_l);
 			cv::imshow(right_win_title, result_r);
-			cv::imshow(big_win_title,result_big);
+			//cv::imshow(big_win_title,result_big);
+			cv::imshow(big_win_title,disparity);
 			cv::waitKey(0);
 
 		}
@@ -214,7 +209,7 @@ private:
 	cv::Ptr<cvxip::SuperpixelSEEDS> seeds_l, seeds_r;
 	cv::Ptr<cv::StereoSGBM> matcher;
 	bool input_is_video;
-	reco::stereo::opencv_rectifier rectifier;
+	reco::calib::opencv_rectifier rectifier;
 	pcl::visualization::PCLVisualizer viewer;
 
 	const char* left_win_title = "Left";

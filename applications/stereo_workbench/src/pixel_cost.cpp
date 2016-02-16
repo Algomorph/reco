@@ -19,7 +19,6 @@
  */
 #include "pixel_cost.hpp"
 #include <opencv2/xfeatures2d.hpp>
-#include <opencv2/hal/intrin.hpp>
 
 #include <reco/utils/debug_util.h>
 #include <reco/utils/cpp_exception_util.h>

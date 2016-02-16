@@ -30,7 +30,7 @@ reco_add_subproject(playback
     
 reco_add_subproject(stereo_rectify
     SOURCES stereo_rectify.cpp
-    DEPENDENCIES OpenCV utils stereo
+    DEPENDENCIES OpenCV utils calib
     LIGHTWEIGHT_APPLICATION)
 
 reco_add_subproject(ogale_example

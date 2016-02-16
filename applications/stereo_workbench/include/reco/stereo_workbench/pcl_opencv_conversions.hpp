@@ -36,7 +36,7 @@ class Mat;
 namespace reco{
 namespace stereo_workbench{
 
-#define Z_LIMIT_DEFAULT 1.0
+#define Z_LIMIT_DEFAULT 0.6
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_cloud(const cv::Mat& depth,
 		const cv::Mat& K, Eigen::Matrix<float, 3, 3> R,
@@ -67,12 +67,14 @@ void add_to_cloud(
 		double z_limit = Z_LIMIT_DEFAULT);
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_cloud(
-		const cv::Mat& disparity, const cv::Mat& color, const cv::Mat& mask,const cv::Mat& Q,
+		const cv::Mat& disparity, const cv::Mat& color, const cv::Mat& Q,
+		cv::InputArray mask = cv::noArray(),
 		double z_limit = Z_LIMIT_DEFAULT);
 
 void add_to_cloud(
-		const cv::Mat& disparity, const cv::Mat& color, const cv::Mat& mask,
-		const cv::Mat& Q, pcl::PointCloud<pcl::PointXYZRGB>& cloud, double z_limit = Z_LIMIT_DEFAULT);
+		const cv::Mat& disparity, const cv::Mat& color,
+		const cv::Mat& Q, pcl::PointCloud<pcl::PointXYZRGB>& cloud,
+		cv::InputArray mask = cv::noArray(), double z_limit = Z_LIMIT_DEFAULT);
 
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_cloud_direct(

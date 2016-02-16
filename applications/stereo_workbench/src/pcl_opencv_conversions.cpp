@@ -197,12 +197,26 @@ void add_to_cloud(
 
 pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_cloud(
 		const cv::Mat& disparity, const cv::Mat& color,
-		const cv::Mat& mask,
 		const cv::Mat& Q,
+		cv::InputArray mask,
 		double z_limit) {
 	pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>());
-	add_to_cloud(disparity, color, mask, Q, *cloud, z_limit);
+	add_to_cloud(disparity, color, Q, *cloud, mask, z_limit);
 	return cloud;
+}
+
+static inline void add_color_point(uchar* color_px, double disp,
+		pcl::PointCloud<pcl::PointXYZRGB>& cloud, double inv_baseline,
+		double z_limit, double f, double ox, double oy, int row, int col){
+	double ib_d = inv_baseline * disp / 16.0;
+	double z = f / ib_d;//equiv. to fB/d
+	if(z <= z_limit){
+		pcl::PointXYZRGB pt(*(color_px + 2), *(color_px + 1), *(color_px));
+		pt.x = (col + ox) / ib_d; //equiv. to (x-x_0) * z / f
+		pt.y = (row + oy) / ib_d;//equiv. to (y-y_0) * z / f
+		pt.z = z;
+		cloud.push_back(pt);
+	}
 }
 
 /**
@@ -214,10 +228,11 @@ pcl::PointCloud<pcl::PointXYZRGB>::Ptr generate_cloud(
  * \param[out] cloud PCL pointcloud
  */
 void add_to_cloud(
-		const cv::Mat& disparity, const cv::Mat& color, const cv::Mat& mask, const cv::Mat& Q,
-		pcl::PointCloud<pcl::PointXYZRGB>& cloud, double z_limit) {
+		const cv::Mat& disparity, const cv::Mat& color, const cv::Mat& Q,
+		pcl::PointCloud<pcl::PointXYZRGB>& cloud, cv::InputArray mask, double z_limit) {
 
-	if (disparity.type() != CV_16UC1) {
+
+	if (disparity.type() != CV_16UC1  && disparity.type() != CV_16S) {
 		pcl::console::print_error("[add_to_cloud] disparity matrix type must be CV_16U");
 		exit(EXIT_FAILURE);
 	}
@@ -225,12 +240,16 @@ void add_to_cloud(
 		pcl::console::print_error("[add_to_cloud] color matrix must type be CV_8UC3");
 		exit(EXIT_FAILURE);
 	}
-	if (mask.type() != CV_8UC1) {
-		pcl::console::print_error("[add_to_cloud] mask matrix must type be CV_8U");
-		exit(EXIT_FAILURE);
+	cv::Mat mask_mat;
+	if(!mask.empty()){
+		mask_mat = mask.getMat();
+		if (mask_mat.type() != CV_8UC1) {
+			pcl::console::print_error("[add_to_cloud] mask matrix must type be CV_8U");
+			exit(EXIT_FAILURE);
+		}
 	}
-	if (disparity.rows != mask.rows || disparity.cols != mask.cols || mask.cols != color.cols
-			|| mask.rows != color.rows) {
+	if (disparity.rows != color.rows || disparity.cols != color.cols ||
+			(!mask.empty() && (mask_mat.cols != color.cols || mask_mat.rows != color.rows))) {
 		pcl::console::print_error(
 				"[add_to_cloud] mask, color, and disparity matrices must have the same dimensions.");
 		exit(EXIT_FAILURE);
@@ -245,21 +264,43 @@ void add_to_cloud(
 	const double ox = Q.at<double>(0, 3);
 	const double oy = Q.at<double>(1, 3);
 
-	const unsigned short* cur_disp = disparity.ptr<unsigned short>();
-	uchar* color_px = color.data;
-	uchar* cur_mask = mask.data;
 
-	for (int row = 0; row < disparity.rows; row++) {
-		for (int col = 0; col < disparity.cols; col++, cur_disp++, cur_mask++, color_px += 3) {
-			if (*cur_mask) {
-				double ib_d = inv_baseline * static_cast<double>(*cur_disp) / 16;
-				double z = f / ib_d;//equiv. to fB/d
-				if(z <= z_limit){
-					pcl::PointXYZRGB pt(*(color_px + 2), *(color_px + 1), *(color_px));
-					pt.x = (col + ox) / ib_d; //equiv. to (x-x_0) * z / f
-					pt.y = (row + oy) / ib_d;//equiv. to (y-y_0) * z / f
-					pt.z = z;
-					cloud.push_back(pt);
+	uchar* color_px = color.data;
+
+
+	if(!mask.empty() && disparity.type() != CV_16S){
+		const unsigned short* cur_disp = disparity.ptr<unsigned short>();
+		uchar* cur_mask = mask_mat.data;
+		for (int row = 0; row < disparity.rows; row++) {
+			for (int col = 0; col < disparity.cols; col++, cur_disp++, cur_mask++, color_px += 3) {
+				if (*cur_mask) {
+					add_color_point(color_px, static_cast<double>(*cur_disp),cloud,inv_baseline,
+							z_limit,f,ox,oy,row,col);
+				}
+			}
+		}
+	}else{
+		if(disparity.type() == CV_16UC1){
+			const unsigned short* cur_disp = disparity.ptr<unsigned short>();
+			for (int row = 0; row < disparity.rows; row++) {
+				for (int col = 0; col < disparity.cols; col++, cur_disp++, color_px += 3) {
+					double ib_d = inv_baseline * static_cast<double>(*cur_disp) / 16.0;
+					double z = f / ib_d;//equiv. to fB/d
+					if(z <= z_limit){
+						add_color_point(color_px, static_cast<double>(*cur_disp),cloud,inv_baseline,
+													z_limit,f,ox,oy,row,col);
+					}
+				}
+			}
+		}else{
+			//CV_16S
+			const short* cur_disp = disparity.ptr<short>();
+			for (int row = 0; row < disparity.rows; row++) {
+				for (int col = 0; col < disparity.cols; col++, cur_disp++, color_px += 3) {
+					if (*cur_disp > 0) {
+						add_color_point(color_px, static_cast<double>(*cur_disp),cloud,inv_baseline,
+													z_limit,f,ox,oy,row,col);
+					}
 				}
 			}
 		}
