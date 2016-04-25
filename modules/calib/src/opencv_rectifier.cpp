@@ -67,7 +67,7 @@ void opencv_rectifier::compute_maps(const cv::Mat& T, const cv::Mat& R,
 		const cv::Mat& K0, const cv::Mat& d0,
 		const cv::Mat& K1, const cv::Mat& d1,
 		const cv::Size im_size){
-	double factor = 1.8;
+	double factor = 1.8;//TODO: make this at least a class-wide constant, better yet specifiable at construction
 	cv::Size new_size((int)(im_size.width*factor),(int)(im_size.height*factor));
 	cv::stereoRectify(K0, d0, K1, d1, im_size, R, T, R0, R1, P0, P1, Q, cv::CALIB_ZERO_DISPARITY,-1.0,new_size);
 	cv::initUndistortRectifyMap(K0, d0, R0, P0, new_size, CV_32FC1, map0x, map0y);
