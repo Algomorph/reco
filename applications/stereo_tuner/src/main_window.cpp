@@ -32,7 +32,7 @@ namespace reco {
 namespace stereo_tuner {
 
 #define DEFAULT_RECO_DATA_PATH "/media/algomorph/Data/reco/"
-#define DEFAULT_CAP_PATH DEFAULT_RECO_DATA_PATH "cap/yi/"
+#define DEFAULT_CAP_PATH DEFAULT_RECO_DATA_PATH "cap/"
 #define DEFAULT_CALIB_PATH "/home/algomorph/Dropbox/calib/yi/"
 
 //uncomment to load images instead of videos by default
@@ -44,8 +44,8 @@ namespace stereo_tuner {
 #define CALIB_FILE "0_1_smallboard_redux.xml"
 
 
-#define DEFAULT_IMAGE_LEFT DEFAULT_CAP_PATH "0_1_stills/01_L.png"
-#define DEFAULT_IMAGE_RIGHT DEFAULT_CAP_PATH "0_1_stills/01_R.png"
+#define DEFAULT_IMAGE_LEFT DEFAULT_CAP_PATH "mouse_cap03/test_pairs/dl_18_rect.pnga"
+#define DEFAULT_IMAGE_RIGHT DEFAULT_CAP_PATH "mouse_cap03/test_pairs/dr_18_rect.pnga"
 
 main_window::main_window() :
 		ui(new Ui_main_window),

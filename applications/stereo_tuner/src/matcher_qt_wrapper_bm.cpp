@@ -71,7 +71,7 @@ void matcher_qt_wrapper_bm::tuning_panel_bm::construct_specialized_controls(){
 			QStringLiteral("block_size_label"),
 			QStringLiteral("block_size_spin_box"),
 			QStringLiteral("block_size_slider"),
-			5,65,2,1
+			5,65,2,21
 			);
 
 	construct_integer_control_set(
@@ -84,7 +84,7 @@ void matcher_qt_wrapper_bm::tuning_panel_bm::construct_specialized_controls(){
 		QStringLiteral("pre_filter_cap_label"),
 		QStringLiteral("pre_filter_cap_spin_box"),
 		QStringLiteral("pre_filter_cap_slider"),
-		0,256
+		5,63,2,5
 		);
 
 	construct_integer_control_set(
@@ -97,7 +97,7 @@ void matcher_qt_wrapper_bm::tuning_panel_bm::construct_specialized_controls(){
 		QStringLiteral("pre_filter_size_label"),
 		QStringLiteral("pre_filter_size_spin_box"),
 		QStringLiteral("pre_filter_size_slider"),
-		0,256
+		5,255,2,5
 		);
 
 
@@ -120,7 +120,7 @@ void matcher_qt_wrapper_bm::tuning_panel_bm::construct_specialized_controls(){
 		QStringLiteral("smaller_block_size_label"),
 		QStringLiteral("smaller_block_size_spin_box"),
 		QStringLiteral("smaller_block_size_slider"),
-		1,11,2,1
+		5,255,2,1
 		);
 
 	construct_integer_control_set(
@@ -195,6 +195,9 @@ void matcher_qt_wrapper_bm::set_pre_filter_cap(int value) {
 }
 
 void matcher_qt_wrapper_bm::set_pre_filter_size(int value){
+	if(value % 2 != 1){
+		value = value+1; //make it odd
+	}
 	stereo_matcher->setPreFilterSize(value);
 	emit parameters_changed();
 }
@@ -203,6 +206,9 @@ void matcher_qt_wrapper_bm::set_pre_filter_type(int value){
 	emit parameters_changed();
 }
 void matcher_qt_wrapper_bm::set_smaller_block_size(int value){
+    if(value % 2 != 1){
+        value = value+1; //make it odd
+    }
 	stereo_matcher->setSmallerBlockSize(value);
 	emit parameters_changed();
 }

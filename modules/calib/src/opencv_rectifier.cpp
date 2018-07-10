@@ -38,26 +38,26 @@ opencv_rectifier::~opencv_rectifier(){}
 void opencv_rectifier::set_calibration(const std::string& path, double scale_factor){
 	cv::FileStorage fs(path, cv::FileStorage::READ);
 
-	cv::FileNode stereo_calib_node = fs["StereoCalibrationInfo"];
+	cv::FileNode stereo_calib_node = fs["Rig"];
 	cv::FileNode cameras_node = stereo_calib_node["Cameras"];
 	cv::FileNode camera_0_node = cameras_node[0];
 	cv::FileNode camera_1_node = cameras_node[1];
+	cv::FileNode intrinsics_0_node = camera_0_node["Intrinsics"];
+	cv::FileNode intrinsics_1_node = camera_1_node["Intrinsics"];
+	cv::FileNode extrinsics_node = camera_1_node["Extrinsics"];
 
-	camera_0_node["intrinsic_mat"] >> K0;
-	camera_0_node["distortion_coeffs"] >> d0;
-	camera_1_node["intrinsic_mat"] >> K1;
-	camera_1_node["distortion_coeffs"] >> d1;
-	stereo_calib_node["rotation"] >> R;
-	stereo_calib_node["translation"] >> T;
+	cv::Mat K0, d0, K1, d1, R, T;
+	cv::Size im_size;
 
-	K0 *= scale_factor;
-	K1 *= scale_factor;
+	intrinsics_0_node["intrinsic_mat"] >> K0;
+	intrinsics_0_node["distortion_coeffs"] >> d0;
+	intrinsics_1_node["intrinsic_mat"] >> K1;
+	intrinsics_1_node["distortion_coeffs"] >> d1;
+	extrinsics_node["rotation"] >> R;
+	extrinsics_node["translation"] >> T;
 
-	K0.at<double>(2,2) = 1.0;
-	K1.at<double>(2,2) = 1.0;
-
-	im_size = cv::Size(static_cast<int>(scale_factor*static_cast<int>(camera_0_node["resolution"]["width"])),
-		static_cast<int>(scale_factor*static_cast<int>(camera_0_node["resolution"]["height"])));
+	im_size = cv::Size(static_cast<int>(intrinsics_0_node["resolution"]["width"]),
+					   static_cast<int>(intrinsics_0_node["resolution"]["height"]));
 
 	fs.release();
 	compute_maps(T,R,K0,d0,K1,d1,im_size);
@@ -74,20 +74,23 @@ void opencv_rectifier::compute_maps(const cv::Mat& T, const cv::Mat& R,
 	cv::initUndistortRectifyMap(K1, d1, R1, P1, new_size, CV_32FC1, map1x, map1y);
 }
 
+#ifdef RECTIFY_CHECK_SIZES
 static void report_int_mismatch(int expected, int received, const std::string& name){
 	if(expected != received){
 		dpt("Expected " + name + ": " << expected + ". Got: " << received);
 	}
 }
+#endif
 
 void opencv_rectifier::rectify(const cv::Mat& left, const cv::Mat& right, cv::Mat& left_rect,
 		cv::Mat& right_rect){
-	bool check_sizes = false;
+
+#ifdef RECTIFY_CHECK_SIZES
 	bool sizes_match = map0x.cols == left.cols
 				&& map0x.rows == left.rows
 				&& map1x.cols == right.cols
 				&& map1x.rows == right.rows;
-	if (check_sizes && !sizes_match) {
+	if (!sizes_match) {
 		dpt("Lookup table sizes don't match image sizes. Skipping rectification.");
 		report_int_mismatch( map0x.cols,left.cols, "left width");
 		report_int_mismatch( map0x.rows,left.rows, "left height");
@@ -96,14 +99,17 @@ void opencv_rectifier::rectify(const cv::Mat& left, const cv::Mat& right, cv::Ma
 		left_rect = left;
 		right_rect = right;
 	} else {
-		cv::Mat rect_left;
-		cv::Mat rect_right;
-		cv::remap(left, rect_left, map0x, map0y, cv::INTER_LINEAR);
-		cv::remap(right, rect_right, map1x, map1y, cv::INTER_LINEAR);
+#endif
+	cv::Mat rect_left;
+	cv::Mat rect_right;
+	cv::remap(left, rect_left, map0x, map0y, cv::INTER_LINEAR);
+	cv::remap(right, rect_right, map1x, map1y, cv::INTER_LINEAR);
 
-		left_rect = rect_left;
-		right_rect = rect_right;
+	left_rect = rect_left;
+	right_rect = rect_right;
+#ifdef RECTIFY_CHECK_SIZES
 	}
+#endif
 }
 
 void opencv_rectifier::print() const{

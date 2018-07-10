@@ -17,6 +17,7 @@
 #define err(exception_class) (reco::utils::error_stream<exception_class>())
 #define enderr (reco::utils::error_end_token::get_instance())
 #define err2(exception_class, stuff) (reco::utils::error_stream<exception_class>()) << stuff << (reco::utils::error_end_token::get_instance())
+#define err3(stuff) (reco::utils::error_stream<std::runtime_error>()) << stuff << (reco::utils::error_end_token::get_instance())
 
 namespace reco {
 namespace utils {

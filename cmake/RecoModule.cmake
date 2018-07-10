@@ -31,7 +31,7 @@ macro(reco_link_libraries_to_subproject _target_name verbose link_plain)
         endif()
     endforeach()
     if(${verbose} EQUAL 1)
-        get_target_property(${_target_name}_libs ${_target_name} LINK_INTERFACE_LIBRARIES)
+        get_target_property(${_target_name}_libs ${_target_name} INTERFACE_LINK_LIBRARIES)
         message(STATUS "Libraries linked to subproject '${_target_name}': ${${_target_name}_libs}")
     endif() 
 endmacro()
@@ -112,7 +112,7 @@ macro(reco_add_subproject _name)
     set(subproject_name ${global_project_name}_${_name})
     
     #adjust verbocity level here to 1, 2 for debugging
-    set(verbose 0)
+    set(verbose 1)
 
 #----------------------------------PARSE ARGUMENTS-------------------------------------------------#
 
@@ -273,7 +273,7 @@ macro(reco_add_subproject _name)
     set(${subproject_name}_sources)
     if(NOT ${_subproject_type} STREQUAL "${lightweight_app_type}")
         #search for all sources in the current source dir
-        file(GLOB_RECURSE ${subproject_name}_sources src/ *.cpp *.cu)
+        file(GLOB_RECURSE ${subproject_name}_sources src/ *.cpp *.cxx *.cu)
         file(GLOB_RECURSE ${subproject_name}_headers src/ *.h *.h.in *.hpp *.tpp)
         file(GLOB_RECURSE ${subproject_name}_headers ${${subproject_name}_top_include_dir}/ *.h *.h.in *.hpp *.tpp)
         file(GLOB_RECURSE ${subproject_name}_test_sources tests/ *.cpp)

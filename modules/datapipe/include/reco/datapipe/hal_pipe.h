@@ -7,8 +7,6 @@
  */
 
 #pragma once
-#ifndef RECO_DATAPIPE_MULTICHANNEL_PIPE_H_
-#define RECO_DATAPIPE_MULTICHANNEL_PIPE_H_
 
 //qt
 #include <QObject>
@@ -76,5 +74,3 @@ public slots:
 
 } /* namespace datapipe */
 } /* namespace reco */
-
-#endif /* RECO_DATAPIPE_MULTICHANNEL_PIPE_H_ */

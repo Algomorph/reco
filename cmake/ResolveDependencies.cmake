@@ -22,6 +22,8 @@ reco_find_dependency(FFMPEG ${verbosity} QUIET)
 reco_find_dependency(OpenMP ${verbosity} QUIET) 
 reco_find_dependency(CUDA ${verbosity} QUIET)
 reco_find_dependency(OpenGL ${verbosity} QUIET)
+reco_find_dependency(Eigen3 ${verbosity} QUIET INCLUDE_DIRS EIGEN3_INCLUDE_DIRS)
+
 if(CUDA_FOUND)
     #default to the CUDA version of OpenCL
     find_OpenCL_CUDA()

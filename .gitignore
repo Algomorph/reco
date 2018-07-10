@@ -1,3 +1,8 @@
+.idea/
+cmake-build-debug/
+cmake-build-release/
+scripts/__pycache__/
+
 #image samples/work files
 /output/
 
@@ -268,3 +273,4 @@ UpgradeLog*.htm
 
 # Microsoft Fakes
 FakesAssemblies/
+

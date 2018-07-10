@@ -3,7 +3,7 @@
 #  Created on: Dec 8, 2014
 #      Author: Gregory Kramida
 #     License: Apache v2
-#   Copyright: (c) Gregory Kramida 2014, 2015
+#   Copyright: (c) Gregory Kramida 2016
 #
 # EDITING GUIDELINES:
 # 1) Use lowercase CMake commands
@@ -38,7 +38,7 @@ set(RELEASE_BUILD_TYPE_OPTIONS Release MinSizeRel)
 set(BUILD_TYPE_OPTIONS ${DEBUG_BUILD_TYPE_OPTIONS} ${RELEASE_BUILD_TYPE_OPTIONS})
 
 #set build type 
-if(NOT MSVC)#TODO: also don't do for XCode generator?
+if(NOT MSVC)
     #work around CMakes strange CACHE setting system
     if("${CMAKE_BUILD_TYPE}" STREQUAL "")
         set(CMAKE_BUILD_TYPE Debug CACHE STRING "Choose the type of build, options are: ${BUILD_TYPE_OPTIONS}." FORCE)
@@ -118,6 +118,7 @@ include("ResolveDependencies")
 #-------------------------INCLUDE SUBDIRECTORIES-------------------------------#
 add_subdirectory ("modules")
 add_subdirectory ("applications")
+
 
 #-------------------------RUN SCRIPTS------------------------------------------#
 if(UNIX)
